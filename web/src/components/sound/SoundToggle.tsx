@@ -145,6 +145,10 @@ export function SoundToggle({
           </button>
         </div>
 
+      </div>
+
+      {/* Permanently reserved slot: the slider slides in here, so nothing below is covered and nothing moves */}
+      <div className="sound-control__slot">
         {mounted && (
           <div
             className={`sound-control__volume ${shown ? 'sound-control__volume--in' : ''}`.trim()}
@@ -155,7 +159,6 @@ export function SoundToggle({
           </div>
         )}
       </div>
-
     </div>
   )
 }
