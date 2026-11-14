@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { DemoCaption } from '../components/demo/DemoCaption'
 import { Tour } from '../components/help/Tour'
+import { TourChip } from '../components/help/TourChip'
 import { ScenarioBoard } from '../components/scenario/ScenarioBoard'
 import { SimpleView } from '../components/simple/SimpleView'
 import { useEventSounds } from '../components/sound/useEventSounds'
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <div className="app">
       <TopBar />
+      <TourChip />
       <main className="shell">
         <Tools />
         {mode === 'simple' ? (

@@ -3,12 +3,10 @@ import { useAppStore } from '../../state/store'
 import {
   advancedSteps,
   nextAvailableStep,
-  shouldAutoStart,
   simpleSteps,
   type TourStep,
 } from './tourSteps'
 import {
-  getStoredTourStatus,
   setStoredTourStatus,
   useTourStore,
 } from './tourState'
@@ -18,7 +16,6 @@ export function useTour() {
   const isOpen = useTourStore((s) => s.isOpen)
   const stepIndex = useTourStore((s) => s.stepIndex)
   const dontShowAgain = useTourStore((s) => s.dontShowAgain)
-  const openTour = useTourStore((s) => s.openTour)
   const closeTour = useTourStore((s) => s.closeTour)
   const setStepIndex = useTourStore((s) => s.setStepIndex)
   const setDontShowAgain = useTourStore((s) => s.setDontShowAgain)
@@ -29,37 +26,10 @@ export function useTour() {
     return typeof document !== 'undefined' && Boolean(document.querySelector(selector))
   }, [])
 
-  // Auto-start on first visit of each level
+  // Switching level closes an open tour; it never opens by itself (see TourChip).
   useEffect(() => {
-    // Switching level closes an open tour
-    if (useTourStore.getState().isOpen) {
-      closeTour()
-    }
-
-    if (typeof window === 'undefined') return
-
-    const urlParams = new URLSearchParams(window.location.search)
-    const suppressed = urlParams.get('tour') === '0'
-    const stored = getStoredTourStatus(mode)
-
-    if (!shouldAutoStart(stored, suppressed)) {
-      return
-    }
-
-    const timer = setTimeout(() => {
-      // Find first available step
-      const firstAvailable = nextAvailableStep(steps, -1, 1, exists)
-      if (firstAvailable !== -1) {
-        openTour(firstAvailable)
-      } else {
-        openTour(0)
-      }
-    }, 600)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [mode, exists, openTour, closeTour, steps])
+    if (useTourStore.getState().isOpen) closeTour()
+  }, [mode, closeTour])
 
   // Automatically skip step if its target is not in DOM
   useEffect(() => {

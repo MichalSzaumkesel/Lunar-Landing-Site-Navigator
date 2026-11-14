@@ -1,3 +1,4 @@
+import { lazy, Suspense, useState } from 'react'
 import type { ObserverHeightM } from '../lib/types'
 import { useDemoStore } from '../components/demo/demoState'
 import { useBundleLoading } from '../components/demo/useBundleLoading'
@@ -5,6 +6,8 @@ import { useTourStore } from '../components/help/tourState'
 import { useAppStore } from '../state/store'
 import type { Mode } from '../state/types'
 import { PresetBar } from './PresetBar'
+
+const AboutData = lazy(() => import('../components/about/AboutData'))
 
 const MODES: { id: Mode; label: string }[] = [
   { id: 'simple', label: 'Simple' },
@@ -24,6 +27,7 @@ export function TopBar() {
   const startDemo = useDemoStore((s) => s.startDemo)
   const stopDemo = useDemoStore((s) => s.stopDemo)
   const isBundleLoading = useBundleLoading()
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   const handleDemoClick = () => {
     if (isDemoActive) {
@@ -50,6 +54,9 @@ export function TopBar() {
         }}
       >
         <span aria-hidden="true">(?)</span> Tutorial
+      </button>
+      <button type="button" className="ghost" onClick={() => setAboutOpen(true)}>
+        About the data
       </button>
       <button
         type="button"
@@ -89,6 +96,11 @@ export function TopBar() {
           </button>
         ))}
       </div>
+      {aboutOpen && (
+        <Suspense fallback={null}>
+          <AboutData onClose={() => setAboutOpen(false)} />
+        </Suspense>
+      )}
     </header>
   )
 }

@@ -20,6 +20,7 @@ import {
   earthStateText,
   fmtUtc,
   polarToXY,
+  skyZoomLabel,
   sunStateText,
 } from './geometry'
 import type { BodyReadout, SkyModel, SkyReadout } from './geometry'
@@ -134,6 +135,7 @@ function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
     : `Sky plot, ${bundle.site.name}, ${utc}. Outside data range.`
 
   return (
+    <>
     <div className="sky__frame">
       <svg
         className="sky__svg"
@@ -168,11 +170,16 @@ function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
             </g>
           )}
         </g>
-        <text className="sky__scale" x={12} y={24}>
-          scale 0 to {model.zoomEl} deg
-        </text>
       </svg>
     </div>
+    <p
+      className={`sky__zoom${model.zoomEl < 90 ? ' sky__zoom--zoomed' : ''}`}
+      data-sky-zoom={model.zoomEl}
+      title="Elevation in degrees: the rim is the horizon (0°), the centre is the value shown"
+    >
+      {skyZoomLabel(model.zoomEl)}
+    </p>
+    </>
   )
 }
 

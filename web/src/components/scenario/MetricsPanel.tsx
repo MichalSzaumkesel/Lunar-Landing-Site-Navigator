@@ -100,6 +100,9 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
           </div>
         )}
       </dl>
+      <p className="metrics__note">
+        Sun visible matters for solar power and heat. Earth in view is needed for direct-to-Earth radio. This tool shows geometry only, not power or link guarantees.
+      </p>
       {partial && <p className="metrics__note">Window partly outside data range. Window values cover the available part.</p>}
       {isActive && (
         <ElevationChart scenario={scenario} bundle={bundle} heightM={heightM} />

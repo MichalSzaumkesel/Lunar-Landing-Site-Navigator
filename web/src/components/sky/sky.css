@@ -150,6 +150,21 @@
   font: 600 15px var(--font);
 }
 
+.sky__zoom {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sky__zoom--zoomed {
+  color: var(--text);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
 .sky__outside rect {
   fill: rgba(7, 9, 15, 0.88);
   stroke: var(--line);

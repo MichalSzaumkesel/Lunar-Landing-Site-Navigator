@@ -156,6 +156,18 @@ export function ringStepDeg(zoomEl: ZoomEl): number {
   return RING_STEP[zoomEl]
 }
 
+/** Scale label of the polar plot: what elevation the centre stands for at this zoom. */
+export function skyZoomLabel(zoomEl: number): string {
+  return zoomEl >= 90
+    ? 'Full sky: centre = 90° elevation (straight up)'
+    : `Zoom: centre = ${zoomEl}° elevation`
+}
+
+/** Plain-language description of the plot centre, for legends and the tutorial. */
+export function skyCentreText(zoomEl: number): string {
+  return zoomEl >= 90 ? 'straight up' : `${zoomEl}° above the horizon (the plot is zoomed in)`
+}
+
 /** Zoom shared by the polar plot and the panorama: the smallest level that fits horizon and bodies. */
 export function chooseSkyZoom(
   bundle: Pick<SiteBundle, 'horizon' | 'ephem'>,
