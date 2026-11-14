@@ -9,14 +9,19 @@ export const SHADE_H = 180
 const smooth = (t: number): number => t * t * (3 - 2 * t)
 const clamp01 = (t: number): number => (t < 0 ? 0 : t > 1 ? 1 : t)
 
-/** Night opacity: 0 for a Sun more than 3 deg up, 0.72 for more than 3 deg down, soft in between (0.36 at the terminator). */
+/** Max night opacity: low enough that the relief under it stays readable. */
+export const NIGHT_MAX_ALPHA = 0.45
+/** Max far-side (Earth not in view) tint opacity. */
+export const NO_EARTH_MAX_ALPHA = 0.25
+
+/** Night opacity: 0 for a Sun more than 3 deg up, NIGHT_MAX_ALPHA for more than 3 deg down, soft in between (half at the terminator). */
 export function nightAlpha(sunElDeg: number): number {
-  return 0.72 * smooth(clamp01((3 - sunElDeg) / 6))
+  return NIGHT_MAX_ALPHA * smooth(clamp01((3 - sunElDeg) / 6))
 }
 
 /** Earth-not-in-view tint opacity. */
 export function noEarthAlpha(earthElDeg: number): number {
-  return 0.22 * smooth(clamp01((1.5 - earthElDeg) / 3))
+  return NO_EARTH_MAX_ALPHA * smooth(clamp01((1.5 - earthElDeg) / 3))
 }
 
 /** Bilinear sample of a grid at output pixel centre (u, v) of a w x h raster; longitude wraps, latitude clamps. */
