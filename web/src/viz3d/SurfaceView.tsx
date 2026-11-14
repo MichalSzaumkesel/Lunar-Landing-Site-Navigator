@@ -32,6 +32,7 @@ import {
   nudgeOffset,
 } from './landerHelpers'
 import type { OffsetM } from './landerHelpers'
+import { MOVE_MS, NUDGE_MS } from './tween'
 import { useTerrainHeights } from './useTerrainHeights'
 import {
   belowHorizonText,
@@ -326,6 +327,36 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     scene?.setLanderOffset(landerOffset.eastM, landerOffset.northM)
   }, [scene, landerOffset])
 
+  // Latest requested lander position (an animated move updates the state only when it ends).
+  const targetOffsetRef = useRef<OffsetM>({ eastM: 0, northM: 0 })
+  const moveSeqRef = useRef(0)
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  // Animated lander move. The state (and with it the debounced horizon mask) follows after the move.
+  const moveLanderTo = useCallback(
+    async (offset: OffsetM, durationMs: number): Promise<boolean> => {
+      const seq = ++moveSeqRef.current
+      targetOffsetRef.current = offset
+      if (!scene) {
+        setLanderOffset(offset)
+        return true
+      }
+      const r = await scene.animateLanderTo(offset, durationMs)
+      // Superseded by a newer move, or unmounted: leave the state to the newer one.
+      if (!mountedRef.current || seq !== moveSeqRef.current) return false
+      setLanderOffset(r.finished ? offset : r.offset)
+      if (!r.finished) targetOffsetRef.current = r.offset
+      return r.finished
+    },
+    [scene],
+  )
+
   // Raycast terrain click to move lander
   const handleTerrainClick = useCallback(
     (hit: { eastM: number; northM: number; heightM: number }) => {
@@ -334,11 +365,11 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         terrain.size_px,
         terrain.spacing_m,
       )
-      setLanderOffset(clamped.offset)
+      void moveLanderTo(clamped.offset, MOVE_MS)
       setIsClamped(clamped.clamped)
       setBestSpotResult(null)
     },
-    [terrain.size_px, terrain.spacing_m],
+    [terrain.size_px, terrain.spacing_m, moveLanderTo],
   )
 
   useEffect(() => {
@@ -438,23 +469,22 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
   // Keyboard nudges on focused lander position control
   const handleLanderKeyDown = (e: React.KeyboardEvent) => {
-    const next = nudgeOffset(landerOffset, e.key, e.shiftKey)
+    const next = nudgeOffset(targetOffsetRef.current, e.key, e.shiftKey)
     if (next) {
       e.preventDefault()
       const clamped = clampLanderOffset(next, terrain.size_px, terrain.spacing_m)
-      setLanderOffset(clamped.offset)
+      void moveLanderTo(clamped.offset, NUDGE_MS)
       setIsClamped(clamped.clamped)
       setBestSpotResult(null)
     }
   }
 
   const handleResetPosition = () => {
-    setLanderOffset({ eastM: 0, northM: 0 })
+    void moveLanderTo({ eastM: 0, northM: 0 }, MOVE_MS)
     setIsClamped(false)
     setBestSpotResult(null)
     setShowComparison(false)
     setSearchMessage(null)
-    scene?.setLanderOffset(0, 0)
   }
 
   useEffect(() => {
@@ -511,12 +541,10 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         setBestSpotResult(null)
       } else {
         setSearchMessage(null)
-        if (scene) {
-          await scene.animateLanderTo(result.offset, 1200)
+        if (await moveLanderTo(result.offset, MOVE_MS)) {
+          setIsClamped(false)
+          setBestSpotResult(result)
         }
-        setLanderOffset(result.offset)
-        setIsClamped(false)
-        setBestSpotResult(result)
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message === 'cancelled') {

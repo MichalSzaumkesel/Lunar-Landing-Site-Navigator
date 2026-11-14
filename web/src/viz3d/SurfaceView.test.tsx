@@ -56,7 +56,7 @@ vi.mock('./scene', () => {
       setOnTerrainHover = vi.fn()
       setHeatmapTexture = vi.fn()
       invalidateShadow = vi.fn()
-      animateLanderTo = vi.fn().mockResolvedValue(undefined)
+      animateLanderTo = vi.fn().mockResolvedValue({ finished: true, offset: { eastM: 0, northM: 0 } })
     },
   }
 })
