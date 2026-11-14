@@ -5,6 +5,7 @@ import {
   clampSearchRadius,
   compassDirection8,
   formatResultSentence,
+  formatSimpleResultSentence,
   slopeDeg,
 } from './bestSpot'
 import { findBestSpotAsync, cancelBestSpotSearch } from './bestSpotClient'
@@ -401,5 +402,21 @@ describe('findBestSpotAsync worker client', () => {
     cancelBestSpotSearch()
     // Calling cancel repeatedly is safe
     expect(() => cancelBestSpotSearch()).not.toThrow()
+  })
+})
+
+describe('formatSimpleResultSentence', () => {
+  it('names direction, distance and whole-hour gain', () => {
+    expect(formatSimpleResultSentence({ eastM: 0, northM: -1000 }, 48.6)).toBe(
+      'Moving 1 km south would give about 49 more hours of Sun in this window.',
+    )
+    expect(formatSimpleResultSentence({ eastM: 240, northM: 240 }, 1)).toBe(
+      'Moving 340 m north-east would give about 1 more hour of Sun in this window.',
+    )
+  })
+  it('says the spot is already good when there is no gain', () => {
+    expect(formatSimpleResultSentence({ eastM: 0, northM: 0 }, 0)).toBe(
+      'The current spot is already among the sunniest nearby.',
+    )
   })
 })

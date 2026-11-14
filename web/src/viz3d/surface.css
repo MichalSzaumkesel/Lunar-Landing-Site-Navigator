@@ -479,3 +479,19 @@
   font-family: var(--mono);
   font-size: 0.875rem;
 }
+
+.surface__hint {
+  transition: opacity 150ms;
+}
+.surface__hint[data-state='closed'] {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface__hint {
+    transition: none;
+  }
+}
+.surface__credits {
+  font-size: 0.875rem;
+  color: var(--muted);
+}

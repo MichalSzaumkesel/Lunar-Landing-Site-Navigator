@@ -131,6 +131,20 @@ export function formatResultSentence(
 }
 
 /**
+ * Plain one-sentence result for Simple mode. Uses only the gain, so two baselines are never shown.
+ */
+export function formatSimpleResultSentence(offset: OffsetM, gainHours: number): string {
+  const dist = Math.hypot(offset.eastM, offset.northM)
+  const gain = Math.round(gainHours)
+  if (gain <= 0 || dist < 5) return 'The current spot is already among the sunniest nearby.'
+  const azDeg = (Math.atan2(offset.eastM, offset.northM) * 180) / Math.PI
+  const dir = compassDirection8(azDeg)
+  const distText =
+    dist >= 950 ? `${String(Math.round(dist / 100) / 10)} km` : `${String(Math.max(10, Math.round(dist / 10) * 10))} m`
+  return `Moving ${distText} ${dir} would give about ${String(gain)} more ${gain === 1 ? 'hour' : 'hours'} of Sun in this window.`
+}
+
+/**
  * Samples terrain heights at cell centres for a gridN x gridN grid covering extentM.
  */
 export function buildCellHeightGrid(
