@@ -6,7 +6,10 @@
   pointer-events: none;
   z-index: 900;
   border: 2px solid var(--earth, #4aa8ff);
-  transition: top 150ms ease, left 150ms ease, width 150ms ease, height 150ms ease;
+  transition: top var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
+              left var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
+              width var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
+              height var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
 }
 
 .tour-card {
@@ -23,6 +26,20 @@
   flex-direction: column;
   gap: var(--space-3, 12px);
   color: var(--text, #f2f5fb);
+  transition: top var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
+              left var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
+  animation: tour-card-enter var(--motion-duration-fast, 120ms) var(--motion-ease-out, ease-out);
+}
+
+@keyframes tour-card-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .tour-sr-only,
@@ -102,7 +119,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-cutout {
+  .tour-cutout,
+  .tour-card {
     transition: none !important;
+    animation: none !important;
   }
 }

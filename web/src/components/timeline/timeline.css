@@ -334,3 +334,40 @@
   fill: #fca5a5;
 }
 
+
+/* Rule status flips only when the mission window crosses a threshold */
+.tl__badge {
+  transition: background-color var(--motion-duration-fast, 120ms) ease,
+              color var(--motion-duration-fast, 120ms) ease,
+              border-color var(--motion-duration-fast, 120ms) ease;
+}
+
+.tl__mission-info {
+  animation: mission-info-in var(--motion-duration-fast, 120ms) ease-out;
+}
+
+@keyframes mission-info-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.chip {
+  animation: chip-in var(--motion-duration-fast, 120ms) ease-out;
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
