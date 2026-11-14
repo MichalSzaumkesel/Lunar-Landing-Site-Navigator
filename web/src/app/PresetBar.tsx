@@ -5,7 +5,8 @@ export interface PresetBarProps {
   className?: string
 }
 
-/** One-click presets. The Apollo vs Artemis comparison is the demo hook, with a featured stronger label weight. */
+/** One-click presets. Presets need two cards, so in Simple they are hidden and disabled; Advanced (mode switch or `?m=a`) enables them.
+ *  The Apollo vs Artemis comparison is the demo hook, with a featured stronger label weight. */
 export function PresetBar({ className = '' }: PresetBarProps) {
   const applyPreset = useAppStore((s) => s.applyPreset)
   const mode = useAppStore((s) => s.mode)

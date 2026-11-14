@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from './store'
+import { DEFAULT_DURATION_H, DEFAULT_START_UTC, SIMPLE_DEFAULT_START_UTC } from '../config/presets'
 import { useUrlSync } from './useUrlSync'
 import { decodeState, encodeState } from './urlState'
 
@@ -53,6 +54,32 @@ describe('useUrlSync', () => {
     root = createRoot(container)
     act(() => root.render(createElement(Harness)))
     expect(useAppStore.getState().mode).toBe('advanced')
+  })
+
+  it('opens a plain URL in Simple with the Simple default example', () => {
+    window.history.replaceState(null, '', '/')
+    useAppStore.setState({
+      mode: 'simple',
+      scenarios: [
+        { id: 'sc1', siteId: 'southpole_landed', startUtc: DEFAULT_START_UTC, durationH: DEFAULT_DURATION_H, slipDays: 0 },
+      ],
+    })
+    act(() => root.render(createElement(Harness)))
+    expect(useAppStore.getState().mode).toBe('simple')
+    expect(useAppStore.getState().scenarios[0].startUtc).toBe(SIMPLE_DEFAULT_START_UTC)
+  })
+
+  it('opens #m=a in Advanced and keeps the default start', () => {
+    window.history.replaceState(null, '', '/#m=a')
+    useAppStore.setState({
+      mode: 'simple',
+      scenarios: [
+        { id: 'sc1', siteId: 'southpole_landed', startUtc: DEFAULT_START_UTC, durationH: DEFAULT_DURATION_H, slipDays: 0 },
+      ],
+    })
+    act(() => root.render(createElement(Harness)))
+    expect(useAppStore.getState().mode).toBe('advanced')
+    expect(useAppStore.getState().scenarios[0].startUtc).toBe(DEFAULT_START_UTC)
   })
 
   it('applies the hash to the store on hashchange', () => {

@@ -70,7 +70,7 @@ export function withSimpleDefault(scenarios: Scenario[]): Scenario[] {
 const initialScenarios = assignScenarioIds(DEFAULT_PRESET.scenarios)
 
 export const useAppStore = create<AppStore>()((set, get) => ({
-  mode: 'advanced', // the demo shows everything; the tour offers Simple to newcomers
+  mode: 'simple', // a link without m= opens Simple; the demo switches to Advanced itself and restores the mode on exit
   observerHeightM: 2,
   scenarios: initialScenarios,
   activeScenarioId: initialScenarios[0]?.id ?? '',
