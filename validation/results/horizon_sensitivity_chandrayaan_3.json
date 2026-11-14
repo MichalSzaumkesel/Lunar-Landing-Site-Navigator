@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_chandrayaan_3",
+  "kind": "horizon_sensitivity",
+  "site_id": "chandrayaan_3",
+  "max_abs_error_deg": 0.9437,
+  "rms_worst_deg": 0.3526,
+  "recommended_uncertainty_deg": 0.4,
+  "n_samples": 720,
+  "pass": true,
+  "threshold_deg": 0.4,
+  "notes": "2 m mask, DEM LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0) (118.451 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 47.7%). dem_x2: rms 0.072 max 0.344 deg, d_pct_sunlit +0.24 pp; dem_x4: rms 0.097 max 0.468 deg, d_pct_sunlit +0.36 pp; shift_N: rms 0.077 max 0.317 deg, d_pct_sunlit +0.16 pp; shift_S: rms 0.089 max 0.402 deg, d_pct_sunlit +0.25 pp; shift_E: rms 0.353 max 0.944 deg, d_pct_sunlit -0.68 pp; shift_W: rms 0.080 max 0.293 deg, d_pct_sunlit +0.16 pp. File uncertainty_deg 0.4; worst RMS (x2 and +-1 px shifts) 0.353 deg -> recommended uncertainty_deg 0.40. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}

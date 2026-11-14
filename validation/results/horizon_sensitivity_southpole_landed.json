@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_southpole_landed",
+  "kind": "horizon_sensitivity",
+  "site_id": "southpole_landed",
+  "max_abs_error_deg": 0.1729,
+  "rms_worst_deg": 0.0261,
+  "recommended_uncertainty_deg": 0.05,
+  "n_samples": 720,
+  "pass": true,
+  "threshold_deg": 0.05,
+  "notes": "2 m mask, DEM LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0) (20 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 45.1%). dem_x2: rms 0.017 max 0.087 deg, d_pct_sunlit +0.01 pp; dem_x4: rms 0.021 max 0.088 deg, d_pct_sunlit +0.02 pp; shift_N: rms 0.018 max 0.094 deg, d_pct_sunlit -0.10 pp; shift_S: rms 0.021 max 0.105 deg, d_pct_sunlit +0.07 pp; shift_E: rms 0.026 max 0.173 deg, d_pct_sunlit +0.01 pp; shift_W: rms 0.026 max 0.146 deg, d_pct_sunlit +0.04 pp. File uncertainty_deg 0.05; worst RMS (x2 and +-1 px shifts) 0.026 deg -> recommended uncertainty_deg 0.05. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}

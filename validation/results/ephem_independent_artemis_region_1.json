@@ -1,0 +1,10 @@
+{
+  "id": "ephem_independent_artemis_region_1",
+  "kind": "ephemeris",
+  "site_id": "artemis_region_1",
+  "max_abs_error_deg": 0.001193,
+  "n_samples": 50,
+  "pass": true,
+  "threshold_deg": 0.05,
+  "notes": "max|d_el|=0.00119 deg; max|d_az|=0.00050 deg raw, 0.00049 deg weighted by cos(el); error = max(d_el, d_az*cos el); sun 0.00046/0.00049, earth 0.00119/0.00049 (el/az*cos el); independent form: TLIST JD, seed 20261114, 50 times x 2 bodies; wrap-aware azimuth."
+}

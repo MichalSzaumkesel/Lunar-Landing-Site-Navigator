@@ -1,0 +1,12 @@
+{
+  "id": "polar_orientation_ldem80s20m",
+  "kind": "orientation",
+  "site_id": null,
+  "max_abs_error_deg": null,
+  "max_dist_km": 1.71,
+  "n_samples": 3,
+  "pass": true,
+  "threshold_deg": null,
+  "threshold_km": "0.30 x crater radius",
+  "notes": "Assumed grid (row0=0,col0=10829, N=30400, +y=lon 0, +x=lon 90E) vs USGS Gazetteer centres (control network 1). Shackleton: best-fit bowl centre 0.28 km from sourced centre (rim-interior contrast 3430.3 m; floor min 2.26 km away), Shoemaker: best-fit bowl centre 1.71 km from sourced centre (rim-interior contrast 3155.6 m; floor min 14.67 km away), de Gerlache: best-fit bowl centre 1.22 km from sourced centre (rim-interior contrast 1884.5 m; floor min 3.54 km away). Pass rule: best-fit bowl centre (max rim-ring minus interior mean elevation, 0.2 km blocks, search +-0.6 R) within 0.3 R of the sourced centre and contrast > 500 m. Craters passing under wrong orientations (of 3): {'mirror=no,rot=90': 0, 'mirror=no,rot=180': 0, 'mirror=no,rot=270': 0, 'mirror=yes,rot=0': 0, 'mirror=yes,rot=90': 1, 'mirror=yes,rot=180': 0, 'mirror=yes,rot=270': 1}. Gazetteer centres differ by several km between control networks (see detail), so distances below ~0.3 R are not meaningful."
+}

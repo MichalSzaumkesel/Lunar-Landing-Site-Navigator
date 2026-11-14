@@ -1,0 +1,10 @@
+{
+  "id": "ephem_independent_southpole_landed",
+  "kind": "ephemeris",
+  "site_id": "southpole_landed",
+  "max_abs_error_deg": 0.000899,
+  "n_samples": 50,
+  "pass": true,
+  "threshold_deg": 0.05,
+  "notes": "max|d_el|=0.00090 deg; max|d_az|=0.00079 deg raw, 0.00078 deg weighted by cos(el); error = max(d_el, d_az*cos el); sun 0.00083/0.00078, earth 0.00090/0.00077 (el/az*cos el); independent form: TLIST JD, seed 20261114, 50 times x 2 bodies; wrap-aware azimuth. site coordinates differ only by sites.json rounding (<= 0.0005 deg, about 15 m): ephem 29.1957,-84.7906 vs 29.196,-84.791."
+}

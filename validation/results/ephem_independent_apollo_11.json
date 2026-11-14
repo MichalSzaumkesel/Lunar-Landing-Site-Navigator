@@ -1,0 +1,10 @@
+{
+  "id": "ephem_independent_apollo_11",
+  "kind": "ephemeris",
+  "site_id": "apollo_11",
+  "max_abs_error_deg": 0.000581,
+  "n_samples": 50,
+  "pass": true,
+  "threshold_deg": 0.05,
+  "notes": "max|d_el|=0.00058 deg; max|d_az|=0.00364 deg raw, 0.00049 deg weighted by cos(el); error = max(d_el, d_az*cos el); sun 0.00058/0.00049, earth 0.00052/0.00041 (el/az*cos el); independent form: TLIST JD, seed 20261114, 50 times x 2 bodies; wrap-aware azimuth. site coordinates differ only by sites.json rounding (<= 0.0005 deg, about 15 m): ephem 23.4731,0.6742 vs 23.473,0.674."
+}

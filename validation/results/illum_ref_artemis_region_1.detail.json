@@ -1,0 +1,74 @@
+{
+ "ours": {
+  "pct_sunlit": 24.491469816272964,
+  "mean_sun_frac": 24.50459891190927,
+  "sun_any_part": 25.96237970253718,
+  "pct_earth": 66.7979002624672,
+  "earth_any_part": 71.8941382327209,
+  "pct_both": 18.2742782152231
+ },
+ "pgda_raw": {
+  "sun": {
+   "point": 0.25964000000000004,
+   "nbhd_min": 0.06436,
+   "nbhd_max": 0.44024,
+   "nbhd_mean": 0.2953787654320988
+  },
+  "earth": {
+   "point": 0.72436,
+   "nbhd_min": 0.47692000000000007,
+   "nbhd_max": 1.0,
+   "nbhd_mean": 0.7303748148148149
+  }
+ },
+ "pgda_pct": {
+  "sun": {
+   "point": 25.964000000000002,
+   "nbhd_min": 6.436,
+   "nbhd_max": 44.024,
+   "nbhd_mean": 29.53787654320988
+  },
+  "earth": {
+   "point": 72.436,
+   "nbhd_min": 47.69200000000001,
+   "nbhd_max": 100.0,
+   "nbhd_mean": 73.03748148148149
+  }
+ },
+ "raster_info": {
+  "sun": {
+   "crs": "PROJCS[\"Moon2000_spole\",GEOGCS[\"GCS_Moon\",DATUM[\"D_Moon_2000\",SPHEROID[\"Moon_2000_IAU_IAG\",1737400,0]],PRIMEM[\"Reference_Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+   "dtype": "int16",
+   "nodata": -32768.0,
+   "scale": 4e-05,
+   "offset": 0.0,
+   "res": [
+    120.0,
+    120.0
+   ],
+   "row": 2571,
+   "col": 4545
+  },
+  "earth": {
+   "crs": "PROJCS[\"Moon2000_spole\",GEOGCS[\"GCS_Moon\",DATUM[\"D_Moon_2000\",SPHEROID[\"Moon_2000_IAU_IAG\",1737400,0]],PRIMEM[\"Reference_Meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+   "dtype": "int16",
+   "nodata": -32768.0,
+   "scale": 4e-05,
+   "offset": 0.0,
+   "res": [
+    120.0,
+    120.0
+   ],
+   "row": 2571,
+   "col": 4545
+  }
+ },
+ "files": {
+  "sun": "AVGVISIB_75S_120M_201608.TIF",
+  "earth": "AVGVISIB_75S_120M_201608_EARTH.TIF"
+ },
+ "urls": {
+  "sun": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF",
+  "earth": "https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608_EARTH.TIF"
+ }
+}
