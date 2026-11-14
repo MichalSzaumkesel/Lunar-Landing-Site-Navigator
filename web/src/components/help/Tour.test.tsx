@@ -90,13 +90,26 @@ describe('Tour component', () => {
       rect = { ...rect, top: 300, bottom: 340 }
       await advance(300)
       expect(card().classList.contains('tour-card--on')).toBe(false)
-      expect(cutout()).toBeNull()
+      expect(cutout()?.classList.contains('tour-cutout--on')).toBe(false)
       await act(async () => {
         window.dispatchEvent(new Event('scrollend'))
       })
       expect(card().classList.contains('tour-card--on')).toBe(true)
       expect(cutout()?.classList.contains('tour-cutout--on')).toBe(true)
       expect((cutout() as HTMLElement).style.top).toBe('296px')
+    })
+
+    it('keeps the spotlight (the only dimming layer) mounted while the step changes', async () => {
+      await mount(true)
+      await advance(5)
+      const frame = cutout()
+      expect(frame).not.toBeNull()
+      await act(async () => {
+        useTourStore.getState().openTour(1)
+      })
+      expect(cutout()).toBe(frame)
+      await advance(5)
+      expect(cutout()).toBe(frame)
     })
 
     it('falls back to polling the target rect when scrollend is missing', async () => {

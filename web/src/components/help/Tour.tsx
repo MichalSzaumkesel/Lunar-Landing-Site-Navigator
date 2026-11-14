@@ -198,19 +198,22 @@ export function Tour({ className = '' }: TourProps) {
 
   return (
     <>
-      <div className={`tour-backdrop${ready && targetRect ? ' tour-backdrop--off' : ''}`} aria-hidden="true" />
-      {targetRect && (
-        <div
-          className={`tour-cutout${ready ? ' tour-cutout--on' : ''}`}
-          aria-hidden="true"
-          style={{
-            top: `${targetRect.top - 4}px`,
-            left: `${targetRect.left - 4}px`,
-            width: `${targetRect.width + 8}px`,
-            height: `${targetRect.height + 8}px`,
-          }}
-        />
-      )}
+      {/* One persistent dimming layer: the shadow of the spotlight frame. It never fades between steps. */}
+      <div
+        className={`tour-cutout${ready && targetRect ? ' tour-cutout--on' : ''}`}
+        data-testid="tour-spotlight"
+        aria-hidden="true"
+        style={
+          targetRect
+            ? {
+                top: `${targetRect.top - 4}px`,
+                left: `${targetRect.left - 4}px`,
+                width: `${targetRect.width + 8}px`,
+                height: `${targetRect.height + 8}px`,
+              }
+            : { top: '50%', left: '50%', width: '0px', height: '0px' }
+        }
+      />
 
       <div
         ref={cardRef}
