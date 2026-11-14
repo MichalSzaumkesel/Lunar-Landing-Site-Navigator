@@ -1,0 +1,8 @@
+{
+ "id": "terrain_sanity_global",
+ "kind": "terrain",
+ "site_id": null,
+ "n_samples": 16,
+ "pass": true,
+ "notes": "16 terrain files (global DEMs): site height vs sites.json elevation_m max 0.41 m (tol 1 m + tan(slope)*res); saturated pixels max 0.00 %; north-up r vs an independent N/E offset re-sample min 0.9980, best flipped/rotated copy max 0.914. Failing: none. pipeline/terrain_all.py"
+}

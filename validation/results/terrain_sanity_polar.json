@@ -1,0 +1,8 @@
+{
+ "id": "terrain_sanity_polar",
+ "kind": "terrain",
+ "site_id": null,
+ "n_samples": 5,
+ "pass": true,
+ "notes": "5 terrain files (polar DEMs): site height vs sites.json elevation_m max 0.03 m (tol 1 m + tan(slope)*res); saturated pixels max 0.00 %; north-up r vs an independent N/E offset re-sample min 0.9917, best flipped/rotated copy max 0.876. Failing: none. pipeline/terrain_all.py"
+}
