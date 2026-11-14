@@ -38,7 +38,8 @@ import { earthRotation } from '../lib/earthOrientation'
 import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
-import { earthLitFraction, faceTarget } from './viewMath'
+import { dampAngleDeg, dampFactor, dampValue, lockPitchDeg } from './cameraLock'
+import { earthLitFraction, faceTarget, overviewFaceTarget } from './viewMath'
 import { createKeyMotion } from './keyMotion'
 import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
 
@@ -218,6 +219,13 @@ export class SurfaceScene {
   private onTerrainClick: ((coords: { eastM: number; northM: number; heightM: number }) => void) | null = null
   private onTerrainHover: ((coords: { eastM: number; northM: number; heightM: number } | null) => void) | null = null
   private onUserLook: (() => void) | null = null
+  private lock: 'direction' | 'lander' | null = null
+  private lockOnce = false
+  private lockAz = 0
+  private lockEl = 0
+  private lockRaf = 0
+  private lockLast = 0
+  private onLockBreak: (() => void) | null = null
 
   constructor(container: HTMLElement, data: TerrainInput) {
     this.data = data
@@ -394,6 +402,123 @@ export class SurfaceScene {
     this.onUserLook = cb
   }
 
+  /** Called when the camera lock ends because of the user's own move or another camera command. */
+  setOnLockBreak(cb: (() => void) | null): void {
+    this.onLockBreak = cb
+  }
+
+  /**
+   * Locks the camera on a direction (azimuth and elevation of a body): every frame it eases towards it,
+   * so the body stays centred while time moves. Surface: yaw and pitch follow. Overview: orbit azimuth follows.
+   */
+  lockOnDirection(azDeg: number, elDeg: number): void {
+    this.cancelCameraAnimation()
+    this.lockAz = azDeg
+    this.lockEl = elDeg
+    this.startLock('direction', false)
+  }
+
+  /** Feeds the current direction of the locked body (no effect without a direction lock). */
+  updateLockDirection(azDeg: number, elDeg: number): void {
+    this.lockAz = azDeg
+    this.lockEl = elDeg
+  }
+
+  /**
+   * Overview: centres the orbit target on the lander. With `follow` the lock stays and the camera keeps
+   * the lander centred when it moves; otherwise the move ends when the lander is centred.
+   */
+  centerOnLander(follow: boolean): void {
+    if (this.mode !== 'overview') return
+    this.cancelCameraAnimation()
+    this.startLock('lander', !follow)
+  }
+
+  clearLock(): void {
+    this.lock = null
+    if (this.lockRaf) cancelAnimationFrame(this.lockRaf)
+    this.lockRaf = 0
+  }
+
+  private breakLock(): void {
+    if (!this.lock) return
+    const once = this.lockOnce
+    this.clearLock()
+    if (!once) this.onLockBreak?.()
+  }
+
+  private startLock(kind: 'direction' | 'lander', once: boolean): void {
+    this.lock = kind
+    this.lockOnce = once
+    this.lockLast = performance.now()
+    if (!this.lockRaf) this.lockRaf = requestAnimationFrame(this.lockStep)
+  }
+
+  private readonly lockStep = (now: number): void => {
+    this.lockRaf = 0
+    if (this.disposed || !this.lock) return
+    const dt = Math.max(0, Math.min(100, now - this.lockLast))
+    this.lockLast = now
+    if (this.lock === 'direction') this.trackDirection(dt)
+    else if (!this.trackLander(dt)) {
+      this.lock = null
+      this.invalidate()
+      return
+    }
+    this.invalidate()
+    this.lockRaf = requestAnimationFrame(this.lockStep)
+  }
+
+  private trackDirection(dt: number): void {
+    if (this.mode === 'surface') {
+      this.yawDeg = dampAngleDeg(this.yawDeg, this.lockAz, dt)
+      this.pitchDeg = dampValue(this.pitchDeg, Math.min(PITCH_LIMIT, lockPitchDeg(this.lockEl)), dt)
+      this.applyCamera()
+      return
+    }
+    const t = this.controls.target
+    const ox = this.camera.position.x - t.x
+    const oy = this.camera.position.y - t.y
+    const oz = this.camera.position.z - t.z
+    const dist = Math.hypot(ox, oy, oz)
+    if (dist === 0) return
+    const curAz = (Math.atan2(-ox, oz) * 180) / Math.PI
+    const curEl = (Math.atan2(oy, Math.hypot(ox, oz)) * 180) / Math.PI
+    const goalEl = overviewFaceTarget(this.lockAz, curEl).elevationDeg
+    const az = (dampAngleDeg(curAz, this.lockAz, dt) * Math.PI) / 180
+    const el = (dampValue(curEl, goalEl, dt) * Math.PI) / 180
+    this.camera.position.set(
+      t.x - Math.sin(az) * Math.cos(el) * dist,
+      t.y + Math.sin(el) * dist,
+      t.z + Math.cos(az) * Math.cos(el) * dist,
+    )
+    this.camera.lookAt(t)
+    this.controls.update()
+  }
+
+  /** Returns false when a one-off move has arrived. */
+  private trackLander(dt: number): boolean {
+    if (this.mode !== 'overview') return false
+    const t = this.controls.target
+    const gx = this.landerOffset.eastM
+    const gz = -this.landerOffset.northM
+    const gy = this.groundY(gx, gz)
+    const instant = this.lockOnce && typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
+    const k = instant ? 1 : dampFactor(dt)
+    const dx = (gx - t.x) * k
+    const dy = (gy - t.y) * k
+    const dz = (gz - t.z) * k
+    t.x += dx
+    t.y += dy
+    t.z += dz
+    this.camera.position.x += dx
+    this.camera.position.y += dy
+    this.camera.position.z += dz
+    this.camera.lookAt(t)
+    this.controls.update()
+    return !(this.lockOnce && Math.hypot(gx - t.x, gy - t.y, gz - t.z) < 0.5)
+  }
+
   /** Point the surface camera at an azimuth and stand off so that the lander is in view. */
   lookAtAzimuth(azDeg: number): void {
     const a = ((azDeg + 30) * Math.PI) / 180
@@ -408,6 +533,7 @@ export class SurfaceScene {
   /** Turn the surface camera towards a direction without moving it. */
   faceDirection(azDeg: number, elDeg: number): void {
     this.cancelCameraAnimation()
+    this.breakLock()
     const t = faceTarget(azDeg, elDeg)
     this.yawDeg = t.azimuthDeg
     this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, t.pitchDeg))
@@ -426,6 +552,7 @@ export class SurfaceScene {
    */
   cameraTo(target: { azimuthDeg: number; elevationDeg: number; durationMs: number }): Promise<void> {
     this.cancelCameraAnimation()
+    this.breakLock()
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -811,6 +938,7 @@ export class SurfaceScene {
   }
 
   dispose(): void {
+    this.clearLock()
     if (this.disposed) return
     this.disposed = true
     this.cancelCameraAnimation()
@@ -1148,11 +1276,13 @@ export class SurfaceScene {
     this.yawDeg = (((this.yawDeg + dYaw) % 360) + 360) % 360
     this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, this.pitchDeg + dPitch))
     this.applyCamera()
+    this.breakLock()
     this.onUserLook?.()
     this.invalidate()
   }
 
   private readonly onControlsStart = (): void => {
+    this.breakLock()
     this.cancelCameraAnimation()
     this.cancelLanderAnimation()
   }
@@ -1220,6 +1350,7 @@ export class SurfaceScene {
   }
 
   private readonly onWheel = (): void => {
+    this.breakLock()
     this.cancelCameraAnimation()
     this.cancelLanderAnimation()
   }

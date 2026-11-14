@@ -38,6 +38,11 @@ vi.mock('./scene', () => {
       lookAtAzimuth = vi.fn()
       cameraTo = vi.fn().mockResolvedValue(undefined)
       faceBody = vi.fn().mockResolvedValue(undefined)
+      lockOnDirection = vi.fn()
+      updateLockDirection = vi.fn()
+      centerOnLander = vi.fn()
+      clearLock = vi.fn()
+      setOnLockBreak = vi.fn()
       overviewElevationDeg = vi.fn().mockReturnValue(37)
       static last: unknown
       constructor() {
@@ -238,6 +243,63 @@ describe('SurfaceView 3D View Fixes', () => {
     const scene = (SurfaceScene as unknown as { last: { cameraTo: ReturnType<typeof vi.fn>; faceBody: ReturnType<typeof vi.fn> } }).last
     expect(scene.faceBody).not.toHaveBeenCalled()
     expect(scene.cameraTo).toHaveBeenCalledWith({ azimuthDeg: 0, elevationDeg: 25, durationMs: 600 })
+  })
+
+  it('holding Face the Sun locks the camera, a click on it unlocks, Escape unlocks', async () => {
+    vi.useFakeTimers()
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const find = (t: string) =>
+      Array.from(container.querySelectorAll('button')).find((b) => b.textContent === t) as HTMLButtonElement
+    const { SurfaceScene } = await import('./scene')
+    const scene = (SurfaceScene as unknown as { last: Record<string, ReturnType<typeof vi.fn>> }).last
+    const sun = find('Face the Sun')
+    await act(async () => {
+      sun.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+      vi.advanceTimersByTime(650)
+    })
+    expect(scene.lockOnDirection).toHaveBeenCalledTimes(1)
+    const locked = find('Locked on the Sun')
+    expect(locked.getAttribute('aria-pressed')).toBe('true')
+    await act(async () => {
+      locked.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0 }))
+      locked.click()
+    })
+    expect(find('Locked on the Sun')).toBeTruthy()
+    await act(async () => {
+      find('Locked on the Sun').click()
+    })
+    expect(scene.cameraTo).not.toHaveBeenCalled()
+    expect(find('Face the Sun').getAttribute('aria-pressed')).toBe('false')
+    await act(async () => {
+      find('Face the Sun').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+      vi.advanceTimersByTime(650)
+    })
+    expect(find('Locked on the Sun')).toBeTruthy()
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    })
+    expect(find('Face the Sun').getAttribute('aria-pressed')).toBe('false')
+    vi.useRealTimers()
+  })
+
+  it('Face the lander is disabled on the surface and centres the lander in Overview', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const find = (t: string) =>
+      Array.from(container.querySelectorAll('button')).find((b) => b.textContent === t) as HTMLButtonElement
+    expect(find('Face the lander').disabled).toBe(true)
+    await act(async () => {
+      find('Overview').click()
+    })
+    await act(async () => {
+      find('Face the lander').click()
+    })
+    const { SurfaceScene } = await import('./scene')
+    const scene = (SurfaceScene as unknown as { last: Record<string, ReturnType<typeof vi.fn>> }).last
+    expect(scene.centerOnLander).toHaveBeenCalledWith(false)
   })
 
   it('renders badges in lander box (Approximate and Synthetic)', async () => {
