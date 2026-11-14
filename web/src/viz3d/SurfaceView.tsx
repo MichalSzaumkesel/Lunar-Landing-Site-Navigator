@@ -39,6 +39,7 @@ import { MOVE_MS } from './tween'
 import { lockReducer } from './cameraLock'
 import type { LockBody, LockState } from './cameraLock'
 import { LockButton } from './LockButton'
+import { SegmentedToggle } from '../components/ui/SegmentedToggle'
 
 /** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
 const LANDER_M_PER_S = 400
@@ -147,6 +148,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   const [dismissedResult, setDismissedResult] = useState<BestSpotResult | null>(null)
   const chipResult = bestSpotResult !== dismissedResult ? bestSpotResult : null
   const chipPresence = usePresence(chipResult !== null)
+  const computingPresence = usePresence(showHeatmap && heatmapLoading)
   const legendPresence = usePresence(showHeatmap && heatmapGrid !== null)
   const [showComparison, setShowComparison] = useState(false)
 
@@ -775,6 +777,16 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         {!simple && (
           <>
         <div className="surface__stack-bl">
+          <div className="surface__chipslot">
+          {computingPresence.mounted && (
+            <div
+              className="surface__overlay surface__map-computing presence-rise"
+              data-state={computingPresence.state}
+              role="status"
+            >
+              Computing sunlight map…
+            </div>
+          )}
           {legendPresence.mounted && (
             <div
               className="surface__overlay surface__map-legend presence-rise"
@@ -794,6 +806,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
               <div className="surface__map-legend-cap">Share of the window with Sun visible</div>
             </div>
           )}
+          </div>
           <div className="surface__overlay surface__overlay--bl">
             <div>{legend}</div>
             <div>{earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}</div>
@@ -810,31 +823,15 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
       </div>
 
       <div className={simple ? 'surface__controls surface__controls--simple' : 'surface__controls'}>
-        {simple ? (
-          <ViewToggle
-            value={mode}
-            onChange={(next) => {
-              switchMode(next)
-              if (next === 'overview') setFacing(null)
-            }}
-          />
-        ) : (
-          <div className="group" role="group" aria-label="Camera">
-            <button type="button" aria-pressed={mode === 'surface'} onClick={() => switchMode('surface')}>
-              On the surface
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === 'overview'}
-              onClick={() => {
-                switchMode('overview')
-                setFacing(null)
-              }}
-            >
-              Overview
-            </button>
-          </div>
-        )}
+        <SegmentedToggle
+          ariaLabel="Camera view"
+          options={VIEW_OPTIONS}
+          value={mode}
+          onChange={(next) => {
+            switchMode(next)
+            if (next === 'overview') setFacing(null)
+          }}
+        />
         <div className={simple ? 'surface__faces' : 'surface__faces surface__faces--inline'}>
           <FaceSlot show={!simple || locked === null || locked === 'lander'}>
             <LockButton
@@ -913,7 +910,10 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
 
         <button
           type="button"
+          className="surface__mapbtn"
           aria-pressed={showHeatmap}
+          data-loading={heatmapLoading || undefined}
+          aria-busy={heatmapLoading || undefined}
           onClick={() => setShowHeatmap((prev) => !prev)}
         >
           Sunlight map
@@ -1072,13 +1072,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
       )}
 
       {/* Sunlight Heatmap Legend & Cell Inspector */}
-      {!simple && showHeatmap && (
+      {!simple && showHeatmap && heatmapGrid && (
         <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
-          {heatmapLoading ? (
-            <div className="surface__heatmap-loading" role="status" aria-busy="true">
-              Computing sunlight map...
-            </div>
-          ) : heatmapGrid ? (
+          {heatmapGrid ? (
             <>
               <div className="surface__legend-meta">
                 <div className="surface__legend-title-group">
@@ -1103,38 +1099,10 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   )
 }
 
-function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (m: ViewMode) => void }) {
-  const opts: { id: ViewMode; label: string }[] = [
-    { id: 'surface', label: 'On the surface' },
-    { id: 'overview', label: 'Overview' },
-  ]
-  return (
-    <div className="viewtoggle" role="radiogroup" aria-label="Camera view" data-value={value}>
-      <span className="viewtoggle__thumb" aria-hidden="true" />
-      {opts.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          aria-checked={value === o.id}
-          tabIndex={value === o.id ? 0 : -1}
-          onClick={() => onChange(o.id)}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-              e.preventDefault()
-              const next = value === 'surface' ? 'overview' : 'surface'
-              onChange(next)
-              const sib = e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button[role="radio"]')
-              sib?.[next === 'surface' ? 0 : 1]?.focus()
-            }
-          }}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  )
-}
+const VIEW_OPTIONS: readonly { id: ViewMode; label: string }[] = [
+  { id: 'surface', label: 'On the surface' },
+  { id: 'overview', label: 'Overview' },
+]
 
 /** One Face button cell; slides out while another body is locked and slides back in after unlock. */
 function FaceSlot({ show, children }: { show: boolean; children: ReactNode }) {

@@ -7,6 +7,7 @@ import { SurfaceView } from './SurfaceView'
 import * as useSiteBundleModule from '../lib/useSiteBundle'
 import * as useTerrainHeightsModule from './useTerrainHeights'
 import * as bestSpotClientModule from './bestSpotClient'
+import * as localIllumClientModule from './localIllumClient'
 import { useAppStore } from '../state/store'
 import type { SiteBundle } from '../lib/types'
 
@@ -385,6 +386,49 @@ describe('SurfaceView 3D View Fixes', () => {
     const inspector = container.querySelector('.surface__cell-inspector')
     expect(inspector?.getAttribute('tabIndex')).toBeNull()
     expect(inspector?.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('shows the computing text in the legend slot on the canvas, not as a card below it', async () => {
+    const spy = vi.spyOn(localIllumClientModule, 'localSunlitGridAsync').mockReturnValue(new Promise(() => {}))
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sunlight map') as HTMLButtonElement
+    expect(mapBtn.hasAttribute('data-loading')).toBe(false)
+    await act(async () => {
+      mapBtn.click()
+    })
+    const chip = container.querySelector('.surface__frame .surface__chipslot .surface__map-computing')
+    expect(chip?.textContent).toBe('Computing sunlight map…')
+    expect(mapBtn.hasAttribute('data-loading')).toBe(true)
+    expect(container.querySelector('.surface__heatmap-panel')).toBeNull()
+    expect(container.textContent).not.toContain('Computing sunlight map...')
+    spy.mockRestore()
+  })
+
+  it('a quick click on Face the Sun shows no hold visuals, a long press does', async () => {
+    vi.useFakeTimers()
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const sun = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Face the Sun') as HTMLButtonElement
+    await act(async () => {
+      sun.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+      vi.advanceTimersByTime(100)
+    })
+    expect(sun.hasAttribute('data-holding')).toBe(false)
+    await act(async () => {
+      sun.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, button: 0 }))
+      vi.advanceTimersByTime(1000)
+    })
+    expect(sun.hasAttribute('data-holding')).toBe(false)
+    await act(async () => {
+      sun.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+      vi.advanceTimersByTime(300)
+    })
+    expect(sun.hasAttribute('data-holding')).toBe(true)
+    expect(sun.querySelector('.lockbtn__ring')).not.toBeNull()
+    vi.useRealTimers()
   })
 
   it('renders sunniest spot result card with role="status" and aria-live="polite"', async () => {

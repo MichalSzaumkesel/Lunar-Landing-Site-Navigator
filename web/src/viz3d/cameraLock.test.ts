@@ -73,6 +73,27 @@ describe('hold timer', () => {
     vi.useRealTimers()
   })
 
+  it('shows hold visuals only after the delay and never for a quick click', () => {
+    vi.useFakeTimers()
+    const onShow = vi.fn()
+    const onLock = vi.fn()
+    const t = createHoldTimer({ onLock, onShow, showAfterMs: 220 })
+    t.start()
+    vi.advanceTimersByTime(219)
+    expect(onShow).not.toHaveBeenCalled()
+    t.cancel()
+    vi.advanceTimersByTime(1000)
+    expect(onShow).not.toHaveBeenCalled()
+    t.start()
+    vi.advanceTimersByTime(220)
+    expect(onShow).toHaveBeenCalledTimes(1)
+    expect(onLock).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(HOLD_MS)
+    expect(onShow).toHaveBeenCalledTimes(1)
+    expect(onLock).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
   it('ignores a repeated start while pending', () => {
     vi.useFakeTimers()
     const onLock = vi.fn()

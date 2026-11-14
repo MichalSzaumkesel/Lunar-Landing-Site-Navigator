@@ -1,0 +1,44 @@
+.segtoggle {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.segtoggle__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: calc(var(--radius) - 2px);
+  background: rgba(255, 194, 51, 0.18);
+  box-shadow: inset 0 0 0 1px var(--sun);
+  transition: transform 0.22s ease;
+}
+
+.segtoggle[data-index='1'] .segtoggle__thumb {
+  transform: translateX(100%);
+}
+
+.segtoggle button[role='radio'] {
+  position: relative;
+  background: transparent;
+  border-color: transparent;
+  min-width: 0;
+}
+
+.segtoggle button[role='radio'][aria-checked='true'] {
+  color: var(--sun);
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segtoggle__thumb {
+    transition: none;
+  }
+}
