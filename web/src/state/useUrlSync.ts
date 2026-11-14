@@ -125,9 +125,26 @@ export function useUrlSync(): void {
       current.scenarios,
       current.missionRules,
     )
+    let lastMode = current.mode
+    let lastHeight = current.observerHeightM
+    let lastSpeed = current.speedHPerSec
+    let lastScenarios = current.scenarios
     let timer: ReturnType<typeof setTimeout> | null = null
 
     const unsubscribe = useAppStore.subscribe((state) => {
+      // Playback changes only the cursor, so skip serialising when no shared field changed.
+      if (
+        state.mode === lastMode &&
+        state.observerHeightM === lastHeight &&
+        state.speedHPerSec === lastSpeed &&
+        state.scenarios === lastScenarios
+      ) {
+        return
+      }
+      lastMode = state.mode
+      lastHeight = state.observerHeightM
+      lastSpeed = state.speedHPerSec
+      lastScenarios = state.scenarios
       const key = serializeShareable(
         state.mode,
         state.observerHeightM,

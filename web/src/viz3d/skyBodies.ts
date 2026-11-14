@@ -379,6 +379,8 @@ export interface EarthRig {
 export interface EarthOptions {
   baseUrl: string
   anisotropy: number
+  /** False on the low tier: the cloud layer stays off and its image is never fetched. */
+  clouds: boolean
   /** Called after a texture arrives, so the scene can redraw. */
   onTexture: () => void
   /** True once the scene is gone; late textures are then freed at once. */
@@ -474,15 +476,17 @@ export function buildEarth(opts: EarthOptions): EarthRig {
     ;(u[name].value as THREE.Texture).dispose()
     u[name].value = tex
   }
-  load('land_ocean_ice_2048.jpg', true, (tex) => {
+  load('land_ocean_ice_1024.jpg', true, (tex) => {
     swap(planetMat.uniforms, 'tDay', tex)
     planetMat.uniforms.uHasTex.value = 1
   })
-  load('cloud_combined_2048.jpg', false, (tex) => {
-    swap(cloudMat.uniforms, 'tCloud', tex)
-    swap(planetMat.uniforms, 'tCloud', tex)
-    clouds.visible = true
-  })
+  if (opts.clouds) {
+    load('cloud_combined_1024.jpg', false, (tex) => {
+      swap(cloudMat.uniforms, 'tCloud', tex)
+      swap(planetMat.uniforms, 'tCloud', tex)
+      clouds.visible = true
+    })
+  }
 
   const hint = buildHint(new THREE.Vector3(0.34, 0.58, 1.0))
   return { root, planet, clouds, atmosphere, hint }

@@ -1,5 +1,5 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { MAX_SCENARIOS } from '../../config/dataRange'
 import type { SiteBundle } from '../../lib/types'
@@ -31,7 +31,7 @@ function headingText(status: SiteBundleStatus, bundle: SiteBundle | null): { tit
   return { title: 'Loading site', sub: ' ' }
 }
 
-function CardBody({ scenario }: { scenario: Scenario }) {
+const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   const active = useAppStore((s) => s.activeScenarioId === scenario.id)
   const canRemove = useAppStore((s) => s.scenarios.length > 1)
   const tourOpen = useTourStore((s) => s.isOpen)
@@ -123,7 +123,7 @@ function CardBody({ scenario }: { scenario: Scenario }) {
       </details>
     </section>
   )
-}
+})
 
 export function ScenarioCard({ scenarioId }: { scenarioId: string }) {
   const scenario = useAppStore((s) => s.scenarios.find((x) => x.id === scenarioId))

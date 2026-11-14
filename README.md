@@ -158,7 +158,7 @@ The workflow [.github/workflows/deploy-web.yml](.github/workflows/deploy-web.yml
 ## Credits and Licences
 
 ### Earth imagery
-- **NASA Blue Marble** textures (`land_ocean_ice_2048.jpg`, `cloud_combined_2048.jpg`) in `web/public/textures/earth/`.
+- **NASA Blue Marble** textures (`land_ocean_ice_1024.jpg`, `cloud_combined_1024.jpg`) in `web/public/textures/earth/`.
 - Credit: NASA Goddard Space Flight Center. Land surface, shallow water and cloud images by Reto Stockli; ocean colour, compositing and enhancements by Robert Simmon.
 - Source: [NASA Earth Observatory, Blue Marble](https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution). Full notice: [web/public/textures/earth/CREDITS.txt](web/public/textures/earth/CREDITS.txt).
 

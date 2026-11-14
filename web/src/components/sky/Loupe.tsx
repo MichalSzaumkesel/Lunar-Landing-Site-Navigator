@@ -38,6 +38,9 @@ function LoupeFrame({ bundle, heightM, cursorMs, target }: {
   const mask = useMemo(() => pickMask(bundle, heightM), [bundle, heightM])
   const sample = sampleAt(bundle.ephem, cursorMs)
   const azStep = bundle.horizon.az_step_deg
+  // The silhouette is rebuilt only when the centre moves by 0.025 deg (at most half a pixel off).
+  const centerAz = sample ? Math.round(sample[target].az / 0.025) * 0.025 : 0
+  const terrain = useMemo(() => loupeTerrainPath(mask, azStep, centerAz), [mask, azStep, centerAz])
 
   if (!sample) {
     return <div className="loupe__box">Outside data range</div>
@@ -46,7 +49,6 @@ function LoupeFrame({ bundle, heightM, cursorMs, target }: {
   const focus = sample[target]
   const angR = target === 'sun' ? bundle.ephem.sun_ang_radius_deg : bundle.ephem.earth_ang_radius_deg
   const body = describeBody(focus, mask, azStep, angR)
-  const terrain = loupeTerrainPath(mask, azStep, focus.az)
   const sunPlace = placeOf(sample.sun, focus.az)
   const earthPlace = placeOf(sample.earth, focus.az)
   const phase = earthPhaseView(sample)

@@ -1,5 +1,5 @@
-Earth textures: NASA Blue Marble (2002), 2048x1024 equirectangular JPG.
-Files: land_ocean_ice_2048.jpg (land surface, ocean colour, sea ice), cloud_combined_2048.jpg (clouds).
+Earth textures: NASA Blue Marble (2002), downsampled to 1024x512 equirectangular JPG (from the 2048x1024 original).
+Files: land_ocean_ice_1024.jpg (land surface, ocean colour, sea ice), cloud_combined_1024.jpg (clouds).
 Credit: NASA Goddard Space Flight Center. Land surface, shallow water and cloud images by Reto Stockli; ocean colour, compositing and enhancements by Robert Simmon.
 Source page: https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution
 Files fetched from https://assets.science.nasa.gov/content/dam/science/esd/eo/content-feature/bluemarble/images/
