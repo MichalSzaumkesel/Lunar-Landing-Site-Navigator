@@ -1,0 +1,5 @@
+# Task W18: Simple mode redesign from review U2
+Follow `_common.md`, `RULES-quality.md`, `UI-guidelines.md`. Write files first, then test. Do not commit. Other workers edit files concurrently: re-read a file before editing it, keep edits minimal. Final reply max 8 lines: STATUS, FILES, test counts, OPEN. Acceptance: typecheck, lint, test pass.
+Read `reviews/U2-simple-mode.md`. Implement the High findings: a prominent status headline (Sunlit / Dark, Earth in view) with chips, replace the six-sentence paragraph, plain-language wording (no CLPS, explain UTC or hide it), all real sites in the picker grouped simply, Demo must not strand the user in Advanced, fewer controls. Wording rule: never claim power or link. Writable: `src/components/simple/**`, `src/app/TopBar.tsx`, `src/components/demo/demoSteps.ts` (also change end text "Tour complete" to "Demo complete").
+Note (rerun): a previous run stalled; inspect git diff and existing files, continue, do not redo finished items. Run shell commands in steps under 60 s.
+Note: stalls happen on long reads; read only the files you need, in ranges under 200 lines, and write your first edit within 10 steps.

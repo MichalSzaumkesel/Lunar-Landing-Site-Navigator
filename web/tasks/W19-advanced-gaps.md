@@ -1,0 +1,4 @@
+# Task W19: Advanced mode gaps from review U3
+Follow `_common.md`, `RULES-quality.md`, `UI-guidelines.md`. Write files first, then test. Do not commit. Other workers edit files concurrently: re-read a file before editing it, keep edits minimal. Final reply max 8 lines: STATUS, FILES, test counts, OPEN. Acceptance: typecheck, lint, test pass.
+Read `reviews/U3-advanced-mode.md`. Implement the High findings: site selector on each scenario card, details not auto-collapsed in multi-card view (or a clear toggle), custom coordinates usable at 4 cards and in the window map, duration choices beyond 14/30/60. Share-link rules persistence only if it touches src/state/urlState.ts minimally. Writable: `src/components/scenario/**`, `src/components/map/**`, `src/components/library/**`.
+Note (rerun): a previous run stalled; inspect git diff and existing files, continue, do not redo finished items. Run shell commands in steps under 60 s.

@@ -4,3 +4,6 @@ Read tasks/_review.md first (read-only rules). Run the app mentally from the cod
 Report: tasks/reviews/U2-simple-mode.md.
 
 Task: act as a first-time user (a teacher, a curious student, no space knowledge) in Simple mode (src/components/simple/**, tour for Simple, TopBar). Judge: can they get a useful answer in 15 seconds without reading anything? Count decisions and words on screen, jargon (clearance, azimuth, UTC, disc), what the sentences say vs what is needed, whether the sky picture is understandable, whether the place picker and date input make sense, whether the tutorial helps, what happens with sound/demo, how a mistake is recovered. Give a verdict (keep, tweak, redesign) and, if redesign, a concrete wireframe in text and the exact new copy for every string. Compare with how best consumer apps explain a similar thing (for example sky or sun-position apps), from your own knowledge, labelled as such.
+
+## Note (rerun)
+A previous run stalled. Real data from scope A now exists in web/public/data (21 sites); judge Simple mode as it behaves now. Run shell commands in steps under 60 seconds.

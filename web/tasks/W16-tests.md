@@ -1,0 +1,4 @@
+# Task W16: add the missing tests from review R12
+Follow `_common.md`, `RULES-quality.md`, `UI-guidelines.md`. Write files first, then test. Do not commit. Other workers edit files concurrently: re-read a file before editing it, keep edits minimal. Final reply max 8 lines: STATUS, FILES, test counts, OPEN. Acceptance: typecheck, lint, test pass.
+Read (read-only) `reviews/R12-test-gaps.md`. Add tests for every High finding and as many Medium as fit (store, playback loop, URL round trip, WindowMap with real calculation, SurfaceView with mocked WebGL, demo hooks 1 and 2). Writable: new or existing `*.test.ts(x)` files only. If a test reveals a real bug, do not fix source; mark the test `it.todo` with a comment and list it in OPEN.
+Note (rerun): a previous run stalled; inspect git diff and existing files, continue, do not redo finished items. Run shell commands in steps under 60 s.

@@ -4,3 +4,6 @@ Read tasks/_review.md first (read-only rules). Run the app mentally from the cod
 Report: tasks/reviews/U4-competitors.md.
 
 Task: research similar tools on the internet (use web search/fetch if you have it; if you have no web access say so on the first line of the report and then work from your own knowledge, clearly labelled): NASA Moon Trek, Quickmap (LROC), JPL Horizons web tool, NASA Eyes on the Solar System, Stellarium and Stellarium Web, Celestia, Heavens-Above style tools, SunCalc and similar sun-path tools for Earth, any lunar illumination or landing-site tools from space agencies or startups. For each: what it does best (strengths to borrow), what is worst (weaknesses to avoid), cost in speed for 'compare same site on new date'. Cite URLs for everything you got from the web. Then compare with OUR app (read README.md and the code) in a table, and give a ranked roadmap: top 10 ideas to add or change before a Sunday 13:00 deadline (effort S/M/L, what we would not do), and a longer wish list for after the event. Do not suggest claims of power or link availability.
+
+## Note (rerun)
+A previous run stalled. If web fetch hangs, give up on that URL after one try and continue with what you have (label knowledge from memory clearly). Real data from scope A now exists (21 sites). Run shell commands in steps under 60 seconds.

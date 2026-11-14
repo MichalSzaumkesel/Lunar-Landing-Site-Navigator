@@ -4,3 +4,4 @@ Read tasks/_review.md first (read-only rules). Run the app mentally from the cod
 Report: tasks/reviews/U1-gaps.md.
 
 Task: find missing pieces and rough edges across the whole UI in both modes: empty, loading, error and out-of-range states, inconsistent wording or units, missing tooltips for numbers (contract says every number has a unit and a definition tooltip), dead or confusing controls, unclear labels, layout problems at 1280x800, 1024 and 390 px, keyboard use, anything a jury member would trip on in the first minute, copy that breaks the wording rule (no power, energy, signal or link claims), places where synthetic or approximate data is not labelled. Also check what challenge requirements from CLAUDE.md (table 'The challenge') are weakly covered.
+Note (rerun): a previous run stalled; inspect existing partial output in tasks/reviews and continue; write the report file early and extend it. Run shell commands in steps under 60 s.
