@@ -1,0 +1,352 @@
+.board-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.board__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5) 0;
+}
+
+.board__count {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.card {
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 5.5rem;
+}
+
+.card__heading {
+  min-width: 0;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.card__sub,
+.card__dates {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.card__dates {
+  font-variant-numeric: tabular-nums;
+}
+
+.card__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.card__badges .badge {
+  font-size: 0.75rem;
+}
+
+/* View tabs */
+.views {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.views__tabs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.views__tab {
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
+.views__tab[aria-selected='true'] {
+  background: var(--earth);
+  border-color: var(--earth);
+  color: var(--bg);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.views__panel {
+  container-type: inline-size;
+}
+
+.views__message {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-align: center;
+}
+
+.views__message--error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.views__polar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  justify-items: center;
+}
+
+/* Wraps the plot so the tour spotlight hugs it, not the loupe column */
+.views__sky {
+  width: 100%;
+  max-width: 560px;
+}
+
+.views__loupe {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 16rem;
+}
+
+.views__loupe-toggle {
+  min-height: 2.5rem;
+}
+
+@container (min-width: 46rem) {
+  .views__polar {
+    grid-template-columns: minmax(0, 1fr) 16rem;
+  }
+}
+
+/* Countdowns: the headline numbers */
+.countdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3) var(--space-4);
+  min-height: 4.5rem;
+}
+
+.countdowns--loading {
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.countdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+}
+
+.countdown--sun {
+  border-left-color: var(--sun);
+}
+
+.countdown--earth {
+  border-left-color: var(--earth);
+}
+
+.countdown__value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown--sun .countdown__value {
+  color: var(--sun);
+}
+
+.countdown--earth .countdown__value {
+  color: var(--earth);
+}
+
+.countdown__utc {
+  min-height: 1.25rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Metrics */
+.metrics {
+  min-height: 9rem;
+}
+
+.metrics--loading {
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+
+.metrics--empty {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.metrics__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--line);
+}
+
+.metrics__item dt {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.metrics__item dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.metrics__note {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 520px) {
+  .metrics__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.controls__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.controls__field label {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.controls__field input[type='date'],
+.controls__field select {
+  min-height: 2.5rem;
+  padding: 0 var(--space-2);
+  background: var(--panel-2);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  color-scheme: dark;
+}
+
+.controls__field--slip {
+  flex: 1 1 18rem;
+}
+
+.controls__slip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.controls__slip input[type='range'] {
+  flex: 1 1 8rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  accent-color: var(--earth);
+}
+
+.controls__readout {
+  min-width: 5.5rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Progressive disclosure details */
+.card__more {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-2);
+}
+
+.card__more[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.card__more-summary {
+  min-height: 40px;
+  line-height: 40px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+  user-select: none;
+}
+
+.card__more-summary:hover,
+.card__more-summary:focus-visible {
+  color: var(--text);
+}
+
+/* Multi-card board: cap sky plot size (polar and panorama) so card fits in ~800px height at 1280px wide viewport */
+.board--2 .views__sky,
+.board--3 .views__sky,
+.board--4 .views__sky,
+.board--2 .sky__pano,
+.board--3 .sky__pano,
+.board--4 .sky__pano {
+  max-width: min(100%, 360px);
+  margin-inline: auto;
+}

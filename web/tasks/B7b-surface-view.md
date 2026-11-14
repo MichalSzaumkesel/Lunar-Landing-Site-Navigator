@@ -1,0 +1,30 @@
+# Task B7b: 3D surface view (Three.js), role `viz`
+
+Goal: a 3D view of the landing site: the terrain from the contract heightmap, a lander at the origin, the Sun as a directional light with real shadows, and the Sun and Earth discs in the sky at true angular size, all synchronised with the shared time cursor. This is the "wow" piece of the demo: at the south pole the Sun sits 1 to 2 degrees above the horizon and shadows are very long.
+
+Read first: `web/tasks/_common.md`, `docs/contract.md` sections 1, 2.3 and 2.5, `web/src/viz3d/terrain.ts` (done, tested: `decodeHeights`, `terrainBinUrl`, `buildTerrainMesh`, `directionEnu`, `heightAt`), `web/src/lib/types.ts`, `web/src/state/store.ts`, `web/src/state/selectors.ts`, `web/src/lib/ephem.ts` (`sampleAt`), `web/src/lib/useSiteBundle.ts` (hook, exists), and how `web/src/components/sky/SkyPlot.tsx` wires store and bundle (follow the same style and CSS conventions).
+
+## Writable paths
+
+`web/src/viz3d/SurfaceView.tsx`, `scene.ts`, `lander.ts`, `skyBodies.ts`, `useTerrainHeights.ts`, `surface.css`, `dev3d-main.tsx` (all new, under `web/src/viz3d/`), and `web/dev3d.html`. Do not edit anything else. Other workers write `terrain.ts`, `terrainHorizon.ts`, `localIllum*` in the same folder and `ScenarioBoard.tsx` elsewhere; leave them alone.
+
+## Spec
+
+- `SurfaceView({ scenarioId }: { scenarioId: string })`: uses `useSiteBundle(scenario.siteId)`, loads the `.bin` through `terrainBinUrl(import.meta.env.BASE_URL, bundle.terrain)` (fetch as `ArrayBuffer`, cache per site), decodes with `decodeHeights`, builds the mesh with `buildTerrainMesh`. States: loading skeleton, "No terrain for this site" when `bundle.terrain` is null (custom sites), error text. Show the badge `Synthetic data` when `bundle.synthetic` (same classes as the sky plot).
+- Frame: terrain data is ENU metres (x east, y north, z up). Three.js uses y up, so map ENU to three as `(x, z, -y)` once, in one place (`scene.ts`), and document it.
+- Camera: two modes with a small toggle. (1) "On the surface": camera at the lander position, eye height 2 m (use the 2 m or 10 m of the store's `observerHeightM`) above the ground (`heightAt`), looking towards the Sun azimuth at first, drag to look around (yaw and pitch, pitch clamped), field of view 60 degrees, no OrbitControls. (2) "Overview": camera about 6 km above and 8 km south of the site looking at it, `OrbitControls` from `three/examples/jsm/controls/OrbitControls.js` (no new package), damping on.
+- Terrain: the mesh from `buildTerrainMesh`, grey regolith material (`MeshStandardMaterial`, flat grey, rough 1, metalness 0), `receiveShadow`. A vertical exaggeration control (1x default, up to 5x) rebuilds the mesh.
+- Lander: simple low-poly lander built from primitives (body box, four legs, a dish), about 4 m wide, at the origin standing on the ground (`heightAt(0, 0)` is 0 by construction), `castShadow`. A thin marker ring on the ground so it is findable in the overview.
+- Sun: `DirectionalLight` whose direction comes from `directionEnu(az, el)` of `sampleAt(ephem, cursorMs).sun` mapped to three coordinates; intensity 0 when `el < 0` (the disc below the horizon plane) with a tiny ambient light (earthshine, 0.02) so the terrain is not pitch black. Shadows: `PCFSoftShadowMap`, map size 4096, orthographic shadow camera covering the whole 20 km patch (follow the Sun direction), tune `bias` and `normalBias` so low-angle light does not produce acne (check at 1 to 3 degrees elevation, the typical polar case), update the shadow camera each time the Sun moves.
+- Sun and Earth in the sky: a bright emissive disc for the Sun and a blue sphere for the Earth, placed 40 km away from the camera in their directions, sized by their true angular radius (`sun_ang_radius_deg`, `earth_ang_radius_deg` from the ephemeris), plus a toggle "magnify x4" (off by default, label it). Bodies below the horizon plane are hidden. If `src/lib/earthPhase.ts` exists when you reach this point, shade the Earth disc by `earthIlluminatedFraction`; otherwise skip it. Sky is black with about 1500 faint white points as stars on a sphere (seeded, static).
+- Cursor sync: read `cursorH` and the scenario from the store, compute the cursor time with `scenarioCursorMs`, update only the Sun light and the two bodies on change. Render on demand (no permanent animation loop): render when the cursor, the camera, the size or a toggle changes; during Play the cursor changes every frame, so it renders every frame then.
+- Hygiene: dispose geometries, materials, textures and the renderer on unmount; handle resize with a `ResizeObserver`; cap the pixel ratio at 2; the canvas fills a container of aspect ratio 16:10 (CSS in `surface.css`, variables from `app/theme.css`).
+- Text overlay (HTML, not canvas): the cursor UTC time, Sun elevation and azimuth, and a legend line "Terrain: synthetic" or the DEM product name from `bundle.terrain.dem?.product`. Wording rule: "Sun visible" / "Sun below horizon" only; never claim power or link availability.
+- Dev harness: `web/dev3d.html` plus `src/viz3d/dev3d-main.tsx` mount `SurfaceView` for the active store scenario (with the `Transport` bar from `app/Transport.tsx` below it) so it can be opened at `http://localhost:5173/dev3d.html` without touching the main app. The lead will plug `SurfaceView` into the scenario card.
+
+## Acceptance
+
+1. `npm run typecheck` and `npm run lint` exit 0 (ignore and name errors in files you do not own).
+2. In the browser (preview server `spaceapps-web`, page `/dev3d.html`): the default scenario shows terrain, the lander and a Sun with long shadows; scrubbing the time moves the shadows; the overview mode orbits; no console errors. Take two screenshots (surface mode and overview) at a reduced scale as proof. WebGL in the Browser pane may be software-rendered: report the measured frames per second over 3 seconds of Play (use `requestAnimationFrame` counting through a script) and whether it is smooth enough.
+3. List what you could not verify.
+4. Final report in the format of `_common.md`.

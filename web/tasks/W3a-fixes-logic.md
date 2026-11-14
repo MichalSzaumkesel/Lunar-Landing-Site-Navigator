@@ -1,0 +1,29 @@
+# Task W3a: fixes from the correctness and security reviews (logic, state, data)
+
+Fix exactly the items below, each with a regression test where it is testable. Reviews (read-only, for background): `tasks/reviews/R1-correctness.md`, `tasks/reviews/R2-security.md`; do not re-audit, do not fix anything else.
+
+## Writable paths
+
+`src/state/store.ts`, `src/state/selectors.ts`, `src/state/urlState.ts`, `src/state/urlState.test.ts`, `src/state/useUrlSync.ts`, `src/lib/loader.ts`, `src/lib/loader.test.ts`, `src/lib/metrics.ts`, `src/lib/metrics.test.ts`, `src/lib/windowMap.ts`, `src/lib/windowMap.test.ts`, `src/lib/windowMapClient.ts`, `src/lib/exportCsv.ts`, `src/lib/exportCsv.test.ts`, `src/lib/finder.ts`, `src/lib/events.ts` is NOT yours, `src/components/scenario/cardLogic.ts`, `src/components/scenario/cardLogic.test.ts`, `src/components/library/SiteLibrary.tsx`, `src/components/finder/WindowMap.tsx`, `src/components/sound/useEventSounds.ts`, `src/viz3d/localIllum.ts`, `src/viz3d/localIllum.test.ts`, `vite.config.ts`, `index.html`, `../.github/workflows/deploy-web.yml`. Do not touch `components/map/**` or `components/sky/**` (another worker).
+
+## Items
+
+1. `store.ts` `tick`: guard against a zero or non-finite loop length (`loopH = max(1, min(...durationH clamped to >= 1))`); also clamp `durationH >= 1` in `toScenario` and `updateScenario`. Test via the store.
+2. `store.ts` `setActiveScenario(id)`: ignore ids that are not in `scenarios`. Test.
+3. `cardLogic.ts` `startBoundsMs`: the last selectable start day must be the one whose whole mission still has samples: `lastSampleMs = DATA_END_MS - max(0, durationH - 1) * HOUR_MS`, `maxMs = floor(lastSampleMs / DAY_MS) * DAY_MS` (never below `minMs`). Update tests: a 24 h window can start on 2028-12-31.
+4. `metrics.ts`: `time_to_sunset_h` and `time_to_earthset_h` never negative (`Math.max(0, ...)`, keep `-0` normalised to 0). Mask fallback: when `masks[key]` and `masks['2']` are both missing use the first available mask (`Object.values(masks)[0]`), then a flat 0 mask. Same fallback pattern is wanted in `finder.ts` and `windowMap.ts` (use a small shared helper exported from `metrics.ts`, for example `pickMaskFor(horizon, observerHeightM)`; `events.ts` and `components/sky/geometry.ts` are handled by others later).
+5. `windowMap.ts`: derive the column grid from the sites that have a valid ephemeris (skip empty ones) instead of only `inputs[0]`; coverage bounds of the grid are the intersection start and the common end where at least one site has data. A site with an empty or missing ephemeris gets `valid = 255` everywhere. Test with the first input empty.
+6. `windowMapClient.ts`: expose a way to terminate the worker (`cancelWindowMap()` or an `AbortSignal` parameter) and make `components/finder/WindowMap.tsx` call it on unmount.
+7. `selectors.ts` `scenarioCursorUtc`: format by rounding the time to whole seconds first (`Math.round(ms / 1000) * 1000`), then `toISOString().slice(0, 19) + 'Z'`; no `.replace('.000Z', ...)`. Test with a fractional millisecond value.
+8. `useEventSounds.ts`: memoise the window object passed to `listSkyEvents` (stable dependencies: `startMs`, `endMs` numbers, not a new object per render).
+9. `viz3d/localIllum.ts`: when no ephemeris sample falls inside the window, return `NaN` for every point instead of 0. Update its test.
+10. `urlState.ts`: the custom-site id regex must allow `-` and `.` is not needed: ids look like `custom_-89p500_45p000`; use `^[a-z0-9_-]{1,64}$`. Add a test that a southern-latitude custom id round-trips. `useUrlSync.ts`: ignore non-array or oversized input safely (already tolerant; just verify) and add a `hashchange` listener so Back/Forward re-applies the hash (remove it on cleanup).
+11. `loader.ts`: harden validation. `isValidHorizon`: `n` integer between 1 and 10000, `az_step_deg` finite and positive, every mask value finite numbers, keys of `masks` only digits (reject keys like `__proto__`). `isValidEphem`: `count` integer between 1 and 50000, `step_minutes` finite and positive, arrays numeric and finite (check by sampling every array fully only when length <= 50000, a single pass is fine), `start_utc` parseable. For the custom API response: merge only the whitelisted site fields (`name`, `lat_deg`, `lon_deg`, `elevation_m`, `notes`) over the defaults; ignore everything else; `source.url` is never taken from the API. Tests for each rejection.
+12. `exportCsv.ts` `downloadText`: revoke the object URL after the click with `setTimeout(() => URL.revokeObjectURL(url), 1000)`. `scenariosToCsv`: any **string** cell that starts with `=`, `+`, `-`, `@`, tab or carriage return gets a leading `'` (apostrophe) before quoting; numbers are never prefixed (negative numbers stay as they are). Tests.
+13. `SiteLibrary.tsx`: render the `Source` link only when `new URL(url).protocol === 'https:'` (wrap parsing in try/catch); otherwise show the title as plain text. Test the helper (put it in `components/library/safeUrl.ts` with a test; that new file is yours).
+14. `vite.config.ts` and `index.html`: add a Content-Security-Policy `<meta>` tag **only in production builds** with a small Vite plugin using `transformIndexHtml` (apply when `command === 'build'`): `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' <VITE_API_URL origin if set>; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'`. Verify `npm run build` still succeeds and the tag is in `dist/index.html` (then delete `dist`).
+15. `.github/workflows/deploy-web.yml`: top-level `permissions: contents: read` only; `pages: write` and `id-token: write` only in the `deploy` job (and `contents: read`). Keep everything else.
+
+## Acceptance
+
+`npm run typecheck`, `npm run lint` and `npm test` exit 0 (the whole suite; a failing test in a file you did not touch must be reported, not fixed). Report per item: done, or why not.

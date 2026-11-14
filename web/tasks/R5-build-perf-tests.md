@@ -1,0 +1,10 @@
+# Review R5: build, bundle, performance and test quality
+
+Read `tasks/_review.md` first. Report file: `tasks/reviews/R5-build-perf-tests.md`. You may run `npm run build` (up to 3 minutes) and read the output; do not leave a `dist` folder behind (delete `dist` after measuring; it is git-ignored anyway).
+
+- Build: does `npm run build` pass? Report bundle sizes (raw and gzip) per chunk from the build output. Is three.js (and the 3D view) in its own lazy chunk, and not in the entry? Is anything large or duplicated in the entry chunk (d3 imported as a whole instead of sub-packages, for example)? Do the workers (`windowMap.worker.ts`, `localIllum.worker.ts`) bundle correctly (look for them in `dist/assets`)? Is `dev3d.html` excluded from the production build? Does `VITE_BASE` work (check asset URLs in `dist/index.html` when built with `VITE_BASE=/repo/`)? Do the mock data files end up in `dist/data/mock` and are they fetched with the right base path?
+- First load: what must load before the first meaningful paint (entry JS, CSS, sites.json, one site's horizon and ephemeris ~0.5 MB)? Estimate the transfer size and suggest cuts (for example compact encoding, loading the ephemeris only for the visible window, preloading).
+- Runtime performance: from the code, name the three most expensive things during Play and during slider drags, with a concrete estimate (loops times sizes) and a cheaper design. Check the memoisation of `computeMetrics`, `listSkyEvents`, track paths, window map recomputation on rule edits.
+- Tests: list modules that have logic but no tests; tests that assert too little (for example only "does not throw"); tests that depend on files that may change (real mock data read from disk), on time zone, on the current date, or on floating-point equality; flaky risks (timers, workers). Check that `npm test` is deterministic by running it twice.
+- Tooling: lint warnings that matter, `tsc` strictness gaps, unused exports or dead files, duplicate helpers across modules (for example several copies of an ISO formatter or a clamp), and which of them to merge.
+Give measured numbers where you can and say "estimate" where you cannot.

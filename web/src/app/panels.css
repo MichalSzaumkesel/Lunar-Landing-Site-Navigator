@@ -1,0 +1,53 @@
+/* Layout of the shell below the top bar: tools row, scenario board, lower panels. Tokens come from theme.css. */
+.shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  padding: var(--space-2, 8px) var(--space-5, 24px) var(--space-4, 16px);
+}
+
+.shell > .board-wrap,
+.shell > .board {
+  padding: 0;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2, 8px);
+}
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.panels__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+}
+
+.panels__tabs [role='tab'][aria-selected='true'] {
+  background: var(--earth);
+  border-color: var(--earth);
+  color: #02111f;
+  font-weight: 600;
+}
+
+.panels__body {
+  min-width: 0;
+}
+
+.panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
