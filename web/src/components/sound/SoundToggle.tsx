@@ -144,21 +144,17 @@ export function SoundToggle({
             Cues
           </button>
         </div>
-
       </div>
 
-      {/* Permanently reserved slot: the slider slides in here, so nothing below is covered and nothing moves */}
-      <div className="sound-control__slot">
-        {mounted && (
-          <div
-            className={`sound-control__volume ${shown ? 'sound-control__volume--in' : ''}`.trim()}
-            aria-hidden={wantsSlider ? undefined : 'true'}
-            inert={!wantsSlider}
-          >
-            <VolumeSlider value={Math.round(volume * 100)} onChange={handleVolumeChange} />
-          </div>
-        )}
-      </div>
+      {mounted && (
+        <div
+          className={`sound-control__volume ${shown ? 'sound-control__volume--in' : ''}`.trim()}
+          aria-hidden={wantsSlider ? undefined : 'true'}
+          inert={!wantsSlider}
+        >
+          <VolumeSlider value={Math.round(volume * 100)} onChange={handleVolumeChange} />
+        </div>
+      )}
     </div>
   )
 }

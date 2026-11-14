@@ -10,32 +10,27 @@
   animation: shell-fade-in var(--motion-duration-fast, 120ms) ease;
 }
 
-.shell > .tools {
+.shell > .board__toolbar {
   animation: none;
-}
-
-@keyframes shell-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.shell > .board-wrap,
-.shell > .board {
-  padding: 0;
 }
 
 .tools {
   display: flex;
-  flex-wrap: wrap;
+  margin-left: auto;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2, 8px);
+}
+
+.tools > .share-menu {
+  order: 2;
+}
+
+@media (max-width: 700px) {
+  .tools {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 .panels {

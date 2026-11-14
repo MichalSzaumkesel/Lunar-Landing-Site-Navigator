@@ -1,15 +1,14 @@
+/* The wrapper adds no box: label, switch and slider are laid out by the toolbar (.tools) */
 .sound-control {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1, 4px);
+  display: contents;
   font-size: 0.875rem;
 }
 
 .sound-control__main {
+  order: 1;
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
-  flex-wrap: wrap;
 }
 
 .sound-control__label {
@@ -21,8 +20,9 @@
 
 .sound-control__modes {
   display: inline-flex;
+  height: 2.5rem;
   border: 1px solid var(--control-border);
-  border-radius: var(--radius, 8px);
+  border-radius: 8px;
   overflow: hidden;
   background: var(--panel-2);
 }
@@ -33,8 +33,8 @@
   border: none;
   border-right: 1px solid var(--control-border);
   border-radius: 0;
-  padding: 0.35rem 0.65rem;
-  min-height: 2.25rem;
+  padding: 0 var(--space-3, 12px);
+  min-height: 0;
   min-width: 2.5rem;
   font-size: 0.875rem;
   cursor: pointer;
@@ -62,18 +62,9 @@
   box-shadow: inset 0 0 0 1px var(--control-border);
 }
 
-.sound-control {
-  position: relative;
-}
-
-/* Slot is always present (empty when Off) so the toolbar height never changes */
-.sound-control__slot {
-  display: flex;
-  justify-content: flex-end;
-  min-height: 2.25rem;
-}
-
+/* Mounted only while sound is on. Sits left of the switch, so the switch and Share never move */
 .sound-control__volume {
+  order: 0;
   opacity: 0;
   transform: translateX(var(--space-4, 16px));
   transition: opacity 200ms ease-out, transform 200ms ease-out;
@@ -90,11 +81,11 @@
   align-items: center;
   gap: var(--space-1, 4px);
   width: 10rem;
-  min-height: 2.25rem;
+  height: 2.5rem;
   padding: 0 var(--space-2, 8px);
   box-sizing: border-box;
   border: 1px solid var(--control-border);
-  border-radius: var(--radius, 8px);
+  border-radius: 8px;
   overflow: hidden;
   background: var(--panel-2);
   color: var(--text);
@@ -127,6 +118,25 @@
   font-size: 0.875rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1180px) {
+  .volume-slider {
+    width: 7rem;
+  }
+}
+
+@media (max-width: 700px) {
+  /* Narrow: the slider follows Share on its row, so nothing above it moves */
+  .sound-control__volume {
+    order: 3;
+    flex: 1 1 7rem;
+    max-width: 10rem;
+  }
+
+  .volume-slider {
+    width: 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
