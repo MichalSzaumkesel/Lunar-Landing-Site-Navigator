@@ -67,6 +67,16 @@ export function formatDuration(hours: number): string {
   return rest === 0 ? `${days} d` : `${days} d ${rest} h`
 }
 
+/** Second line of the Sun visible chip. */
+export function longestDarkLine(h: number): string {
+  return h > 0 ? `Longest dark stretch ${formatDuration(h)}` : 'No dark stretch in this window'
+}
+
+/** Second line of the Earth in view chip. */
+export function longestNoEarthLine(h: number): string {
+  return h > 0 ? `Longest without Earth ${formatDuration(h)}` : 'No gap in this window'
+}
+
 // --- Window start and length ---
 
 /** Duration choices in hours; a value that is not on the list (from a preset or URL) stays selectable. */
