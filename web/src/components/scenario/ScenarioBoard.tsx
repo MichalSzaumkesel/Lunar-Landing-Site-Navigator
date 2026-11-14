@@ -15,7 +15,6 @@ import { scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { DataBadges } from '../badges/DataBadges'
-import { ExportCardPngButton } from '../share'
 import { SkyReadout } from '../sky/SkyReadout'
 import { EventChips } from '../timeline/EventChips'
 import { Timeline } from '../timeline/Timeline'
@@ -86,12 +85,6 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
               <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />
             </div>
           )}
-          <ExportCardPngButton
-            scenario={scenario}
-            siteName={bundle?.site.name ?? title}
-            bundle={bundle}
-            metrics={metrics}
-          />
           {canRemove && (
             <button
               type="button"
