@@ -39,6 +39,7 @@ import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { earthLitFraction, faceTarget } from './viewMath'
+import { createKeyMotion } from './keyMotion'
 import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
 
 /**
@@ -101,6 +102,9 @@ const FAR_M = 200_000
 const SURFACE_FOV = 60
 const OVERVIEW_FOV = 45
 const STAND_OFF_M = 14 // the camera stands this far from the lander so the lander is in view
+/** Camera turn speed of a held arrow key. */
+const LOOK_DEG_PER_S = 90
+const SHADOW_REFIT_MS = 150
 const PITCH_LIMIT = 80
 const FACE_MS = 800
 const HINT_RAISE_DEG = 0.9
@@ -202,6 +206,7 @@ export class SurfaceScene {
   private landerAnimationCancel: (() => void) | null = null
   private benchRaf = 0
   private decorTimer = 0
+  private shadowTimer = 0
   private cameraAnimationRaf = 0
   private cameraAnimationCancel: (() => void) | null = null
   private disposed = false
@@ -319,6 +324,8 @@ export class SurfaceScene {
     this.canvas.addEventListener('pointerleave', this.onPointerLeave)
     this.canvas.addEventListener('wheel', this.onWheel, { passive: true })
     this.canvas.addEventListener('keydown', this.onKeyDown)
+    this.canvas.addEventListener('keyup', this.onKeyUp)
+    this.canvas.addEventListener('blur', this.onBlur)
 
     this.rebuildTerrain()
     this.rebuildDecor()
@@ -638,6 +645,11 @@ export class SurfaceScene {
     this.onTerrainHover = cb
   }
 
+  /** Where the lander is right now (mid-animation included). */
+  currentLanderOffset(): OffsetM {
+    return { ...this.landerOffset }
+  }
+
   setLanderOffset(eastM: number, northM: number): void {
     if (this.landerOffset.eastM === eastM && this.landerOffset.northM === northM) return
     this.landerOffset = { eastM, northM }
@@ -651,10 +663,23 @@ export class SurfaceScene {
     } else {
       this.controls.target.set(x, this.groundY(x, z), z)
     }
-    this.fitShadows()
-    this.renderer.shadowMap.needsUpdate = true
-    this.lastShadowUpdateTime = performance.now()
+    this.refitShadowsThrottled()
     this.invalidate()
+  }
+
+  /** The shadow cascades follow the lander, but a full shadow pass per moved frame is too costly: refit at most every 150 ms, with a trailing update. */
+  private refitShadowsThrottled(): void {
+    window.clearTimeout(this.shadowTimer)
+    const wait = SHADOW_REFIT_MS - (performance.now() - this.lastShadowUpdateTime)
+    const run = () => {
+      if (this.disposed) return
+      this.fitShadows()
+      this.renderer.shadowMap.needsUpdate = true
+      this.lastShadowUpdateTime = performance.now()
+      this.invalidate()
+    }
+    if (wait <= 0) run()
+    else this.shadowTimer = window.setTimeout(run, wait)
   }
 
   /**
@@ -799,6 +824,7 @@ export class SurfaceScene {
     if (this.benchRaf) cancelAnimationFrame(this.benchRaf)
     this.benchRaf = 0
     window.clearTimeout(this.decorTimer)
+    window.clearTimeout(this.shadowTimer)
     this.controls.removeEventListener('change', this.invalidate)
     this.controls.removeEventListener('start', this.onControlsStart)
     this.controls.dispose()
@@ -809,6 +835,9 @@ export class SurfaceScene {
     this.canvas.removeEventListener('pointerleave', this.onPointerLeave)
     this.canvas.removeEventListener('wheel', this.onWheel)
     this.canvas.removeEventListener('keydown', this.onKeyDown)
+    this.canvas.removeEventListener('keyup', this.onKeyUp)
+    this.canvas.removeEventListener('blur', this.onBlur)
+    this.lookMotion.dispose()
     disposeObject(this.scene)
     this.shared.uDetail.value?.dispose()
     this.envTarget.dispose()
@@ -1195,21 +1224,27 @@ export class SurfaceScene {
     this.cancelLanderAnimation()
   }
 
+  /** Held arrows turn the camera continuously (deg/s), independent of the key-repeat rate. */
+  private readonly lookMotion = createKeyMotion({
+    speed: LOOK_DEG_PER_S,
+    onMove: (dx, dy) => this.look(dx, dy),
+    reducedMotion: () =>
+      typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),
+  })
+
   private readonly onKeyDown = (e: KeyboardEvent): void => {
     this.cancelCameraAnimation()
     this.cancelLanderAnimation()
     if (this.mode !== 'surface') return
-    const step = e.shiftKey ? 15 : 5
-    const moves: Record<string, [number, number]> = {
-      ArrowLeft: [-step, 0],
-      ArrowRight: [step, 0],
-      ArrowUp: [0, step],
-      ArrowDown: [0, -step],
-    }
-    const m = moves[e.key]
-    if (!m) return
-    e.preventDefault()
-    this.look(m[0], m[1])
+    if (this.lookMotion.handleKey(e, true)) e.preventDefault()
+  }
+
+  private readonly onKeyUp = (e: KeyboardEvent): void => {
+    this.lookMotion.handleKey(e, false)
+  }
+
+  private readonly onBlur = (): void => {
+    this.lookMotion.release()
   }
 
   // Render

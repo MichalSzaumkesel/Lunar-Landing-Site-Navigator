@@ -29,10 +29,15 @@ import {
   formatDeltaHours,
   formatOffset,
   legendRange,
-  nudgeOffset,
 } from './landerHelpers'
 import type { OffsetM } from './landerHelpers'
-import { MOVE_MS, NUDGE_MS } from './tween'
+import { createKeyMotion } from './keyMotion'
+import type { KeyMotion } from './keyMotion'
+import { MOVE_MS } from './tween'
+
+/** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
+const LANDER_M_PER_S = 400
+const READOUT_MS = 100
 import { useTerrainHeights } from './useTerrainHeights'
 import {
   belowHorizonText,
@@ -467,16 +472,53 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     extentM,
   ])
 
-  // Keyboard nudges on focused lander position control
-  const handleLanderKeyDown = (e: React.KeyboardEvent) => {
-    const next = nudgeOffset(targetOffsetRef.current, e.key, e.shiftKey)
-    if (next) {
-      e.preventDefault()
-      const clamped = clampLanderOffset(next, terrain.size_px, terrain.spacing_m)
-      void moveLanderTo(clamped.offset, NUDGE_MS)
-      setIsClamped(clamped.clamped)
-      setBestSpotResult(null)
+  // Held arrow keys move the lander continuously; the readout and the horizon follow while it moves.
+  const lastSyncRef = useRef(0)
+  const keyMotionRef = useRef<KeyMotion | null>(null)
+  useEffect(() => {
+    if (!scene) return
+    let pos: OffsetM = { eastM: 0, northM: 0 }
+    const motion = createKeyMotion({
+      speed: LANDER_M_PER_S,
+      reducedMotion: () => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),
+      onStart: () => {
+        // A held key takes over from a running animated move without a jump.
+        scene.cancelLanderAnimation()
+        moveSeqRef.current++
+        pos = scene.currentLanderOffset()
+        targetOffsetRef.current = pos
+        setBestSpotResult(null)
+      },
+      onMove: (dx, dy) => {
+        const c = clampLanderOffset(
+          { eastM: pos.eastM + dx, northM: pos.northM + dy },
+          terrain.size_px,
+          terrain.spacing_m,
+        )
+        pos = c.offset
+        targetOffsetRef.current = pos
+        scene.setLanderOffset(pos.eastM, pos.northM)
+        setIsClamped(c.clamped)
+        const t = performance.now()
+        if (t - lastSyncRef.current > READOUT_MS) {
+          lastSyncRef.current = t
+          setLanderOffset(pos)
+        }
+      },
+      onStop: () => setLanderOffset(pos),
+    })
+    keyMotionRef.current = motion
+    return () => {
+      motion.dispose()
+      keyMotionRef.current = null
     }
+  }, [scene, terrain.size_px, terrain.spacing_m])
+
+  const handleLanderKeyDown = (e: React.KeyboardEvent) => {
+    if (keyMotionRef.current?.handleKey(e, true)) e.preventDefault()
+  }
+  const handleLanderKeyUp = (e: React.KeyboardEvent) => {
+    keyMotionRef.current?.handleKey(e, false)
   }
 
   const handleResetPosition = () => {
@@ -807,8 +849,10 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
             aria-roledescription="position control"
             aria-label={`Lander position: ${formatOffset(landerOffset)}, height ${fmtNum(landerHeight, 1, true)} m. Arrow keys nudge.`}
             onKeyDown={handleLanderKeyDown}
+            onKeyUp={handleLanderKeyUp}
+            onBlur={() => keyMotionRef.current?.release()}
           >
-            <div className="surface__control-label">Lander position (arrow keys ±100 m, Shift ±500 m)</div>
+            <div className="surface__control-label">Lander position (arrow keys, Shift faster, Alt finer)</div>
             <div className="surface__readouts">
               <span>Offset: <b>{formatOffset(landerOffset)}</b></span>
               <span>Terrain height: <b>{fmtNum(landerHeight, 1, true)} m</b></span>

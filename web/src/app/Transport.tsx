@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SPEEDS_H_PER_SEC } from '../config/presets'
+import { useHeldCursorKeys } from '../lib/useHeldCursorKeys'
 import { formatSpeed } from '../lib/speedLabel'
 import { scenarioCursorUtc } from '../state/selectors'
 import { useAppStore } from '../state/store'
@@ -32,6 +33,7 @@ export function Transport() {
 
   const narrow = useNarrow()
   const loopH = Math.min(...scenarios.map((s) => s.durationH))
+  const held = useHeldCursorKeys({ maxH: loopH, read: () => useAppStore.getState().cursorH, write: setCursorH })
 
   return (
     <footer className="transport" data-tour="transport-play">
@@ -55,6 +57,9 @@ export function Transport() {
         step={0.25}
         value={Math.min(cursorH, loopH)}
         onChange={(e) => setCursorH(Number(e.target.value))}
+        onKeyDown={held.onKeyDown}
+        onKeyUp={held.onKeyUp}
+        onBlur={held.onBlur}
         aria-label="Time cursor"
         aria-valuetext={`+${cursorH.toFixed(1)} h from window start`}
       />
