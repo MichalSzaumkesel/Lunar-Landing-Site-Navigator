@@ -1,6 +1,6 @@
 # Data contract
 
-`contract_version: 1.1.1`. Shared between scope A (produces data) and scope B (consumes it). Changes only via PR approved by the other human. Agents never edit this file.
+`contract_version: 1.2.0`. Shared between scope A (produces data) and scope B (consumes it). Changes only via PR approved by the other human. Agents never edit this file.
 
 The contract defines every file in `web/public/data/` and every metric, exactly. Scope A's pipeline (Python) produces the files. Scope B's web app (TypeScript) consumes them. Both implement §3 identically, and scope A's validator checks that they agree.
 
@@ -112,7 +112,7 @@ Every JSON file has a top-level `meta` object:
   "site_id": "shackleton_rim",
   "start_utc": "2026-12-01T00:00:00Z",
   "step_minutes": 60,
-  "count": 18264,
+  "count": 18288,
   "sun":   { "az": [...], "el": [...] },
   "earth": { "az": [...], "el": [...] },
   "sun_ang_radius_deg": 0.2666,
@@ -185,6 +185,27 @@ A local heatmap of `pct_sunlit` for a grid around the site, over a stated period
 
 Demo site IDs (fixed so both scopes can work in parallel): `apollo_11`, `southpole_landed` (scope A picks the actual site and sets the name), `artemis_region_1` (likewise).
 
+### 2.8 Optional `earth_orientation.json` (one global file, owner: scope A, not blocking)
+
+Lets the 3D view draw the Earth with the correct side facing the Moon. The Earth's appearance from the Moon is practically the same for every site, so there is one file for the whole database. Without it, scope B shows the Earth texture as "illustrative".
+
+```json
+{
+  "meta": { ... },
+  "start_utc": "2026-12-01T00:00:00Z",
+  "step_minutes": 60,
+  "count": 18288,
+  "sub_lunar_lat_deg": [...],
+  "sub_lunar_lon_deg": [...],
+  "pole_pa_deg": [...]
+}
+```
+
+- Same time grid as `ephem/` (sample `k` at `start_utc + k * step_minutes`).
+- `sub_lunar_lat_deg`, `sub_lunar_lon_deg`: the point on Earth that sees the Moon at the zenith (sub-observer point of Earth for an observer at the Moon). Longitude east-positive, -180..180.
+- `pole_pa_deg`: position angle of Earth's north pole as seen from the Moon, degrees east of celestial north.
+- Source: JPL Horizons. Scope A verifies which observer-table quantities give these values and records the exact query in `meta.inputs`.
+
 ---
 
 ## 3. Metric definitions (identical in `pipeline/metrics.py` and `web/src/lib/metrics.ts`)
@@ -250,5 +271,6 @@ Written by scope A **first**, before anything else. `validation/fixtures/metrics
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-14 | Initial |
+| 1.2.0 | 2026-11-14 | Optional `earth_orientation.json` (§2.8); §2.3 example `count` fixed to 18288 (762 days, includes the 2028 leap day) |
 | 1.1.1 | 2026-11-14 | Link to CRITICAL.md; every contract change needs a CRITICAL notice |
 | 1.1.0 | 2026-11-14 | Compact JSON + lazy load; Horizons fetch rules; terrain heightmaps (§2.5); fixed demo site IDs; mocks owned by scope B |
