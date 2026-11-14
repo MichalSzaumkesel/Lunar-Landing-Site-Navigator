@@ -1,6 +1,7 @@
 // Pure definitions and helpers for demo mode narration steps.
 import { HOUR_MS } from '../../config/dataRange'
 import { PRESET_APOLLO_VS_ARTEMIS, PRESET_SLIP } from '../../config/presets'
+import type { SectionKey } from '../../lib/disclosure'
 import type { SkyEvent } from '../../lib/events'
 import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
 import { scenarioWindowMs } from '../../state/selectors'
@@ -22,6 +23,8 @@ export interface DemoStep {
   durationMs: number
   /** Opens the sky loupe on the active card while this step is shown. */
   showLoupe?: boolean
+  /** Sections that hold what the step talks about; opened while it is shown. */
+  reveal?: readonly SectionKey[]
   run(store: AppStore, ctx?: DemoStepContext): void
   caption(ctx: DemoStepContext): string
 }
@@ -171,6 +174,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     id: 'step-2-play-timeline',
+    reveal: ['timeline'],
     durationMs: 7000,
     run(store, ctx) {
       store.setCursorH(0)
@@ -208,6 +212,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     id: 'step-4-metrics-diff',
+    reveal: ['metrics'],
     durationMs: 6000,
     run(store) {
       store.setPlaying(false)
@@ -218,6 +223,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   },
   {
     id: 'step-5-slip-preset',
+    reveal: ['dates'],
     durationMs: 6000,
     run(store) {
       store.applyPreset(PRESET_SLIP, { autoplay: false })

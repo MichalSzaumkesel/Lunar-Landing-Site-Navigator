@@ -502,3 +502,34 @@
     display: none;
   }
 }
+
+/* Collapsed sections under the views; spacing from the shared scale */
+.card__sections {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-1);
+}
+
+.controls__change,
+.card__rules-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.card__rules-edit {
+  align-self: flex-start;
+}
+
+@media (max-width: 520px) {
+  .card__header {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .card__aside {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}

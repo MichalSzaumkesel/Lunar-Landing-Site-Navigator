@@ -1,0 +1,72 @@
+/* Collapsible section: one visual style for every disclosure in the Advanced layout. */
+.disc {
+  border-top: 1px solid var(--line);
+}
+
+.disc__heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.disc__button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.disc__button:hover {
+  background: var(--panel-2, rgba(255, 255, 255, 0.04));
+}
+
+.disc__chevron {
+  flex: none;
+  color: var(--muted);
+  transition: transform var(--motion-duration-fast, 120ms) ease;
+}
+
+.disc[data-open='true'] > .disc__heading .disc__chevron {
+  transform: rotate(90deg);
+}
+
+.disc__title {
+  flex: none;
+  white-space: nowrap;
+}
+
+.disc__summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disc[data-open='true'] > .disc__heading .disc__summary {
+  display: none;
+}
+
+.disc__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+}
+
+@media (max-width: 520px) {
+  .disc__summary {
+    display: none;
+  }
+}

@@ -1,3 +1,4 @@
+import { revealSections } from '../../lib/disclosure'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTourStore } from '../help/tourState'
 import { useAppStore } from '../../state/store'
@@ -61,6 +62,7 @@ export function useDemo(): DemoController {
     if (!step) return
 
     useDemoStore.setState({ loupeOpen: step.showLoupe === true })
+    revealSections(step.reveal ?? [])
     const store = useAppStore.getState()
     step.run(store, ctxRef.current)
 
@@ -77,6 +79,11 @@ export function useDemo(): DemoController {
       clearTimeout(timer)
     }
   }, [isActive, stepIndex, steps, variant, nextStep, stopDemo])
+
+  // Sections the demo opened close again when it ends.
+  useEffect(() => {
+    if (!isActive) revealSections([])
+  }, [isActive])
 
   // Esc or any key stops the demo and leaves the app in a normal state
   useEffect(() => {

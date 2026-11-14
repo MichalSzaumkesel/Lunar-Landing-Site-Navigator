@@ -3,7 +3,8 @@ import type { ChangeEvent } from 'react'
 import { MAX_SLIP_DAYS } from '../../config/dataRange'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
-import { clampStartUtc, dateInputBounds, durationOptionsH, formatSlip } from './cardLogic'
+import { clampStartUtc, dateInputBounds, durationOptionsH, formatChange, formatSlip } from './cardLogic'
+import type { SlipChange } from './cardLogic'
 import './scenario.css'
 
 const SLIP_TIP =
@@ -18,9 +19,12 @@ function humanSlip(days: number): string {
 export function ScenarioControls({
   scenario,
   siteName,
+  change = null,
 }: {
   scenario: Scenario
   siteName?: string
+  /** Change versus slip 0, shown as one line under the fields. */
+  change?: SlipChange | null
 }) {
   const updateScenario = useAppStore((s) => s.updateScenario)
   const setSlipDays = useAppStore((s) => s.setSlipDays)
@@ -98,6 +102,12 @@ export function ScenarioControls({
           </button>
         </div>
       </div>
+      {change && (
+        <p className="controls__change" title="The same metrics computed for the window without the slip.">
+          Change vs original (slip 0): Sun visible {formatChange(change.sunH, change.sunPp)}; Earth in view{' '}
+          {formatChange(change.earthH, change.earthPp)}. pp = percentage points.
+        </p>
+      )}
     </div>
   )
 }

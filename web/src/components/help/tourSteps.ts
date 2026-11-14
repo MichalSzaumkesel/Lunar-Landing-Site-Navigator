@@ -146,8 +146,8 @@ export const advancedSteps: TourStep[] = [
   {
     id: 'panels',
     target: '[data-tour="panels"]',
-    title: 'Panels',
-    text: 'Window map shows which site and landing date fit your mission rules; set the rules above it. Moon map shows the sites with day and night. The library lists every site with its source.',
+    title: 'Explore sites and windows',
+    text: 'Window finder shows which site and landing date fit your mission rules; set the rules inside it. Moon map shows the sites with day and night. Sites lists every site with its source.',
     placement: 'top',
   },
   {
