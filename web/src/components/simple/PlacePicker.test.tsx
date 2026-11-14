@@ -27,7 +27,7 @@ describe('PlacePicker component', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders quick buttons and a grouped list of all sites from dataSource', async () => {
+  it('renders one grouped, keyboard-operable list of all sites from dataSource', async () => {
     const mockSites = [
       {
         id: 'apollo_11',
@@ -102,32 +102,43 @@ describe('PlacePicker component', () => {
       await Promise.resolve()
     })
 
-    const buttons = container.querySelectorAll<HTMLButtonElement>('.simple-place-btn')
-    expect(buttons).toHaveLength(3)
+    const rows = container.querySelectorAll<HTMLElement>('[role="option"]')
+    expect(rows).toHaveLength(3)
 
-    // Leading "[MOCK] " should be stripped
-    expect(buttons[0].querySelector('.simple-place-btn__title')?.textContent).toBe('Apollo 11')
-    expect(buttons[0].querySelector('.simple-place-btn__caption')?.textContent).toBe('Near the equator')
-    expect(buttons[0].getAttribute('aria-pressed')).toBe('false')
+    // Leading "[MOCK] " is stripped; each row has one sentence built from the data
+    expect(rows[0].querySelector('.simple-place-row__title')?.textContent).toBe('Apollo 11')
+    expect(rows[0].querySelector('.simple-place-row__desc')?.textContent).toBe(
+      'Apollo landing site (US), near the equator.',
+    )
+    expect(rows[0].getAttribute('aria-selected')).toBe('false')
+    expect(rows[1].getAttribute('aria-selected')).toBe('true')
+    expect(rows[1].tabIndex).toBe(0)
+    expect(rows[0].tabIndex).toBe(-1)
+    expect(rows[2].querySelector('.simple-place-row__desc')?.textContent).toBe(
+      'Possible future landing zone, near the south pole.',
+    )
 
-    expect(buttons[1].querySelector('.simple-place-btn__title')?.textContent).toBe('South Pole Site')
-    expect(buttons[1].getAttribute('aria-pressed')).toBe('true')
-
-    expect(buttons[2].querySelector('.simple-place-btn__title')?.textContent).toBe('Connecting Ridge')
-    expect(buttons[2].querySelector('.simple-place-btn__caption')?.textContent).toBe('Near the south pole')
-
-    // The dropdown lists every site, grouped without acronyms
-    const groups = Array.from(container.querySelectorAll('optgroup')).map((g) => g.label)
+    const groups = Array.from(container.querySelectorAll('.simple-place-group__heading')).map((g) => g.textContent)
     expect(groups).toEqual(['Apollo landings', 'Other landers', 'Possible future landing zones'])
-    expect(container.querySelectorAll('option')).toHaveLength(3)
     expect(container.textContent).not.toContain('CLPS')
 
-    // Click on first button updates active scenario
+    // Arrow keys move focus without changing the place
+    rows[1].focus()
     await act(async () => {
-      buttons[0].click()
+      rows[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
     })
+    expect(document.activeElement).toBe(rows[2])
+    expect(updateSpy).not.toHaveBeenCalled()
 
+    // Click and Enter select
+    await act(async () => {
+      rows[0].click()
+    })
     expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'apollo_11' })
+    await act(async () => {
+      rows[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'artemis_region_1' })
   })
 
   it('shows plain error with role="alert" and "Try again" button that reloads the site list when load fails', async () => {

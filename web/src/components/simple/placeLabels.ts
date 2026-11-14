@@ -36,6 +36,22 @@ export function placeHint(site: Pick<Site, 'lat_deg' | 'lon_deg'>): string {
   return lat < 0 ? 'Southern half' : 'Northern half'
 }
 
+const TYPE_LABEL: Record<SiteCategory, string> = {
+  apollo: 'Apollo landing site',
+  clps: 'Lander site',
+  commercial: 'Commercial lander site',
+  international: 'Lander site',
+  custom: 'Custom site',
+  artemis_region: 'Possible future landing zone',
+}
+
+/** One short sentence built only from the site data: type, agency or country, latitude band. */
+export function placeDescription(site: Pick<Site, 'category' | 'country' | 'lat_deg' | 'lon_deg'>): string {
+  const who = site.country
+  const hint = placeHint(site)
+  return `${TYPE_LABEL[site.category]}${who ? ` (${who})` : ''}, ${hint.charAt(0).toLowerCase()}${hint.slice(1)}.`
+}
+
 /** Groups sites for the picker, keeping the data order inside each group and dropping empty ones. */
 export function groupPlaces(sites: readonly Site[]): PlaceGroup[] {
   const ids: PlaceGroup['id'][] = ['apollo', 'missions', 'future']
@@ -46,15 +62,4 @@ export function groupPlaces(sites: readonly Site[]): PlaceGroup[] {
       sites: sites.filter((s) => GROUP_OF[s.category] === id),
     }))
     .filter((g) => g.sites.length > 0)
-}
-
-/** The first `max` preferred ids that exist in the data, in the preferred order. */
-export function quickPlaces(sites: readonly Site[], preferred: readonly string[], max = 3): Site[] {
-  const picked: Site[] = []
-  for (const id of preferred) {
-    const site = sites.find((s) => s.id === id)
-    if (site) picked.push(site)
-    if (picked.length === max) break
-  }
-  return picked
 }

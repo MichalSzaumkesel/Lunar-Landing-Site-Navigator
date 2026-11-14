@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Site } from '../../lib/types'
-import { displayName, groupPlaces, placeHint, quickPlaces } from './placeLabels'
+import { displayName, groupPlaces, placeDescription, placeHint } from './placeLabels'
 
 function site(id: string, category: Site['category'], lat = 0, lon = 0): Site {
   return {
@@ -45,10 +45,17 @@ describe('groupPlaces', () => {
   })
 })
 
-describe('quickPlaces', () => {
-  it('returns the first preferred ids that exist, at most max', () => {
-    const sites = [site('x', 'apollo'), site('y', 'clps'), site('z', 'apollo'), site('w', 'clps')]
-    expect(quickPlaces(sites, ['q', 'y', 'x', 'z', 'w']).map((s) => s.id)).toEqual(['y', 'x', 'z'])
+describe('placeDescription', () => {
+  it('builds one sentence from category, agency or country and the latitude band', () => {
+    expect(placeDescription({ ...site('a', 'apollo', 0.7, 23.5), country: 'US' })).toBe(
+      'Apollo landing site (US), near the equator.',
+    )
+    expect(placeDescription({ ...site('b', 'international', -45, 177), country: 'China' })).toBe(
+      'Lander site (China), far side of the Moon.',
+    )
+    expect(placeDescription(site('c', 'artemis_region', -89.5, 0))).toBe(
+      'Possible future landing zone, near the south pole.',
+    )
   })
 })
 
