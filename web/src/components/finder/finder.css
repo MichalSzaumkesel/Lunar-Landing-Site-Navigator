@@ -360,20 +360,23 @@
 
 .finder-form__fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  column-gap: 1.5rem;
+  row-gap: 0.35rem;
 }
 
+/* Each field spans three shared rows (label, control, error) so controls align across a row. */
 .finder-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  margin-bottom: 0.65rem;
 }
 
 .finder-form__label {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  justify-content: flex-end;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text);
@@ -381,18 +384,21 @@
 
 .finder-form__unit {
   font-size: 0.875rem;
+  font-weight: 400;
   color: var(--muted);
 }
 
 .finder-form__input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
   background: var(--panel-2);
   border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
   font-size: 0.875rem;
   color: var(--text);
-  min-height: 40px;
-}
+  }
 
 .finder-form__input:focus-visible {
   outline: 2px solid var(--focus);
@@ -404,16 +410,24 @@
 }
 
 .finder-form__checkbox-field {
-  display: flex;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.5rem;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 40px;
+}
+
+.finder-form__checkbox-field > * {
+  grid-row: 2;
 }
 
 .finder-form__checkbox {
   width: 18px;
   height: 18px;
+  margin: 0;
   accent-color: var(--both);
+}
+
+.finder-form__checkbox-field .finder-form__label {
+  justify-content: center;
 }
 
 .finder-form__error {
