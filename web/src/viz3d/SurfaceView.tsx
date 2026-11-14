@@ -3,6 +3,8 @@ import { registerActiveScene } from '../components/demo/cameraControl'
 import { describeBody, fmtNum, fmtUtc, pickMask, sunStateText } from '../components/sky/geometry'
 import { sampleAt } from '../lib/ephem'
 import { earthIlluminatedFraction } from '../lib/earthPhase'
+import { earthOrientationAt, loadEarthOrientation } from '../lib/earthOrientation'
+import type { EarthOrientationFile } from '../lib/earthOrientation'
 import { horizonAt } from '../lib/horizon'
 import type { SiteBundle, TerrainFile } from '../lib/types'
 import { useSiteBundle } from '../lib/useSiteBundle'
@@ -11,6 +13,7 @@ import { useAppStore } from '../state/store'
 import type { Scenario } from '../state/types'
 import { SurfaceScene } from './scene'
 import type { SkyState, ViewMode } from './scene'
+import { useThrottledCursorH } from './useThrottledCursorH'
 import { heightAt } from './terrain'
 import { horizonFromTerrain } from './terrainHorizon'
 import { cancelLocalSunlitGrid, localSunlitGridAsync } from './localIllumClient'
@@ -96,7 +99,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   const [bestSpotResult, setBestSpotResult] = useState<BestSpotResult | null>(null)
   const [showComparison, setShowComparison] = useState(false)
 
-  const cursorH = useAppStore((s) => s.cursorH)
+  // Readouts update about 10 times a second; the sky itself is pushed to the scene per frame below.
+  const cursorH = useThrottledCursorH()
   const observerHeightM = useAppStore((s) => s.observerHeightM)
   const playing = useAppStore((s) => s.playing)
   const prevPlayingRef = useRef(playing)
@@ -112,6 +116,21 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   const sample = useMemo(() => sampleAt(bundle.ephem, cursorMs), [bundle.ephem, cursorMs])
   const { startMs, endMs } = scenarioWindowMs(scenario)
 
+  // Clear cached heatmap and best spot search when scenario dates or observer height change
+  const prevParamsRef = useRef({ startMs, endMs, observerHeightM })
+  useEffect(() => {
+    if (
+      prevParamsRef.current.startMs !== startMs ||
+      prevParamsRef.current.endMs !== endMs ||
+      prevParamsRef.current.observerHeightM !== observerHeightM
+    ) {
+      prevParamsRef.current = { startMs, endMs, observerHeightM }
+      setHeatmapGrid(null)
+      setBestSpotResult(null)
+      setSearchMessage(null)
+    }
+  }, [startMs, endMs, observerHeightM])
+
   const extentM = terrain.size_px * terrain.spacing_m
   // Sampling resolution targeting ~500 m cells (e.g. 41x41 on 20.48 km patch)
   const gridN = useMemo(() => Math.max(16, Math.min(64, Math.round(extentM / 500))), [extentM])
@@ -124,13 +143,15 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   )
 
   // Sun visible hours for original site vs moved lander
-  const origMask = useMemo(
-    () =>
-      horizonFromTerrain(heights, terrain.size_px, terrain.spacing_m, 0, 0, observerHeightM, {
+  const origMask = useMemo(() => {
+    try {
+      return horizonFromTerrain(heights, terrain.size_px, terrain.spacing_m, 0, 0, observerHeightM, {
         rays: 360,
-      }),
-    [heights, terrain.size_px, terrain.spacing_m, observerHeightM],
-  )
+      })
+    } catch {
+      return new Float32Array(360)
+    }
+  }, [heights, terrain.size_px, terrain.spacing_m, observerHeightM])
   const origSunHours = useMemo(
     () => computeSunVisibleHours(bundle.ephem, origMask, 1.0, startMs, endMs),
     [bundle.ephem, origMask, startMs, endMs],
@@ -138,15 +159,19 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
   const movedMask = useMemo(() => {
     if (landerOffset.eastM === 0 && landerOffset.northM === 0) return origMask
-    return horizonFromTerrain(
-      heights,
-      terrain.size_px,
-      terrain.spacing_m,
-      landerOffset.eastM,
-      landerOffset.northM,
-      observerHeightM,
-      { rays: 360 },
-    )
+    try {
+      return horizonFromTerrain(
+        heights,
+        terrain.size_px,
+        terrain.spacing_m,
+        landerOffset.eastM,
+        landerOffset.northM,
+        observerHeightM,
+        { rays: 360 },
+      )
+    } catch {
+      return origMask
+    }
   }, [heights, terrain.size_px, terrain.spacing_m, landerOffset, observerHeightM, origMask])
 
   const movedSunHours = useMemo(
@@ -176,22 +201,43 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   }, [heatmapGrid, landerOffset, extentM, gridN])
   const landerCellPct = landerCell && heatmapGrid ? heatmapGrid[landerCell.index] : null
 
-  const sky = useMemo<SkyState>(
-    () => ({
-      sun: sample?.sun ?? null,
-      earth: sample?.earth ?? null,
-      sunAngRadiusDeg: bundle.ephem.sun_ang_radius_deg,
-      earthAngRadiusDeg: bundle.ephem.earth_ang_radius_deg,
-      sizeScale,
-      timeMs: cursorMs,
-    }),
-    [sample, bundle.ephem, sizeScale, cursorMs],
+  const [orientationFile, setOrientationFile] = useState<EarthOrientationFile | null>(null)
+  useEffect(() => {
+    let alive = true
+    void loadEarthOrientation().then((f) => {
+      if (alive) setOrientationFile(f)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+  const earthOrientation = useMemo(
+    () => (orientationFile ? earthOrientationAt(orientationFile, cursorMs) : null),
+    [orientationFile, cursorMs],
   )
 
-  const skyRef = useRef(sky)
+  // Built from a store time, not from React state, so Play does not re-render this component per frame.
+  const buildSky = useCallback(
+    (h: number): SkyState => {
+      const ms = scenarioCursorMs(scenario, h)
+      const at = sampleAt(bundle.ephem, ms)
+      return {
+        sun: at?.sun ?? null,
+        earth: at?.earth ?? null,
+        sunAngRadiusDeg: bundle.ephem.sun_ang_radius_deg,
+        earthAngRadiusDeg: bundle.ephem.earth_ang_radius_deg,
+        sizeScale,
+        timeMs: ms,
+        earthOrientation: orientationFile ? earthOrientationAt(orientationFile, ms) : null,
+        siteLatDeg: bundle.site.lat_deg,
+      }
+    },
+    [scenario, bundle, sizeScale, orientationFile],
+  )
+  const buildSkyRef = useRef(buildSky)
   useEffect(() => {
-    skyRef.current = sky
-  })
+    buildSkyRef.current = buildSky
+  }, [buildSky])
 
   useEffect(() => {
     const holder = holderRef.current
@@ -201,7 +247,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       sizePx: terrain.size_px,
       spacingM: terrain.spacing_m,
     })
-    s.lookAtAzimuth(skyRef.current.sun?.az ?? 0)
+    s.lookAtAzimuth(buildSkyRef.current(useAppStore.getState().cursorH).sun?.az ?? 0)
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect
       s.setSize(width, height)
@@ -247,7 +293,13 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   useEffect(() => scene?.setMode(mode), [scene, mode])
   useEffect(() => scene?.setExaggeration(exaggeration), [scene, exaggeration])
   useEffect(() => scene?.setEyeHeight(observerHeightM), [scene, observerHeightM])
-  useEffect(() => scene?.setSky(sky), [scene, sky])
+  useEffect(() => {
+    if (!scene) return
+    scene.setSky(buildSky(useAppStore.getState().cursorH))
+    return useAppStore.subscribe((s, prev) => {
+      if (s.cursorH !== prev.cursorH) scene.setSky(buildSky(s.cursorH))
+    })
+  }, [scene, buildSky])
 
   // Sync lander position with 3D scene
   useEffect(() => {
@@ -301,15 +353,21 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     return () => scene?.setOnTerrainHover(null)
   }, [scene, handleTerrainHover])
 
-  // Heatmap texture sync with 3D scene
+  // Heatmap texture sync with 3D scene (memoized to prevent GPU re-uploads when toggling)
+  const heatmapTexture = useMemo(() => {
+    if (!heatmapGrid) return null
+    return createHeatmapTexture(heatmapGrid, gridN).texture
+  }, [heatmapGrid, gridN])
+
   useEffect(() => {
-    if (!showHeatmap || !heatmapGrid) {
-      scene?.setHeatmapTexture(null)
-      return
+    return () => {
+      heatmapTexture?.dispose()
     }
-    const { texture } = createHeatmapTexture(heatmapGrid, gridN)
-    scene?.setHeatmapTexture(texture)
-  }, [showHeatmap, heatmapGrid, scene, gridN])
+  }, [heatmapTexture])
+
+  useEffect(() => {
+    scene?.setHeatmapTexture(showHeatmap ? heatmapTexture : null)
+  }, [showHeatmap, heatmapTexture, scene])
 
   // Worker-based heatmap calculation
   useEffect(() => {
@@ -423,7 +481,13 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       }
 
       if (!result) {
-        setSearchMessage('No flat spot found in this radius')
+        const isOutOfRange =
+          origSunHours === null || bundle.ephem.count === 0 || startMs >= endMs
+        setSearchMessage(
+          isOutOfRange
+            ? 'Outside ephemeris coverage'
+            : 'No flat spot found in this radius',
+        )
         setBestSpotResult(null)
       } else {
         setSearchMessage(null)
@@ -453,10 +517,15 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
   const isAtOrigin = landerOffset.eastM === 0 && landerOffset.northM === 0
 
+  const activeMask: readonly number[] = useMemo(() => {
+    if (isAtOrigin) return pickMask(bundle, observerHeightM)
+    return Array.from(movedMask)
+  }, [isAtOrigin, bundle, observerHeightM, movedMask])
+
   const sunRead = sample
     ? describeBody(
         sample.sun,
-        pickMask(bundle, observerHeightM),
+        activeMask,
         bundle.horizon.az_step_deg,
         bundle.ephem.sun_ang_radius_deg,
       )
@@ -499,7 +568,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         )}
         <div className="surface__overlay surface__overlay--bl">
           <div>{legend}</div>
-          <div>Earth imagery: NASA Blue Marble (orientation illustrative)</div>
+          <div>{earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}</div>
         </div>
         <div className="surface__overlay surface__overlay--br">
           {mode === 'surface'
@@ -550,6 +619,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           <span className="group__label">Vertical exaggeration</span>
           <input
             type="range"
+            aria-label="Vertical exaggeration"
             min={1}
             max={MAX_EXAGGERATION}
             step={0.5}
@@ -630,7 +700,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
       {/* Best Spot Result Card */}
       {bestSpotResult && (
-        <div className="surface__result-card" role="region" aria-label="Sunniest spot result">
+        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
           <div className="surface__result-badges">
             {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
             <span className="badge badge--approximate">Approximate (terrain patch only)</span>
@@ -682,8 +752,9 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           <div
             className="surface__nudge-control"
             tabIndex={0}
-            role="region"
-            aria-label="Lander position. Use arrow keys to nudge 100 m, Shift with arrow keys to nudge 500 m. Or click on the terrain."
+            role="group"
+            aria-roledescription="position control"
+            aria-label={`Lander position: ${formatOffset(landerOffset)}, height ${fmtNum(landerHeight, 1, true)} m. Arrow keys nudge.`}
             onKeyDown={handleLanderKeyDown}
           >
             <div className="surface__control-label">Lander position (arrow keys ±100 m, Shift ±500 m)</div>
@@ -703,6 +774,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
         <div className="surface__hours-row" title="Sun visible hours for the scenario window evaluated on this terrain patch">
           <span className="surface__hours-title">Sun visible hours:</span>
+          <span className="badge badge--approximate">Approximate</span>
+          {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
           <span className="surface__hours-stat">
             <b>{movedSunHours !== null ? `${movedSunHours.toFixed(1)} h` : '—'}</b>
             <span className="surface__hours-site"> (site: {origSunHours !== null ? `${origSunHours.toFixed(1)} h` : '—'})</span>
@@ -721,7 +794,11 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           ) : heatmapGrid ? (
             <>
               <div className="surface__legend-meta">
-                <span className="surface__legend-name">Sun visible map</span>
+                <div className="surface__legend-title-group">
+                  <span className="surface__legend-name">Sun visible map</span>
+                  <span className="badge badge--approximate">Approximate</span>
+                  {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
+                </div>
                 <span className="surface__legend-res">Resolution: ~{cellResolutionM} m</span>
               </div>
               <div className="surface__ramp-row">
@@ -733,7 +810,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
                 />
                 <span className="surface__ramp-num">{Math.round(heatmapRange.max)}%</span>
               </div>
-              <div className="surface__cell-inspector" tabIndex={0} aria-live="polite">
+              <div className="surface__cell-inspector" aria-live={hoveredCell ? 'off' : 'polite'}>
                 {hoveredCell !== null
                   ? `Hovered cell: ${hoveredCell.pct.toFixed(1)}% Sun visible (${formatOffset({ eastM: hoveredCell.eastM, northM: hoveredCell.northM })})`
                   : landerCellPct !== null && !Number.isNaN(landerCellPct)

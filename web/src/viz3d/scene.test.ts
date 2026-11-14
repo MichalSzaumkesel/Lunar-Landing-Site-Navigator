@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest'
-import { shouldUpdateShadow } from './scene'
+import { cameraEase, enuToThree, shouldUpdateShadow } from './scene'
+
+describe('cameraEase easing curve', () => {
+  it('eases in and out between 0 and 1 with cubic curve', () => {
+    expect(cameraEase(0)).toBe(0)
+    expect(cameraEase(1)).toBe(1)
+    expect(cameraEase(0.5)).toBe(0.5)
+    // ease-in: slower at start
+    expect(cameraEase(0.2)).toBeLessThan(0.2)
+    // ease-out: slower at end
+    expect(cameraEase(0.8)).toBeGreaterThan(0.8)
+    // Clamping
+    expect(cameraEase(-0.5)).toBe(0)
+    expect(cameraEase(1.5)).toBe(1)
+  })
+})
+
+describe('enuToThree coordinate transform', () => {
+  it('maps ENU (+X East, +Y North, +Z Up) to Three.js (+X East, +Y Up, -Z North)', () => {
+    expect(enuToThree(10, 20, 30)).toEqual([10, 30, -20])
+  })
+})
 
 describe('shouldUpdateShadow decision helper', () => {
   it('returns true when there is no previous shadow direction (initial render)', () => {

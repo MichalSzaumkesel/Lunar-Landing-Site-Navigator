@@ -5,7 +5,15 @@ import { Decor } from './decor'
 import type { DecorHost } from './decor'
 import { buildLander, buildLanderEnvironment, buildMarkerRing, disposeObject, LANDER_SINK_M } from './lander'
 import type { OffsetM } from './landerHelpers'
-import { BENCHMARK_MS, chooseTier, isLower, parseTierOverride, TIERS } from './quality'
+import {
+  BENCHMARK_FRAMES,
+  BENCHMARK_SKIP_FRAMES,
+  isLower,
+  medianMs,
+  parseTierOverride,
+  TIERS,
+  tierForIntervalMs,
+} from './quality'
 import type { QualityTier, TierSettings } from './quality'
 import { CASCADE_PATCH_OK, createSharedUniforms, installPatches } from './shaderPatches'
 import { SKIRT_SEGMENTS, skirtElevationAt, skirtProfile } from './skirt'
@@ -18,6 +26,7 @@ import {
   faceSunGlow,
   placeEarth,
   placeSun,
+  orientEarth,
   setEarthLighting,
   setSkirtProfile,
   setSkirtSun,
@@ -25,6 +34,8 @@ import {
   setSunGlare,
 } from './skyBodies'
 import type { BodyPlacement } from './skyBodies'
+import { earthRotation } from '../lib/earthOrientation'
+import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { earthLitFraction, faceTarget } from './viewMath'
@@ -74,8 +85,12 @@ export interface SkyState {
   earthAngRadiusDeg: number
   /** Sun and Earth size slider: 1 is the true angular size. */
   sizeScale: number
-  /** Cursor time, drives the (decorative) turn of the Earth picture. */
+  /** Cursor time, drives the decorative turn of the Earth picture when no orientation data is used. */
   timeMs: number
+  /** Real Earth orientation at the cursor time; null keeps the decorative turn. */
+  earthOrientation: EarthOrientation | null
+  /** Site latitude in degrees: the lunar axis direction in the local sky depends on it. */
+  siteLatDeg: number
 }
 
 const SUN_INTENSITY = 3.2 // about albedo * cos(incidence) before tone mapping
@@ -179,6 +194,7 @@ export class SurfaceScene {
   private raf = 0
   private hoverRaf = 0
   private animationRaf = 0
+  private landerAnimationCancel: (() => void) | null = null
   private benchRaf = 0
   private decorTimer = 0
   private cameraAnimationRaf = 0
@@ -459,6 +475,18 @@ export class SurfaceScene {
     }
   }
 
+  cancelLanderAnimation(): void {
+    if (this.animationRaf) {
+      cancelAnimationFrame(this.animationRaf)
+      this.animationRaf = 0
+    }
+    if (this.landerAnimationCancel) {
+      const cb = this.landerAnimationCancel
+      this.landerAnimationCancel = null
+      cb()
+    }
+  }
+
   /** Force an unthrottled shadow update (e.g. on playback pause). */
   invalidateShadow(): void {
     if (!this.sunDir) return
@@ -526,7 +554,12 @@ export class SurfaceScene {
     this.earthLight.intensity = earthShine
     if (earthP.dir) this.earthLight.position.copy(earthP.dir).multiplyScalar(1000)
 
-    setEarthLighting(this.earthRig, this.sunDir, (s.timeMs / DAY_MS) % 1)
+    const rotation =
+      s.earth && s.earthOrientation
+        ? earthRotation(s.siteLatDeg, s.earth.az, s.earth.el, s.earthOrientation)
+        : null
+    orientEarth(this.earthRig, rotation)
+    setEarthLighting(this.earthRig, this.sunDir, rotation ? 0 : (s.timeMs / DAY_MS) % 1)
     setStarSun(this.stars, this.sunDir)
     setSkirtSun(this.skirt, s.sun?.az ?? 0, s.sun?.el ?? null)
     placeSun(this.sunRig, sunP)
@@ -561,10 +594,13 @@ export class SurfaceScene {
     }
     this.fitShadows()
     this.renderer.shadowMap.needsUpdate = true
+    this.lastShadowUpdateTime = performance.now()
     this.invalidate()
   }
 
   animateLanderTo(target: OffsetM, durationMs: number = 1200): Promise<void> {
+    this.cancelLanderAnimation()
+
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
@@ -572,11 +608,6 @@ export class SurfaceScene {
     if (prefersReducedMotion || durationMs <= 0) {
       this.setLanderOffset(target.eastM, target.northM)
       return Promise.resolve()
-    }
-
-    if (this.animationRaf) {
-      cancelAnimationFrame(this.animationRaf)
-      this.animationRaf = 0
     }
 
     const startEast = this.landerOffset.eastM
@@ -590,9 +621,20 @@ export class SurfaceScene {
     }
 
     return new Promise((resolve) => {
+      this.landerAnimationCancel = () => {
+        resolve()
+      }
+
       const startTime = performance.now()
 
       const step = (now: number) => {
+        if (this.disposed) {
+          this.animationRaf = 0
+          this.landerAnimationCancel = null
+          resolve()
+          return
+        }
+
         const elapsed = now - startTime
         const rawT = Math.min(1, elapsed / durationMs)
         const ease = cameraEase(rawT)
@@ -606,7 +648,10 @@ export class SurfaceScene {
           this.animationRaf = requestAnimationFrame(step)
         } else {
           this.animationRaf = 0
-          this.setLanderOffset(target.eastM, target.northM)
+          this.landerAnimationCancel = null
+          if (!this.disposed) {
+            this.setLanderOffset(target.eastM, target.northM)
+          }
           resolve()
         }
       }
@@ -616,14 +661,14 @@ export class SurfaceScene {
   }
 
   setHeatmapTexture(texture: THREE.Texture | null): void {
-    if (this.terrainMat.map) {
+    if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
       this.terrainMat.map.dispose()
-      this.terrainMat.map = null
     }
     if (texture) {
       this.terrainMat.map = texture
       this.terrainMat.color.set(0xffffff)
     } else {
+      this.terrainMat.map = null
       this.terrainMat.color.set(REGOLITH_COLOR)
     }
     this.terrainMat.needsUpdate = true
@@ -665,6 +710,7 @@ export class SurfaceScene {
     if (this.disposed) return
     this.disposed = true
     this.cancelCameraAnimation()
+    this.cancelLanderAnimation()
     if (this.raf) cancelAnimationFrame(this.raf)
     this.raf = 0
     if (this.hoverRaf) cancelAnimationFrame(this.hoverRaf)
@@ -704,34 +750,26 @@ export class SurfaceScene {
   // Quality
 
   /**
-   * Measure the cost of one frame for about two seconds and lower the tier if the machine is slow.
-   * Reading a pixel waits for the GPU but also pays a fixed round trip, so a sample is the extra
-   * time of four more frames over a single one, with one shadow pass among them.
+   * Judge the machine from the first normal frame intervals. Forcing GPU reads stalls the page
+   * for seconds, so the benchmark only observes the frames the user already sees. The first
+   * frames pay for shader compilation and are skipped.
    */
   private startBenchmark(): void {
-    const samples: number[] = []
-    const gl = this.renderer.getContext()
-    const pixel = new Uint8Array(4)
-    const timed = (frames: number, shadow: boolean): number => {
-      if (shadow) this.renderer.shadowMap.needsUpdate = true
-      const t0 = performance.now()
-      for (let i = 0; i < frames; i++) this.renderOnce()
-      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
-      return performance.now() - t0
-    }
-    const start = performance.now()
-    const tick = () => {
+    const intervals: number[] = []
+    let last = performance.now()
+    let count = 0
+    const tick = (now: number) => {
       this.benchRaf = 0
       if (this.disposed) return
-      const one = timed(1, false)
-      const five = timed(5, true)
-      samples.push(Math.max(0, (five - one) / 4))
-      if (performance.now() - start < BENCHMARK_MS) {
+      const dt = now - last
+      last = now
+      count++
+      if (count > BENCHMARK_SKIP_FRAMES) intervals.push(dt)
+      if (intervals.length < BENCHMARK_FRAMES) {
         this.benchRaf = requestAnimationFrame(tick)
         return
       }
-      // The first samples pay for shader compilation.
-      const next = chooseTier(null, samples.slice(2))
+      const next = tierForIntervalMs(medianMs(intervals))
       if (isLower(next, this.tier)) this.applyTier(next)
     }
     this.benchRaf = requestAnimationFrame(tick)
@@ -835,18 +873,37 @@ export class SurfaceScene {
   }
 
   private updateMarkerRing(): void {
-    if (this.ring) {
-      this.scene.remove(this.ring)
-      disposeObject(this.ring)
-      this.ring = null
-    }
     const { eastM, northM } = this.landerOffset
     const x0 = eastM
     const z0 = -northM
-    this.ring = buildMarkerRing((rx, rz) => this.groundY(rx + x0, rz + z0))
+    if (!this.ring) {
+      this.ring = buildMarkerRing((rx, rz) => this.groundY(rx + x0, rz + z0))
+      this.ring.position.set(x0, 0, z0)
+      this.ring.visible = this.mode === 'overview'
+      this.scene.add(this.ring)
+      return
+    }
     this.ring.position.set(x0, 0, z0)
     this.ring.visible = this.mode === 'overview'
-    this.scene.add(this.ring)
+    if (this.ring.visible) {
+      const posAttr = this.ring.geometry.getAttribute('position') as THREE.BufferAttribute
+      const pos = posAttr.array as Float32Array
+      const segments = 96
+      const innerR = 230
+      const outerR = 260
+      const lift = 2
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2
+        const c = Math.cos(a)
+        const s = Math.sin(a)
+        for (let k = 0; k < 2; k++) {
+          const r = k === 0 ? innerR : outerR
+          const o = (i * 2 + k) * 3
+          pos[o + 1] = this.groundY(c * r + x0, s * r + z0) + lift
+        }
+      }
+      posAttr.needsUpdate = true
+    }
   }
 
   /** Body placement with its clearance over the horizon mask at its azimuth. */
@@ -942,7 +999,12 @@ export class SurfaceScene {
   private applyMode(): void {
     const surface = this.mode === 'surface'
     this.controls.enabled = !surface
-    if (this.ring) this.ring.visible = !surface
+    if (this.ring) {
+      this.ring.visible = !surface
+      if (!surface) {
+        this.updateMarkerRing()
+      }
+    }
     // The skirt is a wall around the observer; seen from the overview camera it would be a curtain.
     this.skirt.mesh.visible = surface
     // Haze is for a low observer; from the overview camera it would flatten the whole patch.
@@ -985,10 +1047,12 @@ export class SurfaceScene {
 
   private readonly onControlsStart = (): void => {
     this.cancelCameraAnimation()
+    this.cancelLanderAnimation()
   }
 
   private readonly onPointerDown = (e: PointerEvent): void => {
     this.cancelCameraAnimation()
+    this.cancelLanderAnimation()
     this.pointerDownPos = { x: e.clientX, y: e.clientY, time: performance.now() }
     if (this.mode !== 'surface') return
     this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY }
@@ -1050,10 +1114,12 @@ export class SurfaceScene {
 
   private readonly onWheel = (): void => {
     this.cancelCameraAnimation()
+    this.cancelLanderAnimation()
   }
 
   private readonly onKeyDown = (e: KeyboardEvent): void => {
     this.cancelCameraAnimation()
+    this.cancelLanderAnimation()
     if (this.mode !== 'surface') return
     const step = e.shiftKey ? 15 : 5
     const moves: Record<string, [number, number]> = {
