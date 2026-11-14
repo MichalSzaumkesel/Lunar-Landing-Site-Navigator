@@ -136,7 +136,7 @@ export function formatResultSentence(
 export function formatSimpleResultSentence(offset: OffsetM, gainHours: number): string {
   const dist = Math.hypot(offset.eastM, offset.northM)
   const gain = Math.round(gainHours)
-  if (gain <= 0 || dist < 5) return 'The current spot is already among the sunniest nearby.'
+  if (gain <= 0 || dist < 5) return 'The current spot is already among the best nearby for Sun visible.'
   const azDeg = (Math.atan2(offset.eastM, offset.northM) * 180) / Math.PI
   const dir = compassDirection8(azDeg)
   const distText =

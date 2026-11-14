@@ -226,7 +226,7 @@ export function getBestSiteSentence(
     return 'No site fits these rules. Relax a rule below.'
   }
   const dayWord = best.validDays === 1 ? 'day' : 'days'
-  return `Best site: ${best.name} (${best.validDays} valid ${dayWord})`
+  return `Most valid days: ${best.name} (${best.validDays} ${dayWord})`
 }
 
 /**

@@ -82,7 +82,7 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
   const mastGainText = delta
     ? delta.gainH > 0.05
       ? `+${fmtHours(delta.gainH)} Sun visible`
-      : 'no difference'
+      : 'No difference'
     : null
 
   return (
@@ -101,7 +101,7 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
         )}
       </dl>
       <p className="metrics__note">
-        Sun visible matters for solar power and heat. Earth in view is needed for direct-to-Earth radio. This tool shows geometry only, not power or link guarantees.
+        This tool shows geometry only: Sun visible and Earth in view above the local terrain horizon.
       </p>
       {partial && <p className="metrics__note">Window partly outside data range. Window values cover the available part.</p>}
       {isActive && (

@@ -213,7 +213,7 @@ describe('windowMapView pure helpers', () => {
         name: 'Site Beta',
         validDays: 4,
       })
-      expect(getBestSiteSentence(rows, sites)).toBe('Best site: Site Beta (4 valid days)')
+      expect(getBestSiteSentence(rows, sites)).toBe('Most valid days: Site Beta (4 days)')
     })
 
     it('returns relaxation prompt when all counts are 0', () => {

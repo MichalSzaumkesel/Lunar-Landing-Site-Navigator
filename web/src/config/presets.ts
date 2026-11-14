@@ -42,7 +42,7 @@ export const PRESET_SOUTH_POLE: Preset = {
 
 export const PRESET_APOLLO_VS_ARTEMIS: Preset = {
   id: 'apollo11_vs_artemis',
-  label: 'Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)',
+  label: 'Apollo 11 vs South Pole',
   description: 'Two cards with the same dates: the Sun high at the equator versus skimming the south pole horizon.',
   scenarios: [{ siteId: 'apollo_11' }, { siteId: 'artemis_region_1' }],
 }

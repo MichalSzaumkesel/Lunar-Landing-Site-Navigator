@@ -72,7 +72,7 @@ export function formatMastGainText(delta: MastDeltaResult | null | undefined): s
     const formatted = Number.isInteger(delta.gainH) ? delta.gainH : delta.gainH.toFixed(1)
     return `+${formatted} h Sun visible`
   }
-  return 'no difference'
+  return 'No difference'
 }
 
 /** Returns the compact table of the same metrics as the metrics panel. */

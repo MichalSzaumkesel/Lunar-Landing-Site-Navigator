@@ -139,7 +139,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
 
   const heatmapLoading = showHeatmap && !heatmapGrid
 
-  // Sunniest spot search state
+  // Spot search state
   const [searchRadiusM, setSearchRadiusM] = useState<number>(1000)
   const [isSearching, setIsSearching] = useState(false)
   const [searchProgress, setSearchProgress] = useState(0)
@@ -678,8 +678,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
       if (err instanceof Error && err.message === 'cancelled') {
         return
       }
-      console.error('Failed to find sunniest spot', err)
-      setSearchMessage('Failed to find sunniest spot')
+      console.error('Failed to find spot with most Sun visible', err)
+      setSearchMessage('Failed to find spot with most Sun visible')
     } finally {
       setIsSearching(false)
     }
@@ -731,7 +731,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             data-state={chipPresence.state}
             role="status"
             aria-live="polite"
-            aria-label="Sunniest spot result"
+            aria-label="Best spot result"
           >
             <div className="surface__result-sentence">
               {formatSimpleResultSentence(landerOffset, deltaHours)}
@@ -792,7 +792,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
               className="surface__overlay surface__map-legend presence-rise"
               data-state={legendPresence.state}
               role="img"
-              aria-label={`Sunlight map colour scale: from ${Math.round(heatmapRange.min)} percent (less Sun visible) to ${Math.round(heatmapRange.max)} percent (more Sun visible)`}
+              aria-label={`Sun visible map colour scale: from ${Math.round(heatmapRange.min)} percent (less Sun visible) to ${Math.round(heatmapRange.max)} percent (more Sun visible)`}
             >
               <div className="surface__map-legend-row">
                 <span>Less</span>
@@ -916,13 +916,13 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
           aria-busy={heatmapLoading || undefined}
           onClick={() => setShowHeatmap((prev) => !prev)}
         >
-          Sunlight map
+          Sun visible map
         </button>
 
           </>
         )}
         {!simple && (
-        <div className="group" role="group" aria-label="Sunniest spot search">
+        <div className="group" role="group" aria-label="Spot search">
           {!simple && (
           <label className="group">
             <span className="group__label">Radius</span>
@@ -946,13 +946,13 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             disabled={isSearching}
             onClick={handleFindBestSpot}
           >
-            Find sunniest spot
+            Find spot with most Sun visible
           </button>
           {isSearching && (
             <button
               type="button"
               onClick={handleCancelSearch}
-              aria-label="Cancel sunniest spot search"
+              aria-label="Cancel spot search"
             >
               Cancel
             </button>
@@ -963,7 +963,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
 
       {isSearching && (
         <div className="surface__search-progress" role="status" aria-live="polite">
-          Searching for sunniest spot: {Math.round(searchProgress * 100)}%
+          Searching for spot with most Sun visible: {Math.round(searchProgress * 100)}%
         </div>
       )}
 
@@ -975,7 +975,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
 
       {/* Best Spot Result Card */}
       {!simple && bestSpotResult && (
-        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
+        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Best spot result">
           <div className="surface__result-badges">
             {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
             <span className="badge badge--approximate">Approximate (local terrain patch horizon)</span>
@@ -1142,7 +1142,7 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
             title="No terrain data for this site"
             aria-label="No terrain data for this site"
           >
-            Find sunniest spot
+            Find spot with most Sun visible
           </button>
         </div>
       </>

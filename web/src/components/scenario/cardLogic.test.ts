@@ -147,7 +147,7 @@ describe('metric rows', () => {
     expect(longestDarkLine(132)).toBe('Longest dark stretch 5 d 12 h')
     expect(longestDarkLine(20)).toBe('Longest dark stretch 20 h')
     expect(longestNoEarthLine(144)).toBe('Longest without Earth 6 d')
-    expect(longestNoEarthLine(0)).toBe('No gap in this window')
+    expect(longestNoEarthLine(0)).toBe('Earth always in view in this window')
   })
 
   it('gives every row a definition', () => {

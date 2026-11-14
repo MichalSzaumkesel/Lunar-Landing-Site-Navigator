@@ -87,7 +87,7 @@ describe('printHelpers', () => {
         longestDark2H: 24,
         longestDark10H: 24,
       }
-      expect(formatMastGainText(delta)).toBe('no difference')
+      expect(formatMastGainText(delta)).toBe('No difference')
     })
 
     it('returns outside data range for null delta', () => {

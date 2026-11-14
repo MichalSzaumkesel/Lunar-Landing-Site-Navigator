@@ -74,7 +74,7 @@ export function longestDarkLine(h: number): string {
 
 /** Second line of the Earth in view chip. */
 export function longestNoEarthLine(h: number): string {
-  return h > 0 ? `Longest without Earth ${formatDuration(h)}` : 'No gap in this window'
+  return h > 0 ? `Longest without Earth ${formatDuration(h)}` : 'Earth always in view in this window'
 }
 
 // --- Window start and length ---

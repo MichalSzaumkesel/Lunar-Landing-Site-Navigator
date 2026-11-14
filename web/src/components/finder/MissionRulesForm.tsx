@@ -215,7 +215,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
           <label
             htmlFor="rule-missionDurationH"
             className="finder-form__label"
-            title="Total mission duration on the lunar surface (contract §3: missionDurationH, 1 to 1440 hours)"
+            title="Total mission duration on the lunar surface (1 to 1440 hours)"
           >
             <span>Mission length</span>
             <span className="finder-form__unit">hours ({daysDisplay} days)</span>
@@ -231,7 +231,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__input"
             aria-invalid={Boolean(errors.missionDurationH)}
             aria-describedby={errors.missionDurationH ? 'error-missionDurationH' : undefined}
-            title="Total mission duration on the lunar surface (contract §3: missionDurationH, 1 to 1440 hours)"
+            title="Total mission duration on the lunar surface (1 to 1440 hours)"
           />
           <FieldError id="error-missionDurationH" message={errors.missionDurationH} />
         </div>
@@ -241,7 +241,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
           <label
             htmlFor="rule-minPctSunlit"
             className="finder-form__label"
-            title="Required minimum percentage of mission duration with the Sun visible above horizon (contract §3: minPctSunlit, 0 to 100%)"
+            title="Required minimum percentage of mission duration with the Sun visible above horizon (0 to 100%)"
           >
             <span>Minimum share of time with Sun visible</span>
             <span className="finder-form__unit">%</span>
@@ -257,7 +257,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__input"
             aria-invalid={Boolean(errors.minPctSunlit)}
             aria-describedby={errors.minPctSunlit ? 'error-minPctSunlit' : undefined}
-            title="Required minimum percentage of mission duration with the Sun visible above horizon (contract §3: minPctSunlit, 0 to 100%)"
+            title="Required minimum percentage of mission duration with the Sun visible above horizon (0 to 100%)"
           />
           <FieldError id="error-minPctSunlit" message={errors.minPctSunlit} />
         </div>
@@ -267,7 +267,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
           <label
             htmlFor="rule-maxLongestDarkH"
             className="finder-form__label"
-            title="Maximum allowable continuous duration where the Sun is below horizon (contract §3: maxLongestDarkH, 0 to 1440 hours)"
+            title="Maximum allowable continuous duration where the Sun is below horizon (0 to 1440 hours)"
           >
             <span>Longest dark stretch allowed</span>
             <span className="finder-form__unit">hours</span>
@@ -283,7 +283,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__input"
             aria-invalid={Boolean(errors.maxLongestDarkH)}
             aria-describedby={errors.maxLongestDarkH ? 'error-maxLongestDarkH' : undefined}
-            title="Maximum allowable continuous duration where the Sun is below horizon (contract §3: maxLongestDarkH, 0 to 1440 hours)"
+            title="Maximum allowable continuous duration where the Sun is below horizon (0 to 1440 hours)"
           />
           <FieldError id="error-maxLongestDarkH" message={errors.maxLongestDarkH} />
         </div>
@@ -296,12 +296,12 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             checked={missionRules.earthAtLandingRequired}
             onChange={(e) => setMissionRules({ earthAtLandingRequired: e.target.checked })}
             className="finder-form__checkbox"
-            title="Requires Earth to be above the local horizon at the moment of landing (contract §3: earthAtLandingRequired)"
+            title="Requires Earth to be above the local horizon at the moment of landing"
           />
           <label
             htmlFor="rule-earthAtLandingRequired"
             className="finder-form__label"
-            title="Requires Earth to be above the local horizon at the moment of landing (contract §3: earthAtLandingRequired)"
+            title="Requires Earth to be above the local horizon at the moment of landing"
           >
             Earth in view at landing
           </label>
@@ -312,7 +312,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
           <label
             htmlFor="rule-minPctEarth"
             className="finder-form__label"
-            title="Required minimum percentage of mission duration with Earth in view above horizon (contract §3: minPctEarth, 0 to 100%)"
+            title="Required minimum percentage of mission duration with Earth in view above horizon (0 to 100%)"
           >
             <span>Minimum share of time with Earth in view</span>
             <span className="finder-form__unit">%</span>
@@ -328,7 +328,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__input"
             aria-invalid={Boolean(errors.minPctEarth)}
             aria-describedby={errors.minPctEarth ? 'error-minPctEarth' : undefined}
-            title="Required minimum percentage of mission duration with Earth in view above horizon (contract §3: minPctEarth, 0 to 100%)"
+            title="Required minimum percentage of mission duration with Earth in view above horizon (0 to 100%)"
           />
           <FieldError id="error-minPctEarth" message={errors.minPctEarth} />
         </div>
@@ -338,7 +338,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
           <label
             htmlFor="rule-minSunElAtLandingDeg"
             className="finder-form__label"
-            title="Optional minimum elevation angle of the Sun above horizon at landing in degrees (contract §3: minSunElAtLandingDeg). Empty means no rule."
+            title="Optional minimum elevation angle of the Sun above horizon at landing in degrees. Empty means no rule."
           >
             <span>Minimum Sun elevation above the horizon at landing</span>
             <span className="finder-form__unit">degrees</span>
@@ -355,7 +355,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__input"
             aria-invalid={Boolean(errors.minSunElAtLandingDeg)}
             aria-describedby={errors.minSunElAtLandingDeg ? 'error-minSunElAtLandingDeg' : undefined}
-            title="Optional minimum elevation angle of the Sun above horizon at landing in degrees (contract §3: minSunElAtLandingDeg). Empty means no rule."
+            title="Optional minimum elevation angle of the Sun above horizon at landing in degrees. Empty means no rule."
           />
           <FieldError id="error-minSunElAtLandingDeg" message={errors.minSunElAtLandingDeg} />
         </div>

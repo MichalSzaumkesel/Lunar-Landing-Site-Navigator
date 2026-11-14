@@ -12,9 +12,9 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ![3D terrain view with lander](docs/screenshots/03-surface-3d.png)
 
-![Sunlight map and "Find sunniest spot" result](docs/screenshots/04-sunniest-spot.png)
+![Sun visible map and "Find spot with most Sun visible" result](docs/screenshots/04-sunniest-spot.png)
 
-![Window map for the mission rules](docs/screenshots/05-window-map.png)
+![Window finder for the mission rules](docs/screenshots/05-window-map.png)
 
 ![Simple mode summary](docs/screenshots/06-simple-mode.png)
 
@@ -22,7 +22,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ### Compare
 - Up to four scenario cards (site and date per card) in the scenario board, with a compare table.
-- Presets, in the menu of the Add scenario button: *Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)*, *South pole*, and *Same site, 14 days later*.
+- Presets, in the menu of the Add scenario button: *Apollo 11 vs South Pole*, *South pole*, and *Same site, 14 days later*.
 - Metrics per card: Sun visible, longest dark stretch, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
 - Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 
@@ -42,15 +42,15 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 ### 3D
 - Terrain view loaded on demand (`React.lazy`), so the first screen does not load three.js.
 - Shadows updated from the Sun position at the time cursor.
-- Two camera modes: surface observer and orbital overview; quick views toward the Sun or Earth.
+- Two camera modes: On the surface and Overview; quick views and tracking lock toward the lander, Sun or Earth.
 - Movable lander (arrow keys, Shift for larger steps) with the local horizon recalculated.
-- Sunlight heatmap over the patch and "Find sunniest spot" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
+- "Sun visible map" over the patch and "Find spot with most Sun visible" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
 - Earth disc textured with NASA Blue Marble imagery, placed from the ephemeris and oriented from `earth_orientation.json` when it is present (otherwise the orientation is labelled illustrative).
 
 ### Planning
-- Mission rules: window length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 168 h, 240 h and 336 h stays.
+- Mission rules: mission length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 72 h, 168 h and 336 h stays; the reset button restores the 240 h example.
 - Mission bar on the timeline: green when the candidate landing meets all rules, red with the failing rule named when it does not.
-- Window map: a site-by-date matrix of landing windows, computed in a Web Worker.
+- Window finder: a site-by-date matrix of landing windows, computed in a Web Worker.
 - Moon map: orthographic view of the Moon with site markers, the subsolar point and the day/night terminator.
 - Site library with status, coordinates and provenance.
 - Custom site coordinates (latitude and longitude). See Data below for how these are labelled.
@@ -66,8 +66,8 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Colour is never the only carrier of status: text labels and shapes are used as well.
 - `prefers-reduced-motion` is respected; demo mode and playback start only on a user action.
 - Opening: a plain link starts in Simple mode; use `?m=a` (or the mode switch) for Advanced, which the presets need.
-- Simple mode: one sky plot and plain-language summaries for teaching and public demonstrations.
-- Guided tour (`Tour` button) and a demo narration (`Demo` button).
+- Simple mode: switchable Polar, Panorama and 3D views with plain-language summaries for teaching and public demonstrations.
+- Guided tour (`Tutorial` button) and a demo narration (`Demo` button).
 
 ### Sound
 - Off by default. Ambient and event-cue modes are available from the tools bar.
