@@ -1,86 +1,128 @@
 {
  "southpole_landed": {
   "height_m": 5321.9,
-  "dem": "LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0)"
+  "dem": "LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0)",
+  "slope_deg": 2.4,
+  "slope_window_m": 60.0
  },
  "artemis_region_1": {
   "height_m": 5290.3,
-  "dem": "LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0)"
+  "dem": "LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0)",
+  "slope_deg": 8.9,
+  "slope_window_m": 60.0
  },
  "apollo_11": {
   "height_m": -1927.9,
-  "dem": "LOLA LDEM_1024 (LRO-L-LOLA-4-GDR-V1.0, V1.05)"
+  "dem": "LOLA LDEM_1024 (LRO-L-LOLA-4-GDR-V1.0, V1.05)",
+  "slope_deg": 0.7,
+  "slope_window_m": 88.8
  },
  "apollo_12": {
   "height_m": -1430.3,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 2.1,
+  "slope_window_m": 355.4
  },
  "apollo_14": {
   "height_m": -1061.7,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 1.5,
+  "slope_window_m": 355.4
  },
  "apollo_15": {
   "height_m": -1925.6,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 1.1,
+  "slope_window_m": 355.4
  },
  "apollo_16": {
   "height_m": 11.6,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 1.4,
+  "slope_window_m": 355.4
  },
  "apollo_17": {
   "height_m": -2628.0,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 1.6,
+  "slope_window_m": 355.4
  },
  "im1_odysseus": {
   "height_m": 2592.8,
-  "dem": "LOLA LDEM_75S_60M (LRO-L-LOLA-4-GDR-V1.0, V2.0)"
+  "dem": "LOLA LDEM_75S_60M (LRO-L-LOLA-4-GDR-V1.0, V2.0)",
+  "slope_deg": 11.4,
+  "slope_window_m": 180.0
  },
  "chandrayaan_3": {
   "height_m": 529.9,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.8,
+  "slope_window_m": 355.4
  },
  "change_4": {
   "height_m": -5929.6,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.8,
+  "slope_window_m": 355.4
  },
  "slim": {
   "height_m": -916.4,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 8.8,
+  "slope_window_m": 355.4
  },
  "blue_ghost_m1": {
   "height_m": -3650.5,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.5,
+  "slope_window_m": 355.4
  },
  "hakuto_r_m1": {
   "height_m": -2910.3,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 11.4,
+  "slope_window_m": 355.4
  },
  "change_3": {
   "height_m": -2633.3,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.3,
+  "slope_window_m": 355.4
  },
  "change_5": {
   "height_m": -2542.0,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.8,
+  "slope_window_m": 355.4
  },
  "change_6": {
   "height_m": -5253.4,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 0.3,
+  "slope_window_m": 355.4
  },
  "luna_9": {
   "height_m": -1178.9,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 5.6,
+  "slope_window_m": 355.4
  },
  "luna_25": {
   "height_m": -329.3,
-  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)"
+  "dem": "LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0)",
+  "slope_deg": 22.5,
+  "slope_window_m": 355.4
  },
  "artemis_region_2": {
   "height_m": 4830.6,
-  "dem": "LOLA LDEM_80S_40M (LRO-L-LOLA-4-GDR-V1.0, V2.0)"
+  "dem": "LOLA LDEM_80S_40M (LRO-L-LOLA-4-GDR-V1.0, V2.0)",
+  "slope_deg": 9.1,
+  "slope_window_m": 120.0
  },
  "artemis_region_3": {
   "height_m": 1492.4,
-  "dem": "LOLA LDEM_80S_40M (LRO-L-LOLA-4-GDR-V1.0, V2.0)"
+  "dem": "LOLA LDEM_80S_40M (LRO-L-LOLA-4-GDR-V1.0, V2.0)",
+  "slope_deg": 8.9,
+  "slope_window_m": 120.0
  }
 }

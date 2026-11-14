@@ -81,3 +81,12 @@ Accessed 2026-11-14. Only numbers actually read on the cited page. Abstract-leve
 | polar orientation | LDEM_80S_20M PDS label: POLAR STEREOGRAPHIC, CENTER_LATITUDE -90, CENTER_LONGITUDE 0, MAP_PROJECTION_ROTATION 0, LINE/SAMPLE_PROJECTION_OFFSET 15199.5, MAP_SCALE 20 m/pix, POSITIVE_LONGITUDE_DIRECTION EAST | https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.lbl |
 | polar orientation (note) | Gazetteer Haworth centre -86.90, -4.00 (net 1; other nets -87.20, -7.49 and -87.45, -5.17), diameter 35 / 51.42 km. The LROC Haworth mosaic centre used for artemis_region_3 (-86.7, -23.7) is therefore tens of km from the crater centre: treat it as a point in the Haworth region mosaic, not the crater centre. | https://planetarynames.wr.usgs.gov/Feature/14502 |
 | illumination reference (validation/check_illumination_reference.py) | PGDA AVGVISIB_75S_120M_201608.TIF (83 MB) and AVGVISIB_75S_120M_201608_EARTH.TIF (43 MB), int16, scale 4e-5 -> fraction, Moon2000 polar stereographic, 120 m/px; 85S product (60 m) does not cover lat > -85 so it cannot be used at -84.79 | https://pgda.gsfc.nasa.gov/data/MoonIllumination/ (page https://pgda.gsfc.nasa.gov/products/69) |
+
+## Map backgrounds (`web/public/data/basemap/`, visual only, built by `pipeline/basemap.py`)
+
+| File | Source | URL |
+|---|---|---|
+| `southpole.png` | LOLA LDEM_80S_40M (whole product, 15200² px, 40 m, Moon-sphere polar stereographic), hillshade | https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_40m.img (label `.lbl`) |
+| `global.jpg` | NASA SVS CGI Moon Kit: `lroc_color_poles_2k.tif` (2048×1024 colour) × hillshade of `ldem_16_uint.tif` (5760×2880, half-metre DN). Credit: NASA's Scientific Visualization Studio. The kit page says it is optimized for aesthetics, not science. | https://svs.gsfc.nasa.gov/4720 |
+
+Kit layout (no georeferencing in the TIFFs) was checked, not assumed: `ldem_16_uint` vs 6 cached LOLA LDEM_256 windows gives r = 0.98–0.999 with left edge = −180°, top = +90° (r < 0.2 for a 0..360 layout); DN = half-metres + 20000.
