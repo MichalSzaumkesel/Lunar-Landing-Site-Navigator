@@ -138,6 +138,7 @@ export function useUrlSync(): void {
     let lastHeight = current.observerHeightM
     let lastSpeed = current.speedHPerSec
     let lastScenarios = current.scenarios
+    let lastRules = current.missionRules
     let timer: ReturnType<typeof setTimeout> | null = null
 
     const unsubscribe = useAppStore.subscribe((state) => {
@@ -146,7 +147,8 @@ export function useUrlSync(): void {
         state.mode === lastMode &&
         state.observerHeightM === lastHeight &&
         state.speedHPerSec === lastSpeed &&
-        state.scenarios === lastScenarios
+        state.scenarios === lastScenarios &&
+        state.missionRules === lastRules
       ) {
         return
       }
@@ -154,6 +156,7 @@ export function useUrlSync(): void {
       lastHeight = state.observerHeightM
       lastSpeed = state.speedHPerSec
       lastScenarios = state.scenarios
+      lastRules = state.missionRules
       const key = serializeShareable(
         state.mode,
         state.observerHeightM,

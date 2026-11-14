@@ -33,19 +33,12 @@ export function ExportCardPngButton({
   useEffect(() => {
     if (typeof document === 'undefined') return
 
+    // Tab ids come from useId(), so detect the Polar view by its mounted frame (Panorama uses .sky__pano).
     const checkPolar = () => {
-      const polarTab = document.querySelector<HTMLButtonElement>(
-        `#sky-views-${scenario.id}-tab-polar`,
-      )
-      if (polarTab) {
-        setIsPolarActive(polarTab.getAttribute('aria-selected') === 'true')
-      } else {
-        const svgEl = document.querySelector<SVGSVGElement>(
-          `svg.sky__svg[data-scenario="${scenario.id}"]`,
-        )
-        const anyTab = document.querySelector(`[id^="sky-views-${scenario.id}-tab-"]`)
-        setIsPolarActive(!anyTab || Boolean(svgEl))
-      }
+      const hasTabs = document.querySelector('[role="tab"][id$="-tab-polar"]') !== null
+      const hasPolar =
+        document.querySelector(`.sky__frame svg.sky__svg[data-scenario="${scenario.id}"]`) !== null
+      setIsPolarActive(!hasTabs || hasPolar)
     }
 
     checkPolar()
@@ -70,7 +63,9 @@ export function ExportCardPngButton({
       // Find the card's sky plot SVG element in the DOM
       const svgElement =
         typeof document !== 'undefined'
-          ? document.querySelector<SVGSVGElement>(`svg.sky__svg[data-scenario="${scenario.id}"]`)
+          ? document.querySelector<SVGSVGElement>(
+              `.sky__frame svg.sky__svg[data-scenario="${scenario.id}"]`,
+            )
           : null
 
       const { startMs, endMs } = scenarioWindowMs(scenario)

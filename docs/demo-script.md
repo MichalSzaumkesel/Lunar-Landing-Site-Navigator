@@ -9,7 +9,7 @@ Guide for the live jury demo (2 minutes) and the 30-second video. Every number i
 - [ ] **Tour off (`?tour=0`)**: open the app at `/?tour=0` so the guided tour does not cover the opening slide.
 - [ ] **Sound off**: the sound control in the tools bar shows `Sound: Off` (the default).
 - [ ] **Data loaded**: the demo sites `apollo_11`, `southpole_landed` and `artemis_region_1` have loaded. Check the site badges before the talk.
-- [ ] **Offline test**: switch DevTools to Offline, reload, and confirm the scenario still renders. Then go back online.
+- [ ] **Offline test**: after the data has loaded, switch DevTools to Offline and confirm the scenario, Play and the demo sites still work in the open tab. Do not reload: there is no service worker, so a reload while offline fails. Then go back online.
 - [ ] **Backup tab**: keep a second tab open at `/?m=s&tour=0` (`m=s` opens Simple mode) as a fallback.
 
 ## Live Demo for the Jury (2 Minutes)
@@ -43,7 +43,7 @@ Captions are generated from the app's own data (the same values the cards show, 
 ## Fallbacks
 
 - **WebGL fails or the projector lags**: stay on the **Polar** sky plot and the **Panorama** view. They use SVG and 2D canvas only.
-- **No network**: the app is static. Load it once before the talk, then it runs offline (see the offline test above).
+- **No network**: the app is static. Load it once before the talk and keep that tab open; it then works offline in-session only (the demo sites are prefetched), but a reload without network fails.
 - **Small or low-resolution screen (below 900 px wide)**: zoom out to 80-90%. The layout switches to one column; arrow keys and Space still work.
 - **Unexpected state or misclick**: reload the page at `/?tour=0`. The scenario is kept in the URL, so reloading restores it.
 - **Only 45 seconds left**: click **Demo** in the top bar. The narration bar runs the steps and moves the camera and timeline for you.
