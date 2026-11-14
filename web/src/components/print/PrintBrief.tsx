@@ -77,8 +77,10 @@ function useScenarioRenderData(
   const computedMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, endMs)
   const metrics = metricsOverride !== undefined ? metricsOverride : computedMetrics
 
-  // Rules use the same window metrics as the metrics table, so both sections agree.
-  const ruleMetrics = metrics
+  // Rules apply to the mission interval from landing, not to the whole scenario window (contract section 3).
+  const missionEndMs = startMs + missionRules.missionDurationH * 3_600_000
+  const missionMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, missionEndMs)
+  const ruleMetrics = metricsOverride !== undefined ? metricsOverride : missionMetrics
 
   const mastResult = useMemo(() => {
     if (!bundle || !scenario) return null
@@ -311,7 +313,7 @@ export function PrintBrief({
                     className="print-table__section-heading"
                     colSpan={1 + scenarioDataList.length}
                   >
-                    Mission Rules Evaluation
+                    Mission Rules Evaluation (mission interval from landing, not the full window)
                   </td>
                 </tr>
 
