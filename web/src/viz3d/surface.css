@@ -8,7 +8,8 @@
 .surface__frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  /* Sized by the viewport so the frame and its controls fit one screen (see the layout block at the end) */
+  height: var(--surface-h);
   overflow: hidden;
   background: #000;
   border: 1px solid var(--line);
@@ -352,9 +353,6 @@
 
 /* Phones: taller frame, one column of smaller overlays, drag hint dropped (the controls below stay) */
 @media (max-width: 480px) {
-  .surface__frame {
-    aspect-ratio: 4 / 5;
-  }
   .surface__overlay {
     padding: 0.25rem 0.45rem;
     font-size: 0.75rem;
@@ -763,4 +761,305 @@
 
 .surface__chipslot > * {
   grid-area: 1 / 1;
+}
+
+/*
+ * Fit the frame and its controls in one screen.
+ * --surface-h is the viewport height minus what surrounds the frame (card tabs, padding, sticky
+ * Transport and, when the controls sit below it, their height). Every part has a constant height,
+ * so nothing jumps while the sunlight map computes or a search runs.
+ */
+.surface {
+  --surface-chrome: 19rem;
+  --surface-h: clamp(15rem, calc(100dvh - var(--surface-chrome)), 60rem);
+}
+
+.surface__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+/* Compact controls: one grid, slim sliders, smaller buttons */
+.surface__controls {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.surface__controls > .segtoggle {
+  grid-column: 1 / -1;
+}
+
+.surface__controls .surface__face {
+  grid-column: span 2;
+}
+
+.surface__controls .surface__faces--inline .lockbtn,
+.surface__controls .surface__mapbtn,
+.surface__controls button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.surface__controls .surface__faces--inline .lockbtn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.15;
+}
+
+.surface__controls > label.group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto;
+  grid-template-areas: 'label slider value';
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+.surface__controls > label.group > .group__label {
+  grid-area: label;
+}
+
+.surface__controls > label.group > .surface__value {
+  grid-area: value;
+  min-width: 2.2rem;
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.surface__controls > label.group > input[type='range'] {
+  grid-area: slider;
+  width: 100%;
+  min-height: 1.75rem;
+  margin: 0;
+}
+
+.surface__controls > .surface__mapbtn {
+  grid-column: span 2;
+  white-space: nowrap;
+}
+
+.surface__controls > .group[role='group'] {
+  grid-column: span 4;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.surface__controls > .group[role='group'] > label.group {
+  display: flex;
+  flex: none;
+  gap: 0.3rem;
+}
+
+.surface__controls > .group[role='group'] > button {
+  flex: 1 1 0;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.surface__controls > .group[role='group'] select {
+  min-height: 2.25rem;
+}
+
+/* Secondary readouts: collapsed row (always mounted so the keyboard nudge keeps working) */
+.surface__more {
+  border-top: 1px solid var(--line);
+}
+
+.surface__more-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.25rem;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+}
+
+.surface__more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.surface__more-summary::before {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform var(--motion-duration-fast, 120ms) ease;
+}
+
+.surface__more[open] > .surface__more-summary::before {
+  transform: rotate(45deg);
+}
+
+.surface__more-summary:hover {
+  background: var(--panel-2);
+}
+
+.surface__more-summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.surface__more-title {
+  flex: none;
+  white-space: nowrap;
+}
+
+.surface__more-sum {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surface__more[open] > .surface__more-summary .surface__more-sum {
+  display: none;
+}
+
+.surface__more > .surface__lander-box,
+.surface__more > .surface__heatmap-panel {
+  margin-top: 0.4rem;
+}
+
+/* Phones: Transport is taller there, so the frame gives more height back */
+@media (max-width: 600px) {
+  /* the radius select keeps its aria-label; the visible word makes way for the buttons */
+  .surface__controls > .group[role='group'] > label.group > .group__label {
+    display: none;
+  }
+
+  .surface__controls > .surface__mapbtn {
+    font-size: 0.8125rem;
+    padding-inline: 0.25rem;
+  }
+
+  .surface {
+    --surface-chrome: 31rem;
+    --surface-h: clamp(15rem, calc(100dvh - var(--surface-chrome)), min(60rem, 125vw));
+  }
+}
+
+/* Wide card: controls in a column next to the frame; the frame is the only tall element */
+@container (min-width: 46rem) {
+  .surface:not(.surface--simple) {
+    --surface-chrome: 11rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem;
+    align-items: start;
+    gap: 0.75rem;
+  }
+
+  .surface:not(.surface--simple) .surface__side {
+    max-height: var(--surface-h);
+    overflow-y: auto;
+    /* the full screen button sits in the top right corner of the card */
+    padding: calc(var(--corner-btn-size, 28px) + var(--space-2, 8px)) 2px 0 0;
+  }
+
+  .surface:not(.surface--simple) .surface__badges {
+    right: 8px;
+  }
+
+  .surface:not(.surface--simple) .surface__controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .surface:not(.surface--simple) .surface__controls > *,
+  .surface:not(.surface--simple) .surface__controls .surface__face {
+    grid-column: 1;
+  }
+
+  .surface:not(.surface--simple) .surface__controls .surface__faces--inline .lockbtn {
+    font-size: 0.9375rem;
+  }
+
+  .surface:not(.surface--simple) .surface__controls > label.group {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'label value'
+      'slider slider';
+  }
+
+  .surface:not(.surface--simple) .surface__controls > .group[role='group'] > button {
+    flex: none;
+  }
+
+  .surface:not(.surface--simple) .surface__controls > .group[role='group'] {
+    flex-wrap: wrap;
+  }
+
+  .surface:not(.surface--simple) .surface__controls button,
+  .surface:not(.surface--simple) .surface__controls .surface__faces--inline .lockbtn {
+    min-height: 2rem;
+  }
+}
+
+/* Simple: the stage has a fixed size, so the frame takes whatever the controls leave */
+.surface--simple {
+  height: 100%;
+}
+
+.surface--simple .surface__frame {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 12rem;
+}
+
+.surface--simple .surface__controls > .surface__faces {
+  grid-column: 1 / -1;
+}
+
+.surface--simple .surface__side {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface__more-summary::before {
+    transition: none;
+  }
+}
+
+/* Simple, roomy stage: toggle and Face buttons share one row */
+@container (min-width: 44rem) {
+  .surface--simple .surface__controls {
+    grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+  }
+
+  .surface--simple .surface__controls > .segtoggle {
+    grid-column: 1;
+  }
+
+  .surface--simple .surface__controls > .surface__faces {
+    grid-column: 2;
+  }
+}
+
+/* Narrow Simple stage: Face labels wrap in two lines instead of being cut (row height stays constant) */
+.surface--simple .surface__faces .surface__face > .lockbtn {
+  white-space: normal;
+  font-size: 0.8125rem;
+  padding-inline: 0.25rem;
+}
+
+@container (min-width: 44rem) {
+  .surface--simple .surface__faces .surface__face > .lockbtn {
+    font-size: inherit;
+  }
 }
