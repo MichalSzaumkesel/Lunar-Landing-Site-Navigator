@@ -58,7 +58,6 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 ### Sharing and export
 - Share link: the workspace state (scenarios, dates, slip, observer height, view) is kept in the URL.
 - CSV export of the hourly time series (UTC time, Sun and Earth azimuth and elevation, visibility).
-- PNG export of a scenario card.
 - Dossier export for printing.
 - "Record video" in the demo narration, which saves a WebM file of the browser tab.
 

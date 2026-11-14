@@ -11,7 +11,7 @@ Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). P
 - Sky and time: polar sky plot, panorama, loupe (visible fraction of the solar disc), elevation chart, shared relative time cursor with Play, Sun and Earth countdowns.
 - 3D view (lazy loaded): terrain, shadows, movable lander, local sunlight heatmap and Find sunniest spot (Web Workers), Earth texture oriented from `earth_orientation.json`.
 - Planning: mission rules and mission bar, window map (Web Worker), Moon map, site library, custom coordinates (client-side approximation, labelled `Approximate`).
-- Simple and Advanced modes, tutorial tour, demo mode and 30 s video variant with WebM recording, share link, CSV, card PNG and dossier export, optional sound (off by default).
+- Simple and Advanced modes, tutorial tour, demo mode and 30 s video variant with WebM recording, share link, CSV and dossier export, optional sound (off by default).
 - Wording: only "Sun visible", "Sun below horizon", "Earth in view", "Earth below horizon"; "Artemis candidate region" everywhere (C-003); no power or link claims.
 - Wave 9: demo captions now show the app's own percentages (Sun visible and Earth in view of both cards; Sun visible before and after the 14-day slip), fallback names say "Artemis candidate region", and docs/demo-script.md and README.md were checked against the code.
 
