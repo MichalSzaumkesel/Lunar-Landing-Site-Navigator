@@ -822,6 +822,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         {simple && <LookHint />}
       </div>
 
+      <div className="surface__side">
       <div className={simple ? 'surface__controls surface__controls--simple' : 'surface__controls'}>
         <SegmentedToggle
           ariaLabel="Camera view"
@@ -928,6 +929,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             <span className="group__label">Radius</span>
             <select
               value={searchRadiusM}
+              title="Search radius"
               onChange={(e) => {
                 setSearchRadiusM(Number(e.target.value))
                 setSearchMessage(null)
@@ -1021,8 +1023,16 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         </div>
       )}
 
-      {/* Lander Position and What-If Horizon Recompute */}
+      {/* Lander position and sunlight hours: secondary, collapsed by default but always mounted (keyboard nudge stays available) */}
       {!simple && (
+      <details className="surface__more">
+      <summary className="surface__more-summary">
+        <span className="surface__more-title">Lander and sunlight hours</span>
+        <span className="surface__more-sum">
+          {formatOffset(landerOffset)}
+          {movedSunHours !== null ? ` · ${movedSunHours.toFixed(1)} h` : ''}
+        </span>
+      </summary>
       <div className="surface__lander-box">
         <div className="surface__lander-header">
           <div
@@ -1068,11 +1078,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
           </span>
         </div>
       </div>
-
-      )}
-
       {/* Sunlight Heatmap Legend & Cell Inspector */}
-      {!simple && showHeatmap && heatmapGrid && (
+      {showHeatmap && heatmapGrid && (
         <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
           {heatmapGrid ? (
             <>
@@ -1095,6 +1102,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
           ) : null}
         </div>
       )}
+      </details>
+      )}
+      </div>
     </>
   )
 }
@@ -1168,7 +1178,7 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
     )
   }
 
-  return <div className="surface">{body}</div>
+  return <div className={simple ? 'surface surface--simple' : 'surface'}>{body}</div>
 }
 
 export function SurfaceView({ scenarioId, variant = 'full' }: { scenarioId: string; variant?: SurfaceVariant }) {

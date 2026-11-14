@@ -728,6 +728,9 @@
 }
 
 .simple-sky-wrap[data-fullscreen='true'] .surface {
+  display: flex;
+  flex-direction: column;
+  --surface-h: auto;
   width: 100%;
   height: 100%;
 }
