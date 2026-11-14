@@ -29,8 +29,8 @@ def main() -> None:
             print(f"WARNING: {r['id']}: no DEM height yet, elevation_m = null")
     doc = {
         "meta": common.make_meta("pipeline/build_sites.py", [
-            {"name": "Site rows with primary sources (see each site.source)", "url": "pipeline/sites_input.json",
-             "notes": "Coordinates planetocentric, east-positive, from LROC pages (see each source)."},
+            {"name": "Site rows with primary sources (see each site.source)", "url": "https://lroc.im-ldi.com/",
+             "notes": "Rows from pipeline/sites_input.json. Coordinates planetocentric, east-positive, from LROC pages (exact URL in each site.source)."},
             {"name": "elevation_m = LOLA DEM ground height at the site (rel. R=1737.4 km)",
              "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/",
              "notes": "from pipeline/site_heights.json (written by pipeline/horizon.py)"}]),
