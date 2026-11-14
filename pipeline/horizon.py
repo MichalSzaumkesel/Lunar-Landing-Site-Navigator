@@ -158,25 +158,50 @@ def compute_masks(dem: Dem, lat_deg: float, lon_deg: float, range_km: float,
     return masks, h0
 
 
-def uncertainty_for(polar: bool) -> float:
+UNC_FILE = Path(__file__).resolve().parent / "uncertainty.json"
+
+
+def uncertainty_site(site_id: str, dem: "Dem") -> tuple[float, str]:
+    """(uncertainty_deg, basis). Per-site recommended value from validation/results/horizon_sensitivity_<site>.json
+    (copied to pipeline/uncertainty.json) when present; otherwise the per-product default (lead's rule)."""
+    if UNC_FILE.exists():
+        u = json.loads(UNC_FILE.read_text()).get(site_id)
+        if u:
+            return float(u["recommended_uncertainty_deg"]), (
+                f"uncertainty_deg {u['recommended_uncertainty_deg']} = worst RMS of the pipeline's own horizon under "
+                f"DEM x2/x4 degradation and +-1 px site shifts ({u['source']}); "
+                "excludes LOLA height and geolocation error")
+    prod = str(dem.info.get("product", ""))
+    val = 0.25 if ("80S" in prod.upper() or "256" in prod) else 0.15
+    return val, f"uncertainty_deg {val} = per-product default for {prod} (no sensitivity result for this site)"
+
+
+def uncertainty_for(polar: bool, resolution_m: float = 30.0) -> float:
     """Justified estimate (documented in docs/method.md by the validator): polar 0.1 deg, global 0.15 deg.
     Rationale: LOLA gridded heights are interpolated between ground tracks (denser near the pole); a height error of
     e metres on the limiting feature at distance d shifts the horizon by e/d rad, e.g. 10 m at 5 km = 0.11 deg, 10 m at
     2 km = 0.29 deg; the bilinear/step scheme adds <~0.03 deg. Equatorial tracks are sparser, hence the larger value."""
-    return UNCERTAINTY_POLAR_DEG if polar else UNCERTAINTY_GLOBAL_DEG
+    if polar:
+        return UNCERTAINTY_POLAR_DEG if resolution_m <= 25 else 0.15   # 40 m polar product: coarser
+    return UNCERTAINTY_GLOBAL_DEG if resolution_m <= 60 else 0.25     # LDEM_256 (118 m): coarser, more interpolation
 
 
 def build_horizon(site_id: str, lat_deg: float, lon_deg: float, dem: Dem, product: str, url: str,
                   extra_inputs: list[dict] | None = None) -> dict:
     polar = abs(lat_deg) >= 80.0
     range_km = 150 if polar else 100
+    is_polar_dem = isinstance(dem, PolarDem)
+    dem_choice = ("polar product (|lat|>=80, range inside the product)" if is_polar_dem else
+                  "global product (|lat|<80)" if not polar else
+                  "global product although |lat|>=80: the 150 km range does not fit inside the 80S polar product")
     masks, h0 = compute_masks(dem, lat_deg, lon_deg, range_km)
+    unc, unc_basis = uncertainty_site(site_id, dem)
     inputs = [{
         "name": product, "url": url,
         "notes": (f"{dem.info.get('kind', 'dem')}; resolution {dem.resolution_m:.1f} m; bilinear; site ground height "
                   f"h0 = {h0:.1f} m rel. R=1737.4 km; ray step max(res, 0.5% d); great-circle distance; "
-                  f"max range {range_km} km; DEM choice: {'polar (|lat|>=80)' if polar else 'global (|lat|<80)'}; "
-                  f"label {dem.info.get('label_url', '')}"),
+                  f"max range {range_km} km; DEM choice: {dem_choice}; "
+                  f"label {dem.info.get('label_url', '')}; {unc_basis}"),
     }] + (extra_inputs or [])
     return {
         "meta": common.make_meta("pipeline/horizon.py", inputs),
@@ -187,7 +212,7 @@ def build_horizon(site_id: str, lat_deg: float, lon_deg: float, dem: Dem, produc
         "masks": {str(h): masks[h].tolist() for h in OBSERVER_HEIGHTS_M},
         "dem": {"product": product, "resolution_m": round(float(dem.resolution_m), 1), "url": url,
                 "max_range_km": range_km},
-        "uncertainty_deg": uncertainty_for(polar),
+        "uncertainty_deg": unc,
         "_site_height_m": h0,
     }
 

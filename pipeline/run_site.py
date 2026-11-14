@@ -17,13 +17,14 @@ import horizon  # noqa: E402
 import terrain  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
+DEMO = set(common.DEMO_SITE_IDS)
 
 
 def run(site_id: str) -> None:
     rows = {r["id"]: r for r in json.loads((HERE / "sites_input.json").read_text())["sites"]}
     s = rows[site_id]
     lat, lon = s["lat_deg"], s["lon_deg"]
-    npy = fetch_dem.ensure_dem(lat, lon, 150 if abs(lat) >= 80 else 100)
+    npy = fetch_dem.ensure_dem(lat, lon, 150 if abs(lat) >= 80 else 100, demo=site_id in DEMO)
     dem, side = terrain.load_dem(npy)
     doc = horizon.build_horizon(site_id, lat, lon, dem, side["product"], side["url"])
     h0 = horizon.write_horizon(doc, common.DATA_DIR / "horizon" / f"{site_id}.json")
@@ -35,8 +36,11 @@ def run(site_id: str) -> None:
         site_id, lat, lon, round(h0 / 1000.0, 3),
         f"Site height {h0 / 1000:.3f} km = {side['product']} ground height at the site (rel. R=1737.4 km).")
     common.write_json(common.DATA_DIR / "ephem" / f"{site_id}.json", eph)
-    t = terrain.build_terrain(site_id, lat, lon, dem, side["product"], side["url"], common.DATA_DIR)
-    print(f"{site_id}: h0 {h0:.1f} m; terrain {t['height_min_m']:.0f}..{t['height_max_m']:.0f} m")
+    msg = f"{site_id}: h0 {h0:.1f} m; DEM {side['product']}"
+    if site_id in DEMO:   # terrain heightmaps only for the demo sites
+        t = terrain.build_terrain(site_id, lat, lon, dem, side["product"], side["url"], common.DATA_DIR)
+        msg += f"; terrain {t['height_min_m']:.0f}..{t['height_max_m']:.0f} m"
+    print(msg)
 
 
 if __name__ == "__main__":

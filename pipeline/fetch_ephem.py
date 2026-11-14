@@ -86,7 +86,7 @@ def parse_az_el(result: str) -> tuple[list[float], list[float], list[str]]:
         if len(f) < 5:
             raise RuntimeError(f"bad row: {l!r}")
         times.append(f[0])
-        az.append(float(f[3]) % 360.0)
+        az.append(round(float(f[3]) % 360.0, 3) % 360.0)   # rounding must not produce 360.0
         el.append(float(f[4]))
     return az, el, times
 
