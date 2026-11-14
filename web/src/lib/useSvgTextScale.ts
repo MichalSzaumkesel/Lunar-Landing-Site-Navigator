@@ -30,12 +30,12 @@ export function useSvgTextScale(unit = 1): (svg: SVGSVGElement | null) => void {
         svg.style.setProperty('--svg-px', String(1 / scale))
       }
       run()
-      const ro = new ResizeObserver(run)
-      ro.observe(svg)
+      const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(run)
+      ro?.observe(svg)
       const mo = new MutationObserver(run)
       mo.observe(svg, { attributes: true, attributeFilter: ['viewBox'] })
       cleanup.current = () => {
-        ro.disconnect()
+        ro?.disconnect()
         mo.disconnect()
       }
     },
