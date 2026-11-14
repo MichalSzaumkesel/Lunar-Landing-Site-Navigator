@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactElement } from 'react'
+import { VolumeSlider } from './VolumeSlider'
 import {
   getSoundEngine,
   loadSoundPreference,
@@ -9,13 +10,15 @@ import {
 } from '../../lib/sound'
 import './sound.css'
 
+const SLIDE_MS = 200
+
 export interface SoundToggleProps {
   className?: string
   engine?: SoundEngine
 }
 
 /**
- * Three-state sound control: Off / Ambient / Cues, with volume slider and visibility hint.
+ * Three-state sound control: Off / Ambient / Cues, with a volume slider that slides in when sound is on.
  * Default Off; persists choice in localStorage (wrapped in try/catch).
  * AudioContext starts only after user click (autoplay policy).
  */
@@ -61,12 +64,36 @@ export function SoundToggle({
     engine.setMode(newMode)
   }
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const val = Number(e.target.value) / 100
+  const handleVolumeChange = (percent: number): void => {
+    const val = percent / 100
     setVolume(val)
     saveSoundVolume(val)
     engine.setVolume(val)
   }
+
+  // Keep the slider mounted during the slide-out, then unmount it
+  const wantsSlider = mode !== 'off'
+  const [mounted, setMounted] = useState(wantsSlider)
+  const [entered, setEntered] = useState(wantsSlider)
+  if (wantsSlider && !mounted) setMounted(true)
+  const shown = wantsSlider && entered
+  useEffect(() => {
+    if (wantsSlider) {
+      const raf = window.requestAnimationFrame(() => setEntered(true))
+      return () => window.cancelAnimationFrame(raf)
+    }
+    const reduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timer = window.setTimeout(
+      () => {
+        setEntered(false)
+        setMounted(false)
+      },
+      reduced ? 0 : SLIDE_MS,
+    )
+    return () => window.clearTimeout(timer)
+  }, [wantsSlider])
 
   return (
     <div
@@ -118,29 +145,17 @@ export function SoundToggle({
           </button>
         </div>
 
-        <div className="sound-control__volume">
-          <label htmlFor="sound-volume-slider" className="sound-sr-only">
-            Sound volume
-          </label>
-          <input
-            id="sound-volume-slider"
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round(volume * 100)}
-            onChange={handleVolumeChange}
-            aria-label="Sound volume"
-            title={`Sound volume: ${Math.round(volume * 100)} %`}
-            className="sound-volume-slider"
-          />
-        </div>
+        {mounted && (
+          <div
+            className={`sound-control__volume ${shown ? 'sound-control__volume--in' : ''}`.trim()}
+            aria-hidden={wantsSlider ? undefined : 'true'}
+            inert={!wantsSlider}
+          >
+            <VolumeSlider value={Math.round(volume * 100)} onChange={handleVolumeChange} />
+          </div>
+        )}
       </div>
 
-      {mode === 'ambient' && (
-        <div className="sound-control__hint" role="status">
-          Sun and Earth fade in and out with visibility.
-        </div>
-      )}
     </div>
   )
 }
