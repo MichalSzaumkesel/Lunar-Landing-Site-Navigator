@@ -25,31 +25,25 @@ export interface SimpleBlock {
 }
 
 export interface SimpleRow {
-  id: 'sun' | 'dark' | 'earth' | 'noEarth'
-  label: string
-  value: string
-  /** Secondary metric shown under the row above it. */
-  child?: boolean
-}
-
-export interface SimpleDetailRow {
   id: string
   label: string
   value: string
   /** Plain definition for the title attribute. */
   hint: string
+  /** Shown under the group's parent row. */
   child?: boolean
 }
 
-export interface SimpleDetailGroup {
+/** One body's tree: a parent row (share of the window) and its child rows. */
+export interface SimpleGroup {
+  id: 'sun' | 'earth'
   title: string
-  rows: SimpleDetailRow[]
+  rows: SimpleRow[]
 }
 
 export interface SimpleStatus {
   blocks: [SimpleBlock, SimpleBlock]
-  rows: SimpleRow[]
-  details: SimpleDetailGroup[]
+  groups: [SimpleGroup, SimpleGroup]
   note: string | null
 }
 
@@ -160,20 +154,39 @@ export function formatMastGain(gainH: number): string {
   return `+${h} ${h === 1 ? 'hour' : 'hours'}`
 }
 
-/** The extra rows under the window summary, grouped Sun, Earth and Site; the mast row only with both heights. */
-export function detailGroups(d: WindowDetails | null | undefined): SimpleDetailGroup[] {
-  const sun: SimpleDetailRow[] = [
+/** Sun and Earth trees for the whole window; the mast row only with both heights. */
+export function windowGroups(
+  metrics: SimpleStatusInput['metrics'],
+  durationH: number,
+  d: WindowDetails | null | undefined,
+): [SimpleGroup, SimpleGroup] {
+  const span = windowPhrase(durationH)
+  const sun: SimpleRow[] = [
+    {
+      id: 'sun',
+      label: 'Sun visible',
+      value: `${Math.round(metrics.pct_sunlit)}% of ${span}`,
+      hint: 'Share of the window when the centre of the Sun is above the local horizon, hills included.',
+    },
+    {
+      id: 'dark',
+      label: 'Longest dark stretch',
+      value: formatStretch(metrics.longest_dark_h),
+      hint: 'The longest time in a row when the Sun stays below the local horizon.',
+      child: true,
+    },
     {
       id: 'maxSun',
       label: 'Highest Sun above the horizon',
       value: formatDegrees(d?.maxSunElDeg),
       hint: 'The highest the centre of the Sun climbs above the flat (mean) horizon in this window. Hills are ignored here.',
+      child: true,
     },
     {
-      id: 'partSun',
-      label: 'Sun partly hidden by hills',
-      value: formatPercent(d?.sunPartlyHiddenPct),
-      hint: 'Share of the Sun visible time (centre above the hills) when the hills still cover part of the Sun disc.',
+      id: 'maxHill',
+      label: 'Highest hill on the horizon',
+      value: formatDegrees(d?.maxHillDeg),
+      hint: 'The highest point of the terrain skyline at this place, for the chosen observer height, in degrees above the flat horizon. Hills this high cut the Sun off.',
       child: true,
     },
   ]
@@ -183,36 +196,34 @@ export function detailGroups(d: WindowDetails | null | undefined): SimpleDetailG
       label: 'Taller mast (10 m) adds',
       value: formatMastGain(d.mastGainH),
       hint: 'Extra hours of Sun visible when the observer stands 10 m above the ground instead of 2 m.',
+      child: true,
     })
   }
   return [
-    { title: 'Sun', rows: sun },
+    { id: 'sun', title: 'Sun', rows: sun },
     {
+      id: 'earth',
       title: 'Earth',
       rows: [
+        {
+          id: 'earth',
+          label: 'Earth in view',
+          value: `${Math.round(metrics.pct_earth)}% of ${span}`,
+          hint: 'Share of the window when the centre of the Earth is above the local horizon, hills included.',
+        },
+        {
+          id: 'noEarth',
+          label: 'Longest without Earth',
+          value: formatStretch(metrics.longest_no_earth_h),
+          hint: 'The longest time in a row when the Earth stays below the local horizon.',
+          child: true,
+        },
         {
           id: 'maxEarth',
           label: 'Highest Earth above the horizon',
           value: formatDegrees(d?.maxEarthElDeg),
           hint: 'The highest the centre of the Earth climbs above the flat (mean) horizon in this window. Hills are ignored here.',
-        },
-        {
-          id: 'earthLit',
-          label: 'Earth lit by the Sun (phase)',
-          value: formatPercent(d?.earthLitPct),
-          hint: 'Average share of the Earth disc that is lit by the Sun, as seen from this place, over the whole window (also when Earth is below the horizon). Approximate.',
           child: true,
-        },
-      ],
-    },
-    {
-      title: 'Site',
-      rows: [
-        {
-          id: 'maxHill',
-          label: 'Highest hill on the horizon',
-          value: formatDegrees(d?.maxHillDeg),
-          hint: 'The highest point of the terrain skyline at this place, for the chosen observer height, in degrees above the flat horizon.',
         },
       ],
     },
@@ -220,12 +231,10 @@ export function detailGroups(d: WindowDetails | null | undefined): SimpleDetailG
 }
 
 /**
- * Builds the Simple mode readout: a Sun block and an Earth block of the same shape, and three window rows.
+ * Builds the Simple mode readout: a Sun block and an Earth block of the same shape, and a Sun and an Earth tree.
  * Wording only says what is visible in the sky, never power or a communication link.
  */
 export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
-  const span = windowPhrase(input.durationH)
-
   return {
     blocks: [
       {
@@ -241,13 +250,7 @@ export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
         detail: nextChange(input.earthVisible, input.nextEarthEvent, input.cursorMs, input.earthVisible ? 'No Earthset' : 'No Earthrise'),
       },
     ],
-    rows: [
-      { id: 'sun', label: 'Sun visible', value: `${Math.round(input.metrics.pct_sunlit)}% of ${span}` },
-      { id: 'dark', label: 'Longest dark stretch', value: formatStretch(input.metrics.longest_dark_h), child: true },
-      { id: 'earth', label: 'Earth in view', value: `${Math.round(input.metrics.pct_earth)}% of ${span}` },
-      { id: 'noEarth', label: 'Longest without Earth', value: formatStretch(input.metrics.longest_no_earth_h), child: true },
-    ],
-    details: detailGroups(input.details),
+    groups: windowGroups(input.metrics, input.durationH, input.details),
     note: input.synthetic ? 'This is demo data, not a measurement.' : null,
   }
 }
