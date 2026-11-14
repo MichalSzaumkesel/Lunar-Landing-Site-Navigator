@@ -68,4 +68,13 @@ describe('SkyHelp', () => {
     act(() => marker().click())
     expect(tip()?.getAttribute('data-state')).toBe('closed')
   })
+
+  it('shows the data sources paragraph in the 3D tooltip', () => {
+    act(() => {
+      root.render(createElement(SkyHelp, { centreText: '', view: '3d', sources: 'Terrain: LOLA X. Earth imagery: NASA Blue Marble.' }))
+    })
+    act(() => marker().focus())
+    expect(tip()?.textContent).toContain('Data sources. Terrain: LOLA X. Earth imagery: NASA Blue Marble.')
+    expect(tip()?.textContent).toContain('hold one')
+  })
 })

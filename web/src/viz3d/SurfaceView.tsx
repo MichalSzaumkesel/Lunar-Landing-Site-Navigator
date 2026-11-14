@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { registerActiveScene } from '../components/demo/cameraControl'
 import { describeBody, fmtNum, fmtUtc, pickMask, sunStateText } from '../components/sky/geometry'
 import { sampleAt } from '../lib/ephem'
@@ -118,7 +119,6 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   const [mode, setMode] = useState<ViewMode>('surface')
   const [exaggeration, setExaggeration] = useState(1)
   const [sizeScale, setSizeScale] = useState(SIZE_MIN)
-  const [showCredits, setShowCredits] = useState(false)
   const [facing, setFacing] = useState<'sun' | 'earth' | null>(null)
   const [locked, setLocked] = useState<LockState>(null)
 
@@ -363,7 +363,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   }
   const faceLander = () => {
     setLocked(null)
-    scene?.centerOnLander(false)
+    setFacing(null)
+    void scene?.faceLander()
   }
   useEffect(() => {
     scene?.setOnLockBreak(() => setLocked(null))
@@ -710,15 +711,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
     <>
       <div
         className="surface__frame"
-        {...(simple
-          ? {
-              tabIndex: 0,
-              'aria-label': '3D view. Arrow keys move the lander.',
-              onKeyDown: handleLanderKeyDown,
-              onKeyUp: handleLanderKeyUp,
-              onBlur: () => keyMotionRef.current?.release(),
-            }
-          : {})}
+        // Arrow keys on the 3D view only turn the camera: no lander move, no time seek.
+        data-no-shortcuts=""
+        {...(simple ? { tabIndex: 0, 'aria-label': '3D view. Arrow keys turn the view.' } : {})}
       >
         <div
           ref={holderRef}
@@ -791,65 +786,78 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         {simple && <LookHint />}
       </div>
 
-      <div className="surface__controls">
-        <div className="group" role="group" aria-label="Camera">
-          <button
-            type="button"
-            aria-pressed={mode === 'surface'}
-            onClick={() => switchMode('surface')}
-          >
-            On the surface
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === 'overview'}
-            onClick={() => {
-              switchMode('overview')
-              setFacing(null)
+      <div className={simple ? 'surface__controls surface__controls--simple' : 'surface__controls'}>
+        {simple ? (
+          <ViewToggle
+            value={mode}
+            onChange={(next) => {
+              switchMode(next)
+              if (next === 'overview') setFacing(null)
             }}
-          >
-            Overview
-          </button>
+          />
+        ) : (
+          <div className="group" role="group" aria-label="Camera">
+            <button type="button" aria-pressed={mode === 'surface'} onClick={() => switchMode('surface')}>
+              On the surface
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === 'overview'}
+              onClick={() => {
+                switchMode('overview')
+                setFacing(null)
+              }}
+            >
+              Overview
+            </button>
+          </div>
+        )}
+        <div className={simple ? 'surface__faces' : 'surface__faces surface__faces--inline'}>
+          <FaceSlot show={!simple || locked === null || locked === 'lander'}>
+            <LockButton
+              body="lander"
+              title={faceTitle('lander', mode, true)}
+              locked={locked === 'lander'}
+              onClick={faceLander}
+              onLock={() => lockBody('lander')}
+              onUnlock={unlock}
+            >
+              Face the lander
+            </LockButton>
+          </FaceSlot>
+          <FaceSlot show={!simple || locked === null || locked === 'sun'}>
+            <LockButton
+              body="sun"
+              disabled={!sample}
+              title={faceTitle('Sun', mode, Boolean(sample))}
+              locked={locked === 'sun'}
+              onClick={() => {
+                setLocked(null)
+                faceBody('sun')
+              }}
+              onLock={() => lockBody('sun')}
+              onUnlock={unlock}
+            >
+              Face the Sun
+            </LockButton>
+          </FaceSlot>
+          <FaceSlot show={!simple || locked === null || locked === 'earth'}>
+            <LockButton
+              body="earth"
+              disabled={!sample}
+              title={faceTitle('Earth', mode, Boolean(sample))}
+              locked={locked === 'earth'}
+              onClick={() => {
+                setLocked(null)
+                faceBody('earth')
+              }}
+              onLock={() => lockBody('earth')}
+              onUnlock={unlock}
+            >
+              Face the Earth
+            </LockButton>
+          </FaceSlot>
         </div>
-        <LockButton
-          body="sun"
-          disabled={!sample}
-          title={faceTitle('Sun', mode, Boolean(sample))}
-          locked={locked === 'sun'}
-          onClick={() => {
-            setLocked(null)
-            faceBody('sun')
-          }}
-          onLock={() => lockBody('sun')}
-          onUnlock={unlock}
-        >
-          Face the Sun
-        </LockButton>
-        <LockButton
-          body="earth"
-          disabled={!sample}
-          title={faceTitle('Earth', mode, Boolean(sample))}
-          locked={locked === 'earth'}
-          onClick={() => {
-            setLocked(null)
-            faceBody('earth')
-          }}
-          onLock={() => lockBody('earth')}
-          onUnlock={unlock}
-        >
-          Face the Earth
-        </LockButton>
-        <LockButton
-          body="lander"
-          disabled={mode !== 'overview'}
-          title={faceTitle('lander', mode, true)}
-          locked={locked === 'lander'}
-          onClick={faceLander}
-          onLock={() => lockBody('lander')}
-          onUnlock={unlock}
-        >
-          Face the lander
-        </LockButton>
         {!simple && (
           <>
         <label className="group">
@@ -890,16 +898,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
 
           </>
         )}
-        {simple && (
-          <button
-            type="button"
-            aria-label="Terrain and image credits"
-            aria-expanded={showCredits}
-            onClick={() => setShowCredits((v) => !v)}
-          >
-            i
-          </button>
-        )}
+        {!simple && (
         <div className="group" role="group" aria-label="Sunniest spot search">
           {!simple && (
           <label className="group">
@@ -924,7 +923,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             disabled={isSearching}
             onClick={handleFindBestSpot}
           >
-            {simple ? 'Find the sunniest spot nearby' : 'Find sunniest spot'}
+            Find sunniest spot
           </button>
           {isSearching && (
             <button
@@ -936,13 +935,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             </button>
           )}
         </div>
+        )}
       </div>
-
-      {simple && showCredits && (
-        <div className="surface__credits">
-          {legend}. {earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}.
-        </div>
-      )}
 
       {isSearching && (
         <div className="surface__search-progress" role="status" aria-live="polite">
@@ -1092,6 +1086,52 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         </div>
       )}
     </>
+  )
+}
+
+function ViewToggle({ value, onChange }: { value: ViewMode; onChange: (m: ViewMode) => void }) {
+  const opts: { id: ViewMode; label: string }[] = [
+    { id: 'surface', label: 'On the surface' },
+    { id: 'overview', label: 'Overview' },
+  ]
+  return (
+    <div className="viewtoggle" role="radiogroup" aria-label="Camera view" data-value={value}>
+      <span className="viewtoggle__thumb" aria-hidden="true" />
+      {opts.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          role="radio"
+          aria-checked={value === o.id}
+          tabIndex={value === o.id ? 0 : -1}
+          onClick={() => onChange(o.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault()
+              const next = value === 'surface' ? 'overview' : 'surface'
+              onChange(next)
+              const sib = e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button[role="radio"]')
+              sib?.[next === 'surface' ? 0 : 1]?.focus()
+            }
+          }}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** One Face button cell; slides out while another body is locked and slides back in after unlock. */
+function FaceSlot({ show, children }: { show: boolean; children: ReactNode }) {
+  const { mounted, state } = usePresence(show, 260)
+  const [wasHidden, setWasHidden] = useState(false)
+  if (!show && !wasHidden) setWasHidden(true)
+  if (!mounted) return null
+  return (
+    <div className="surface__face" data-state={state} data-enter={show && wasHidden ? '' : undefined}>
+      {children}
+    </div>
   )
 }
 
