@@ -1,0 +1,6 @@
+# Review U1: gaps and unfinished edges (UI)
+
+Read tasks/_review.md first (read-only rules). Run the app mentally from the code, and where useful look at the live app at http://localhost:5173/?tour=0 using any browser tool you have (the app is being edited by others; ignore transient breakage). FINAL REPLY RULE: at most 8 lines: report path, counts, the single most valuable recommendation in one line. Put all content only in the report file (create it early, append as you go, about 60 tool calls max). Rank everything by impact for a 2-3 minute jury demo and for planners, educators and the public. Every recommendation: what, why, rough effort (S/M/L), which files or components.
+Report: tasks/reviews/U1-gaps.md.
+
+Task: find missing pieces and rough edges across the whole UI in both modes: empty, loading, error and out-of-range states, inconsistent wording or units, missing tooltips for numbers (contract says every number has a unit and a definition tooltip), dead or confusing controls, unclear labels, layout problems at 1280x800, 1024 and 390 px, keyboard use, anything a jury member would trip on in the first minute, copy that breaks the wording rule (no power, energy, signal or link claims), places where synthetic or approximate data is not labelled. Also check what challenge requirements from CLAUDE.md (table 'The challenge') are weakly covered.
