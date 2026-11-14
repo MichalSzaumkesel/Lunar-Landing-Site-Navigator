@@ -343,6 +343,38 @@
   }
 }
 
+/* Phones: taller frame, one column of smaller overlays, drag hint dropped (the controls below stay) */
+@media (max-width: 480px) {
+  .surface__frame {
+    aspect-ratio: 4 / 5;
+  }
+  .surface__overlay {
+    padding: 0.25rem 0.45rem;
+    font-size: 0.75rem;
+  }
+  .surface__overlay--tl {
+    max-width: calc(100% - 64px);
+  }
+  .surface__badges {
+    top: 6rem;
+    right: auto;
+    left: 8px;
+    max-width: calc(100% - 16px);
+    justify-content: flex-start;
+  }
+  .surface__badges .badge {
+    font-size: 0.75rem;
+  }
+  .surface__overlay--bl {
+    font-size: 0.6875rem;
+    line-height: 1.3;
+  }
+  .surface__overlay--note {
+    bottom: 4.5rem;
+    width: calc(100% - 16px);
+  }
+}
+
 /* Dev harness page (dev3d.html) */
 .dev3d {
   display: flex;
