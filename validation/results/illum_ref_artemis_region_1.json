@@ -1,0 +1,12 @@
+{
+  "id": "illum_ref_artemis_region_1",
+  "kind": "illumination_reference",
+  "site_id": "artemis_region_1",
+  "max_abs_error_deg": null,
+  "max_abs_diff_pp": 1.47,
+  "n_samples": 2,
+  "pass": true,
+  "threshold_deg": null,
+  "threshold_pp": 15.0,
+  "notes": "Ours 2026-12-01..2028-12-31 (2 yr, observer 2 m, LDEM_80S_20M horizon): pct_sunlit 24.5%, sun any-part 26.0%, mean_sun_frac 24.5%, pct_earth 66.8%, earth any-part 71.9%. PGDA (~18.6 yr avg, 120 m/px, 75S product): sun 26.0% (9x9 px range 6.4-44.0), Earth 72.4% (range 47.7-100.0). Differences (ours - PGDA): sun centre-rule -1.5 pp, sun any-part -0.0 pp, Earth any-part -0.5 pp. Plausibility tolerance 15.0 pp; periods, DEM resolution and observer height differ, so this is not an exact validation."
+}

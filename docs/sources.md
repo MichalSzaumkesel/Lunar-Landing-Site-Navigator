@@ -72,3 +72,12 @@ Accessed 2026-11-14. Only numbers actually read on the cited page. Abstract-leve
 
 - Published illumination percent or horizon profile for IM-2 / Mons Mouton, Malapert Massif and Haworth: not found in the abstracts read. Full texts of V1, V2 (tables list the individual sites) and V3 were not read; they may hold per-site values. The Connecting Ridge coordinates are not given in the abstracts.
 - A slide deck found in search lists solar illumination and DTE visibility percentages for base-camp candidates (e.g. Shackleton-Slater) but it was not fetched and is a different study: NOT used.
+
+### Validation runs (2026-11-14)
+
+| Check | Data used | URL |
+|---|---|---|
+| polar orientation (validation/check_polar_orientation.py) | Crater centres, USGS/IAU Gazetteer of Planetary Nomenclature, control network 1, planetographic +East: Shackleton -89.67, 129.78, 20.92 km (other nets: -89.63, 132.32 and -89.90, 0.00); Shoemaker -88.14, 45.91, 51.82 km (other nets: -88.03, 39.85; -88.10, 44.90); de Gerlache -88.48, -88.34, 32.71 km (other nets: -88.45, -90.45; -88.50, -87.10) | https://planetarynames.wr.usgs.gov/Feature/5450 , https://planetarynames.wr.usgs.gov/Feature/5494 , https://planetarynames.wr.usgs.gov/Feature/1439 |
+| polar orientation | LDEM_80S_20M PDS label: POLAR STEREOGRAPHIC, CENTER_LATITUDE -90, CENTER_LONGITUDE 0, MAP_PROJECTION_ROTATION 0, LINE/SAMPLE_PROJECTION_OFFSET 15199.5, MAP_SCALE 20 m/pix, POSITIVE_LONGITUDE_DIRECTION EAST | https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_80s_20m.lbl |
+| polar orientation (note) | Gazetteer Haworth centre -86.90, -4.00 (net 1; other nets -87.20, -7.49 and -87.45, -5.17), diameter 35 / 51.42 km. The LROC Haworth mosaic centre used for artemis_region_3 (-86.7, -23.7) is therefore tens of km from the crater centre: treat it as a point in the Haworth region mosaic, not the crater centre. | https://planetarynames.wr.usgs.gov/Feature/14502 |
+| illumination reference (validation/check_illumination_reference.py) | PGDA AVGVISIB_75S_120M_201608.TIF (83 MB) and AVGVISIB_75S_120M_201608_EARTH.TIF (43 MB), int16, scale 4e-5 -> fraction, Moon2000 polar stereographic, 120 m/px; 85S product (60 m) does not cover lat > -85 so it cannot be used at -84.79 | https://pgda.gsfc.nasa.gov/data/MoonIllumination/ (page https://pgda.gsfc.nasa.gov/products/69) |
