@@ -133,7 +133,7 @@ export function useUrlSync(): void {
               durationH: sc.durationH,
               slipDays: sc.slipDays,
             })),
-            cursorH: 0,
+            cursorH: s.cursorH,
             speedHPerSec: s.speedHPerSec,
           }
           const hash = encodeState(urlState)

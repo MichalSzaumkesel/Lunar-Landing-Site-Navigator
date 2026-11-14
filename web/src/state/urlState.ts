@@ -31,6 +31,22 @@ function isValidCalendarDate(dateStr: string): boolean {
   )
 }
 
+/** Date only when the time is midnight (short links), otherwise `YYYY-MM-DDTHH:MM:SSZ`. */
+function encodeStart(startUtc: string): string {
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?Z$/.exec(startUtc)
+  if (!match) return startUtc.slice(0, 10)
+  return match[2] === '00:00:00' ? match[1] : `${match[1]}T${match[2]}Z`
+}
+
+/** Parses `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ` into a canonical UTC string, or null. */
+function decodeStart(value: string): string | null {
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T(\d{2}):(\d{2}):(\d{2})Z)?$/.exec(value)
+  if (!match || !isValidCalendarDate(match[1])) return null
+  const [, date, hh = '00', mm = '00', ss = '00'] = match
+  if (Number(hh) > 23 || Number(mm) > 59 || Number(ss) > 59) return null
+  return `${date}T${hh}:${mm}:${ss}Z`
+}
+
 /** Returns the hash string without the leading '#'. */
 export function encodeState(s: UrlState): string {
   const parts: string[] = []
@@ -52,10 +68,10 @@ export function encodeState(s: UrlState): string {
   // scenarios
   if (s.scenarios && s.scenarios.length > 0) {
     const scList = s.scenarios.slice(0, MAX_SCENARIOS).map((sc) => {
-      const dateOnly = sc.startUtc.slice(0, 10)
+      const start = encodeStart(sc.startUtc)
       const dur = Math.round(sc.durationH)
       const slip = Math.round(sc.slipDays)
-      return `${sc.siteId}~${dateOnly}~${dur}~${slip}`
+      return `${sc.siteId}~${start}~${dur}~${slip}`
     })
     parts.push(`s=${scList.join(';')}`)
   }
@@ -111,7 +127,7 @@ export function decodeState(hash: string): Partial<UrlState> {
       }
     }
 
-    // scenarios: s=<siteId>~<YYYY-MM-DD>~<durationH>~<slipDays>;...
+    // scenarios: s=<siteId>~<YYYY-MM-DD[THH:MM:SSZ]>~<durationH>~<slipDays>;...
     const sStr = params.get('s')
     if (sStr !== null && sStr !== '') {
       const scenarioTokens = sStr.split(';')
@@ -127,8 +143,9 @@ export function decodeState(hash: string): Partial<UrlState> {
         // siteId must match ^[a-z0-9_-]{1,64}$
         if (!/^[a-z0-9_-]{1,64}$/.test(siteId)) continue
 
-        // date must be a real calendar date
-        if (!isValidCalendarDate(dateStr)) continue
+        // start must be a real calendar date, optionally with a UTC time of day
+        const startUtc = decodeStart(dateStr)
+        if (startUtc === null) continue
 
         // durationH an integer 1 to 1440
         const dur = Number(durStr)
@@ -145,7 +162,7 @@ export function decodeState(hash: string): Partial<UrlState> {
 
         validScenarios.push({
           siteId,
-          startUtc: `${dateStr}T00:00:00Z`,
+          startUtc,
           durationH: dur,
           slipDays: clampedSlip,
         })
