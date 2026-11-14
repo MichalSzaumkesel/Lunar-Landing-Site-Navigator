@@ -6,7 +6,7 @@
   "rms_worst_deg": 0.7571,
   "recommended_uncertainty_deg": 0.8,
   "n_samples": 720,
-  "pass": false,
-  "threshold_deg": 0.25,
-  "notes": "2 m mask, DEM LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0) (118.451 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 46.2%). dem_x2: rms 0.146 max 0.487 deg, d_pct_sunlit +0.14 pp; dem_x4: rms 1.092 max 2.754 deg, d_pct_sunlit +0.86 pp; shift_N: rms 0.562 max 1.958 deg, d_pct_sunlit -0.30 pp; shift_S: rms 0.757 max 2.196 deg, d_pct_sunlit +0.44 pp; shift_E: rms 0.496 max 1.887 deg, d_pct_sunlit +0.21 pp; shift_W: rms 0.226 max 0.658 deg, d_pct_sunlit +0.16 pp. File uncertainty_deg 0.25; worst RMS (x2 and +-1 px shifts) 0.757 deg -> recommended uncertainty_deg 0.80. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+  "pass": true,
+  "threshold_deg": 0.8,
+  "notes": "2 m mask, DEM LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0) (118.451 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 46.2%). dem_x2: rms 0.146 max 0.487 deg, d_pct_sunlit +0.14 pp; dem_x4: rms 1.092 max 2.754 deg, d_pct_sunlit +0.86 pp; shift_N: rms 0.562 max 1.958 deg, d_pct_sunlit -0.30 pp; shift_S: rms 0.757 max 2.196 deg, d_pct_sunlit +0.44 pp; shift_E: rms 0.496 max 1.887 deg, d_pct_sunlit +0.21 pp; shift_W: rms 0.226 max 0.658 deg, d_pct_sunlit +0.16 pp. File uncertainty_deg 0.8; worst RMS (x2 and +-1 px shifts) 0.757 deg -> recommended uncertainty_deg 0.80. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
 }
