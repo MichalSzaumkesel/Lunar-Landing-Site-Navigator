@@ -51,7 +51,7 @@ describe('DemoCaption component', () => {
 
     const bar = container.querySelector('.demo-caption')
     expect(bar).not.toBeNull()
-    expect(bar?.getAttribute('aria-live')).toBe('polite')
+    expect(bar?.getAttribute('aria-live')).toBeNull()
     expect(bar?.getAttribute('role')).toBe('region')
 
     // Hint text
@@ -63,9 +63,11 @@ describe('DemoCaption component', () => {
     expect(stopBtn).not.toBeNull()
     expect(stopBtn?.textContent).toBe('Stop demo')
 
-    // Caption text element
+    // Caption text element with dedicated live region
     const captionEl = container.querySelector('.demo-caption__text')
     expect(captionEl).not.toBeNull()
+    expect(captionEl?.getAttribute('aria-live')).toBe('polite')
+    expect(captionEl?.getAttribute('aria-atomic')).toBe('true')
     expect(captionEl?.textContent).toBeTruthy()
   })
 

@@ -90,7 +90,7 @@ describe('Tour component', () => {
     })
 
     const skipBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Skip tour',
+      (b) => b.textContent === 'Skip tutorial',
     )
     expect(skipBtn).toBeDefined()
 
@@ -183,7 +183,7 @@ describe('Tour component', () => {
     })
 
     const skipBtn = Array.from(container.querySelectorAll('button')).find(
-      (b) => b.textContent === 'Skip tour',
+      (b) => b.textContent === 'Skip tutorial',
     )
     await act(async () => {
       skipBtn?.click()

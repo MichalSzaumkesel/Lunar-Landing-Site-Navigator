@@ -99,7 +99,7 @@ describe('useDemo hook', () => {
     expect(container.querySelector('[data-testid="status"]')?.textContent).toBe('inactive')
   })
 
-  it('any key stops the demo', async () => {
+  it('non-Escape keys do not stop demo, but Escape key stops the demo', async () => {
     await act(async () => {
       root.render(createElement(DemoTester))
     })
@@ -109,11 +109,16 @@ describe('useDemo hook', () => {
     })
     expect(useDemoStore.getState().isActive).toBe(true)
 
-    // Press Space or Enter or letter key
+    // Press Space - should NOT stop the demo
     await act(async () => {
       window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))
     })
+    expect(useDemoStore.getState().isActive).toBe(true)
 
+    // Press Escape - should stop the demo
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
     expect(useDemoStore.getState().isActive).toBe(false)
   })
 
@@ -153,5 +158,90 @@ describe('useDemo hook', () => {
 
     // Should have looped back to step 0
     expect(useDemoStore.getState().stepIndex).toBe(0)
+  })
+
+  it('restores app state before demo started (scenarios, mode, slip, cursor, playing false, active tab) when stopped', async () => {
+    // Setup pre-demo app state
+    const initialScenarios = [
+      {
+        id: 'user_sc1',
+        siteId: 'custom_site',
+        startUtc: '2026-05-01T00:00:00Z',
+        durationH: 120,
+        slipDays: 3,
+      },
+    ]
+    useAppStore.setState({
+      scenarios: initialScenarios,
+      mode: 'simple',
+      cursorH: 42,
+      playing: false,
+      activeScenarioId: 'user_sc1',
+    })
+
+    // Setup tabs in DOM
+    const polarTab = document.createElement('button')
+    polarTab.id = 'tab-polar'
+    polarTab.setAttribute('role', 'tab')
+    polarTab.setAttribute('aria-selected', 'true')
+    polarTab.onclick = () => {
+      polarTab.setAttribute('aria-selected', 'true')
+      tab3d.setAttribute('aria-selected', 'false')
+    }
+    const tab3d = document.createElement('button')
+    tab3d.id = 'tab-3d'
+    tab3d.setAttribute('role', 'tab')
+    tab3d.setAttribute('aria-selected', 'false')
+    tab3d.onclick = () => {
+      tab3d.setAttribute('aria-selected', 'true')
+      polarTab.setAttribute('aria-selected', 'false')
+    }
+    document.body.appendChild(polarTab)
+    document.body.appendChild(tab3d)
+
+    // Start demo
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+    expect(useDemoStore.getState().isActive).toBe(true)
+
+    // Demo steps modify the store and DOM
+    await act(async () => {
+      useAppStore.setState({
+        mode: 'advanced',
+        cursorH: 100,
+        playing: true,
+        scenarios: [
+          {
+            id: 'demo_sc1',
+            siteId: 'apollo_11',
+            startUtc: '2026-12-01T00:00:00Z',
+            durationH: 336,
+            slipDays: 14,
+          },
+        ],
+      })
+      tab3d.click()
+    })
+
+    expect(tab3d.getAttribute('aria-selected')).toBe('true')
+    expect(useAppStore.getState().mode).toBe('advanced')
+    expect(useAppStore.getState().playing).toBe(true)
+
+    // Stop demo
+    await act(async () => {
+      useDemoStore.getState().stopDemo()
+    })
+
+    // Verify app state was completely restored
+    expect(useDemoStore.getState().isActive).toBe(false)
+    expect(useAppStore.getState().playing).toBe(false)
+    expect(useAppStore.getState().mode).toBe('simple')
+    expect(useAppStore.getState().cursorH).toBe(42)
+    expect(useAppStore.getState().scenarios).toEqual(initialScenarios)
+    expect(polarTab.getAttribute('aria-selected')).toBe('true')
+
+    polarTab.remove()
+    tab3d.remove()
   })
 })

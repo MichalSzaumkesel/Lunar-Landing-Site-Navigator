@@ -40,9 +40,11 @@ export default function App() {
           </>
         )}
       </main>
-      <Transport />
+      <div className="app__footer">
+        <DemoCaption />
+        <Transport />
+      </div>
       <Tour />
-      <DemoCaption />
     </div>
   )
 }

@@ -163,6 +163,7 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
 
   const [boxRef, measured] = useElementWidth<HTMLDivElement>()
   const svgRef = useRef<SVGSVGElement>(null)
+  const cursorRef = useRef<SVGGElement>(null)
   const hatchId = 'tl-hatch-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const failHatchId = 'tl-fail-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
 
@@ -211,8 +212,10 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
     const landingDay = new Date(landingMs).toISOString().slice(0, 10)
     const clamped = clampStartUtc(landingDay, durationH)
     if (clamped) {
+      const dayStartMs = Date.parse(clamped)
+      const offsetH = Math.max(0, (landingMs - dayStartMs) / HOUR_MS)
       updateScenario(scenario.id, { startUtc: clamped, slipDays: 0 })
-      setStartH(0)
+      setStartH(offsetH)
     }
   }
 
@@ -238,7 +241,7 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) seek(e.clientX)
   }
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const onKeyDown = (e: KeyboardEvent<Element>) => {
     const step = keyStepH(e.key, e.shiftKey)
     if (step === null) return
     e.preventDefault()
@@ -273,9 +276,39 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
   const onMissionPointerUp = (e: PointerEvent<SVGGElement>) => {
     if (dragMissionRef.current && dragMissionRef.current.pointerId === e.pointerId) {
       e.stopPropagation()
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId)
+      } catch {
+        // Safe fallback if pointer capture already released
+      }
       dragMissionRef.current = null
       if (applyOnRelease) {
         applyLandingDate()
+      }
+    }
+  }
+
+  const onMissionTrackDown = (e: PointerEvent<SVGRectElement>) => {
+    e.stopPropagation()
+    const svg = svgRef.current
+    if (!svg) return
+    const x = e.clientX - svg.getBoundingClientRect().left
+    const clickedH = hoursFromX(x, LEFT, plotW, durationH)
+    const nextH = clampMissionStartH(
+      clickedH - missionRules.missionDurationH / 2,
+      durationH,
+      missionRules.missionDurationH,
+    )
+    setStartH(nextH)
+    if (applyOnRelease) {
+      const newLandingMs = startMs + nextH * HOUR_MS
+      const landingDay = new Date(newLandingMs).toISOString().slice(0, 10)
+      const clamped = clampStartUtc(landingDay, durationH)
+      if (clamped) {
+        const dayStartMs = Date.parse(clamped)
+        const offsetH = Math.max(0, (newLandingMs - dayStartMs) / HOUR_MS)
+        updateScenario(scenario.id, { startUtc: clamped, slipDays: 0 })
+        setStartH(offsetH)
       }
     }
   }
@@ -285,12 +318,9 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
     if (step === null) return
     e.preventDefault()
     e.stopPropagation()
-    const nextH = clampMissionStartH(
-      clampedStartH + step,
-      durationH,
-      missionRules.missionDurationH,
+    setStartH((prev) =>
+      clampMissionStartH(prev + step, durationH, missionRules.missionDurationH),
     )
-    setStartH(nextH)
   }
 
   const missionOffsetH = showMissionBar ? MISSION_H + MISSION_GAP : 0
@@ -356,16 +386,10 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
 
         <div
           className="tl__focus"
-          tabIndex={0}
-          role="slider"
-          aria-label={`Time cursor, ${bundle?.site.name ?? scenario.siteId}`}
-          aria-valuemin={0}
-          aria-valuemax={durationH}
-          aria-valuenow={Math.round(shownH * 10) / 10}
-          aria-valuetext={`${formatUtcMinute(startMs + shownH * HOUR_MS)}, ${shownH.toFixed(1)} h from window start`}
-          onKeyDown={onKeyDown}
+          role="group"
+          aria-label={`Timeline, ${bundle?.site.name ?? scenario.siteId}`}
         >
-          <svg ref={svgRef} className="tl__svg" width={width} height={height} aria-hidden="true">
+          <svg ref={svgRef} className="tl__svg" width={width} height={height} role="none">
             <TimelineBands
               runs={runs}
               width={width}
@@ -375,7 +399,18 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
               missionOffsetH={missionOffsetH}
             />
 
-            <g className="tl__cursor">
+            <g
+              ref={cursorRef}
+              className="tl__cursor"
+              tabIndex={0}
+              role="slider"
+              aria-label={`Time cursor, ${bundle?.site.name ?? scenario.siteId}`}
+              aria-valuemin={0}
+              aria-valuemax={durationH}
+              aria-valuenow={Math.round(shownH * 10) / 10}
+              aria-valuetext={`${formatUtcMinute(startMs + shownH * HOUR_MS)}, ${shownH.toFixed(1)} h from window start`}
+              onKeyDown={onKeyDown}
+            >
               <line x1={cursorX} x2={cursorX} y1={TOP - 4} y2={TOP + BANDS_H + missionOffsetH + 4} />
               <polygon points={`${cursorX - 5},${TOP - 8} ${cursorX + 5},${TOP - 8} ${cursorX},${TOP - 1}`} />
             </g>
@@ -397,7 +432,15 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
                 <text className="tl__label" x={LEFT - 10} y={missionY + MISSION_H / 2} textAnchor="end">
                   Mission
                 </text>
-                <rect className="tl__off" x={LEFT} y={missionY} width={plotW} height={MISSION_H} rx={3} />
+                <rect
+                  className="tl__off"
+                  x={LEFT}
+                  y={missionY}
+                  width={plotW}
+                  height={MISSION_H}
+                  rx={3}
+                  onPointerDown={onMissionTrackDown}
+                />
                 <g
                   className={`tl__bar-group tl__bar-group--${evalRes.color}`}
                   tabIndex={0}
@@ -414,6 +457,14 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
                   onKeyDown={onMissionKeyDown}
                 >
                   <title>{`${formatUtcMinute(landingMs)} · ${evalRes.text}`}</title>
+                  {/* Invisible 40px hit area for touch targets */}
+                  <rect
+                    x={barX}
+                    y={missionY - 10}
+                    width={barW}
+                    height={40}
+                    fill="transparent"
+                  />
                   <rect
                     className={`tl__bar tl__bar--${evalRes.color}`}
                     x={barX}
@@ -444,12 +495,18 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
                   )}
                   <text
                     className={`tl__bar-label tl__bar-label--${evalRes.color}`}
-                    x={textInside ? barX + 22 : barX + barW + 8 > LEFT + plotW - 60 ? barX - 8 : barX + barW + 8}
+                    x={textInside ? barX + 22 : barX + barW + 8 > LEFT + plotW - 80 ? Math.max(LEFT + 4, barX - 8) : barX + barW + 8}
                     y={missionY + MISSION_H / 2}
-                    textAnchor={textInside ? 'start' : barX + barW + 8 > LEFT + plotW - 60 ? 'end' : 'start'}
+                    textAnchor={textInside ? 'start' : barX + barW + 8 > LEFT + plotW - 80 ? 'end' : 'start'}
                     dominantBaseline="central"
                   >
-                    {evalRes.label}{evalRes.failingRule ? `: ${evalRes.failingRule}` : ''}
+                    {evalRes.valid
+                      ? evalRes.label
+                      : textInside
+                        ? `Rules not met: ${evalRes.failingRule ?? ''}`
+                        : evalRes.failingRule
+                          ? `Fail: ${evalRes.failingRule}`
+                          : 'Fail'}
                   </text>
                 </g>
                 <defs>

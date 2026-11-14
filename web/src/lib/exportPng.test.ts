@@ -5,6 +5,7 @@ import {
   buildPngFilename,
   extractKeyMetricRows,
   getFooterText,
+  inlineSvgStyles,
   renderCardToCanvas,
   type CardExportData,
 } from './exportPng'
@@ -31,6 +32,20 @@ describe('buildPngFilename', () => {
     expect(buildPngFilename('site with spaces!', '2027-03-01')).toBe(
       'site_with_spaces__2027-03-01.png',
     )
+  })
+
+  it('sanitizes date string containing non-ISO characters', () => {
+    expect(buildPngFilename('site', '2027/03/01')).toBe('site_2027_03_01.png')
+  })
+})
+
+describe('inlineSvgStyles', () => {
+  it('adds explicit width and height attributes to SVG root if missing', () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 400 400')
+    const serialized = inlineSvgStyles(svg)
+    expect(serialized).toContain('width="400"')
+    expect(serialized).toContain('height="400"')
   })
 })
 

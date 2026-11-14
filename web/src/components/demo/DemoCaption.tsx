@@ -1,10 +1,19 @@
+import { useEffect, useRef } from 'react'
 import { useDemo } from './useDemo'
 import { useVideoRecorder } from './useVideoRecorder'
 import './demo.css'
 
 export function DemoCaption() {
   const { isActive, variant, caption, stopDemo, setVariant } = useDemo()
-  const { isRecording, countdown, recorderError, startRecording, stopRecording } = useVideoRecorder()
+  const { isRecording, countdown, recorderError, startRecording, stopRecording, clearError } =
+    useVideoRecorder()
+  const stopButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (isRecording) {
+      stopButtonRef.current?.focus()
+    }
+  }, [isRecording])
 
   if (!isActive && !isRecording && countdown === null && !recorderError) {
     return null
@@ -19,6 +28,7 @@ export function DemoCaption() {
   }
 
   const handleStopAll = () => {
+    clearError()
     if (isRecording || countdown !== null) {
       stopRecording()
     } else {
@@ -44,7 +54,6 @@ export function DemoCaption() {
       className={`demo-caption ${isRecording ? 'demo-caption--recording' : ''}`}
       role="region"
       aria-label="Demo narration"
-      aria-live="polite"
     >
       <div className="demo-caption__content">
         <span
@@ -58,7 +67,9 @@ export function DemoCaption() {
         >
           {badgeText}
         </span>
-        <p className="demo-caption__text">{displayedText}</p>
+        <p className="demo-caption__text" aria-live="polite" aria-atomic="true">
+          {displayedText}
+        </p>
       </div>
       <div className="demo-caption__controls">
         {/* Recorder UI is hidden during recording so it does not appear in recorded frame */}
@@ -86,8 +97,19 @@ export function DemoCaption() {
             </button>
           </div>
         )}
+        {recorderError && (
+          <button
+            type="button"
+            className="demo-caption__btn"
+            onClick={clearError}
+            aria-label="Dismiss error"
+          >
+            Dismiss
+          </button>
+        )}
         <span className="demo-caption__hint">Esc to stop</span>
         <button
+          ref={stopButtonRef}
           type="button"
           className="demo-caption__stop"
           onClick={handleStopAll}

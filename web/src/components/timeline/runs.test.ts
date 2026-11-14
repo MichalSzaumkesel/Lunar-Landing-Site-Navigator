@@ -174,6 +174,11 @@ describe('keyStepH', () => {
     expect(keyStepH('ArrowLeft', true)).toBe(-24)
   })
 
+  it('jumps to ends on Home and End keys', () => {
+    expect(keyStepH('Home', false)).toBe(-1e6)
+    expect(keyStepH('End', false)).toBe(1e6)
+  })
+
   it('ignores other keys', () => {
     expect(keyStepH('a', false)).toBeNull()
     expect(keyStepH('Enter', true)).toBeNull()

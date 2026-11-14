@@ -42,9 +42,9 @@ export function findFirstSunsetH(
   events?: readonly SkyEvent[] | null,
 ): number | null {
   if (!scenario || !events || events.length === 0) return null
-  const firstSunset = events.find((e) => e.kind === 'sunset')
+  const { startMs, endMs } = scenarioWindowMs(scenario)
+  const firstSunset = events.find((e) => e.kind === 'sunset' && e.ms >= startMs && e.ms <= endMs)
   if (!firstSunset) return null
-  const { startMs } = scenarioWindowMs(scenario)
   return Math.max(0, (firstSunset.ms - startMs) / HOUR_MS)
 }
 
@@ -70,17 +70,18 @@ export function formatStep3Caption(ctx: DemoStepContext): string {
   const events = ctx.events[1]
 
   if (scenario && events && events.length > 0) {
-    const firstSunset = events.find((e) => e.kind === 'sunset')
+    const { startMs, endMs } = scenarioWindowMs(scenario)
+    const firstSunset = events.find((e) => e.kind === 'sunset' && e.ms >= startMs && e.ms <= endMs)
     if (firstSunset) {
-      const { startMs } = scenarioWindowMs(scenario)
       const hoursUntil = Math.max(0, (firstSunset.ms - startMs) / HOUR_MS)
-      const countdownText = formatDuration(hoursUntil)
+      const countdownText =
+        hoursUntil * 60 < 1 ? 'less than a minute' : formatDuration(hoursUntil)
       return appendDemoDataNotice(`${siteName}: Sun sets in ${countdownText}.`, ctx.isSynthetic)
     }
-    return appendDemoDataNotice(`${siteName}: Sun below horizon in data range.`, ctx.isSynthetic)
+    return appendDemoDataNotice(`${siteName}: No sunset in selected window.`, ctx.isSynthetic)
   }
 
-  return appendDemoDataNotice(`${siteName}: Sun sets in 18 h.`, ctx.isSynthetic)
+  return appendDemoDataNotice(`${siteName}: Sunset time calculating...`, ctx.isSynthetic)
 }
 
 /** Step 4 caption: metrics difference between the two cards. */
@@ -95,7 +96,7 @@ export function formatStep4Caption(
   const m2 = metrics[1]
 
   if (!s1 || !s2 || !m1 || !m2) {
-    return appendDemoDataNotice('Sun visible and Earth in view comparison loading...', isSynthetic)
+    return appendDemoDataNotice('Metrics unavailable for selected date range.', isSynthetic)
   }
 
   const sunH1 = (m1.pct_sunlit / 100) * s1.durationH
@@ -124,10 +125,7 @@ export function formatStep5Caption(
   const m2 = metrics[1]
 
   if (!s1 || !s2 || !m1 || !m2) {
-    return appendDemoDataNotice(
-      'Same site, 14 days later: calculating Sun visible change...',
-      isSynthetic,
-    )
+    return appendDemoDataNotice('Metrics unavailable for selected date range.', isSynthetic)
   }
 
   const sunH1 = (m1.pct_sunlit / 100) * s1.durationH
@@ -181,6 +179,12 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     durationMs: 6000,
     run(store, ctx) {
       store.setPlaying(false)
+      if (typeof document !== 'undefined') {
+        const polarTab = document.querySelector<HTMLButtonElement>('[role="tab"][id$="-tab-polar"]')
+        if (polarTab && polarTab.getAttribute('aria-selected') !== 'true') {
+          polarTab.click()
+        }
+      }
       if (ctx && ctx.scenarios[1] && ctx.events[1]) {
         const sunsetH = findFirstSunsetH(ctx.scenarios[1], ctx.events[1])
         if (sunsetH !== null) {

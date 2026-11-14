@@ -43,10 +43,13 @@ export function TopBar() {
         type="button"
         className="ghost"
         data-tour="help-button"
-        aria-label="Open the guided tour"
-        onClick={() => openTour(0)}
+        aria-label="Open the tutorial"
+        onClick={() => {
+          if (isDemoActive) stopDemo()
+          openTour(0)
+        }}
       >
-        <span aria-hidden="true">?</span> Tour
+        <span aria-hidden="true">(?)</span> Tutorial
       </button>
       <button
         type="button"

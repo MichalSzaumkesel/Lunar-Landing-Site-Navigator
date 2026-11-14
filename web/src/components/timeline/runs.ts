@@ -127,8 +127,10 @@ export function xFromHours(h: number, left: number, plotWidth: number, durationH
   return left + (Math.min(durationH, Math.max(0, h)) / durationH) * plotWidth
 }
 
-/** Cursor step for an arrow key: 1 hour, 24 with Shift. Null for other keys. */
+/** Cursor step for an arrow key (1 h, 24 with Shift) or Home/End. Null for other keys. */
 export function keyStepH(key: string, shift: boolean): number | null {
+  if (key === 'Home') return -1e6
+  if (key === 'End') return 1e6
   const size = shift ? 24 : 1
   if (key === 'ArrowRight' || key === 'ArrowUp') return size
   if (key === 'ArrowLeft' || key === 'ArrowDown') return -size

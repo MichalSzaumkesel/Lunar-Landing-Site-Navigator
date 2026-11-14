@@ -1,10 +1,6 @@
 /* Demo narration caption bar */
 .demo-caption {
-  position: fixed;
-  bottom: 4.5rem;
-  left: 0;
-  right: 0;
-  z-index: 10;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -44,6 +40,7 @@
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -112,6 +109,11 @@
   color: var(--sun);
 }
 
+.demo-caption__btn--record::before {
+  content: '● ';
+  color: var(--danger);
+}
+
 .demo-caption__badge--video {
   background: var(--earth);
   color: var(--bg);
@@ -119,7 +121,7 @@
 
 .demo-caption__badge--recording {
   background: var(--danger);
-  color: #fff;
+  color: #07090f;
 }
 
 @media (max-width: 768px) {
@@ -128,11 +130,16 @@
     align-items: flex-start;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
-    bottom: 5.5rem;
   }
 
   .demo-caption__controls {
     width: 100%;
+    flex-wrap: wrap;
+    gap: var(--space-2);
     justify-content: space-between;
+  }
+
+  .demo-caption__hint {
+    display: none;
   }
 }

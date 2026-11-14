@@ -218,7 +218,7 @@ export function Tour({ className = '' }: TourProps) {
 
           <div className="tour-card__actions">
             <button type="button" className="ghost" onClick={handleSkip}>
-              Skip tour
+              Skip tutorial
             </button>
             <div className="tour-card__nav">
               <button type="button" onClick={handleBack} disabled={!canGoBack}>
