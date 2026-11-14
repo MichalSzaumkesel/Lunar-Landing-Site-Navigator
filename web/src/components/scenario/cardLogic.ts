@@ -113,13 +113,13 @@ export function splitEvents(events: readonly SkyEvent[]): SplitEvents {
   return { sun, earth }
 }
 
-/** First event strictly after `ms` in a time-sorted list (binary search), or undefined. */
+/** First event at or after `ms` in a time-sorted list (binary search), or undefined; matches contract section 3 (t >= t_ref). */
 export function nextEventAfter(list: readonly SkyEvent[], ms: number): SkyEvent | undefined {
   let lo = 0
   let hi = list.length
   while (lo < hi) {
     const mid = (lo + hi) >> 1
-    if (list[mid].ms > ms) hi = mid
+    if (list[mid].ms >= ms) hi = mid
     else lo = mid + 1
   }
   return list[lo]
