@@ -1,6 +1,6 @@
 # Status A (Data & Science)
 
-Lead: Claude (Opus). Last update: 2026-11-14 ~15:40 CET. Scope A work complete (A0–A10). See Handoff below.
+Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A10 done; tonight A11 (basemaps, slope) done, A12 (map UI, C-005) in progress.
 
 ## Tasks
 
@@ -17,6 +17,8 @@ Lead: Claude (Opus). Last update: 2026-11-14 ~15:40 CET. Scope A work complete (
 | A8 | Full `sites.json` (~20) + ephem + horizon | done (a/pipeline) | 21 sites. DEMs: LDEM_1024 (Apollo 11), LDEM_256 (other non-polar), LDEM_80S_20M / 80S_40M / 75S_60M (polar). Least robust: artemis_region_2 (pct_sunlit ±7.3 pp). Terrain only for the 3 demo sites. |
 | A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
 | A10 | (stretch) `illum/<id>.json` | done (southpole_landed, artemis_region_1) | 21×21, 200 m, ~36 s per site. vs PGDA: r 0.98 at both, median |Δ| 0.9 pp. meta.approximate = true. |
+| A11 | `basemap/` + `slope_deg` | done (a/basemap) | southpole.png 2048², ±304 km, LDEM_80S_40M hillshade, 1.77 MB; global.jpg 2048×1024 SVS CGI Moon Kit colour × hillshade, 0.66 MB (layout verified vs LOLA, r ≥ 0.98). slope_deg for 21 sites (Horn 3×3, horizon DEM). check_contract 0 errors (now checks basemaps), 43 tests pass. Contract PR #59 (1.3.0, not merged). |
+| A12 | Map UI (web/src/components/map/, C-005, until Sun 08:00) | in progress (a/ui-map) | teammate map-ui; PR to main for scope B review, not merged by A. |
 
 How to run:
 
@@ -116,6 +118,26 @@ New site: add a sourced row to `pipeline/sites_input.json` (source URL mandatory
 2. (For both humans) `docs/scope-A-data.md` and `docs/scope-B-web.md` exist on A's machine but are **not on `main`**, although CLAUDE.md refers to them. Please commit them as shared files.
 
 ## Draft CRITICAL notice
+
+### For the human: commit to main when a/basemap is merged (next free number C-006)
+
+```
+### C-006 · New data: basemap/ (map backgrounds) + sites[].slope_deg
+- Date (CET): 2026-11-14 <fill in>
+- From: scope A
+- Affects: scope B
+- Severity: must-fix-before-freeze (only if B shows the map or slope)
+- Contract: v1.3.0 PR #59 (pending; §2.9 basemap, optional sites[].slope_deg)
+- What changed: on main: web/public/data/basemap/southpole.png + southpole.json (LOLA LDEM_80S_40M hillshade,
+  Moon-sphere south polar stereographic, extent_m ±304000 m, 2048², row 0 = top = +y, lon 0 up, lon 90E right;
+  covers all |lat| ≥ 80° sites) and basemap/global.jpg + global.json (equirectangular, lon −180..180 left→right,
+  lat 90..−90 top→bottom, 2048×1024, NASA SVS CGI Moon Kit). Each json has a `credit` string. sites.json rows gain
+  `slope_deg` (Horn 3×3 on the horizon DEM, terrain scale, not lander-footprint scale); extra field, nothing removed.
+- Action required: show the `credit` string while a basemap is visible (the a/ui-map PR does this); if slope is shown,
+  label it "terrain slope (DEM scale)". Approve or comment on PR #59.
+- Workaround until fixed: none needed; files are additive.
+- Status: open
+```
 
 (Only if the human agrees on the Artemis wording.)
 
