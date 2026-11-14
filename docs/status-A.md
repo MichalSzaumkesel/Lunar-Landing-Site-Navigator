@@ -16,7 +16,7 @@ Lead: Claude (Opus). Last update: 2026-11-14 afternoon. A0–A9 done and validat
 | A7 | `validation.json` | done (a/research) | 37 checks, all pass: ephem vs Horizons re-query at 13 sites (≤ 0.0012°), polar DEM orientation vs 3 IAU craters, PGDA illumination at 2 polar points (≤ 2 pp), horizon sensitivity at all 21 sites (per-site uncertainty_deg). Not done: metrics.py vs metrics.ts (no Node on A's machine; B runs fixtures). |
 | A8 | Full `sites.json` (~20) + ephem + horizon | done (a/pipeline) | 21 sites. DEMs: LDEM_1024 (Apollo 11), LDEM_256 (other non-polar), LDEM_80S_20M / 80S_40M / 75S_60M (polar). Least robust: artemis_region_2 (pct_sunlit ±7.3 pp). Terrain only for the 3 demo sites. |
 | A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
-| A10 | (stretch) `illum/<id>.json` | not started | |
+| A10 | (stretch) `illum/<id>.json` | done for southpole_landed (a/illum) | 21×21, 200 m, 36 s runtime. 0–51.7 % sunlit over ±2 km, 21.9–51.1 % within ±1 km (PGDA 31.8–51.4 %). meta.approximate = true. |
 
 How to run:
 
@@ -77,6 +77,8 @@ For the humans to decide. Agents don't edit the contract.
 - NASA re-scoped Artemis on 2026-02-27 (source: spacepolicyonline.com/news/nasa-makes-a-course-correction-for-the-artemis-program/): Artemis III is now an Earth-orbit test, the first crewed landing is Artemis IV. The nine regions are still the latest official list. Should B relabel "Artemis III region" → "Artemis candidate region"? (Draft notice below if yes.)
 
 ## Requests to other scope
+
+0. (For B, new) `illum/southpole_landed.json` grid orientation, not specified in contract §2.6: `pct_sunlit[row][col]`, row 0 = NORTH edge, col 0 = WEST edge (same as terrain), centre cell (10,10), east offset = (col−10)·spacing_m, north offset = (10−row)·spacing_m. The file also has a top-level `notes` string. Propose adding both to §2.6 in the next contract PR.
 
 1. (Info for B) The fixtures are at `validation/fixtures/metrics_cases.json` once `a/phase0` is merged. Each case's `horizon`/`ephem` already have the `HorizonFile`/`EphemFile` field names, so a vitest can call `computeMetrics({horizon, ephem}, {observerHeightM, startMs: Date.parse(t0_utc), endMs: Date.parse(t1_utc), refMs: Date.parse(t_ref_utc)})` and compare against `expected` with `tolerance_abs`. A has only read `metrics.ts`, not run it (no Node on A's machine). Please run the fixtures and report any mismatch here.
 2. (For both humans) `docs/scope-A-data.md` and `docs/scope-B-web.md` exist on A's machine but are **not on `main`**, although CLAUDE.md refers to them. Please commit them as shared files.
