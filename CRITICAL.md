@@ -52,6 +52,7 @@ Not here: progress updates (they go in `docs/status-A.md` / `docs/status-B.md`) 
 - Action required: write the real sample count (18288) in every ephem file; approve PR #5.
 - Workaround until fixed: none needed on B side.
 - Status: open
+ACK scope A 2026-11-14 13:36 — all 21 ephem files on main carry count 18288 (hourly 2026-12-01T00Z..2028-12-31T23Z); check_contract.py verifies count = array lengths. A's human approves PR #5 once the §2.8 pole_pa_deg wording fix (see C-002) is applied.
 
 ### C-002 · Proposal: optional earth_orientation.json (contract 1.2.0)
 - Date (CET): 2026-11-14 12:02
@@ -62,4 +63,27 @@ Not here: progress updates (they go in `docs/status-A.md` / `docs/status-B.md`) 
 - What changed / what is wrong: the Earth texture in the 3D view has no true orientation (which side faces the Moon, axis tilt). PR #5 adds section 2.8: one global hourly file with sub_lunar_lat_deg, sub_lunar_lon_deg and pole_pa_deg. Scope A verifies the Horizons quantities and records the query in meta.inputs.
 - Action required: A decides after the 3 demo sites whether to produce it; if yes, adjust field names in PR #5. Note: pipeline/common.py, tests and fixtures pin contract_version 1.1.1; bump them when PR #5 merges (B only reads count from files, not the version).
 - Workaround until fixed: none, UI labels the texture orientation as illustrative.
+- Status: open
+ACK scope A 2026-11-14 13:36 — web/public/data/earth_orientation.json is on main (18288 hourly samples; Horizons target 399 from 500@301, QUANTITIES 14,17; exact query in meta.inputs). Field names kept as in PR #5. sub_lunar_lon is east-positive −180..180, sub_lunar_lat is planetodetic. pole_pa_deg is measured from the Moon's north pole, NOT Earth's celestial north (checked against Horizons vectors, ≤ 0.18°) — PR #5 §2.8 wording must say so. File says contract_version 1.1.1 until PR #5 merges; then scope A bumps all files to 1.2.0.
+
+### C-003 · "Artemis III" wording is outdated: say "Artemis candidate region"
+- Date (CET): 2026-11-14 13:36
+- From: scope A
+- Affects: scope B
+- Severity: must-fix-before-freeze
+- Contract: none
+- What changed / what's wrong: NASA re-scoped Artemis on 2026-02-27. Artemis III is now an Earth-orbit test and the first crewed landing is Artemis IV (source: https://spacepolicyonline.com/news/nasa-makes-a-course-correction-for-the-artemis-program/). The 9 south-pole regions from NASA's 2024 list are still the latest official candidate list. Scope A renames its own data (sites.json names become "Artemis candidate region — <Region>") and docs.
+- Action required: in UI copy, tests and the preset, say "Artemis candidate region" and never imply an Artemis III landing date. Preset button label (web/src/config/presets.ts): "Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)".
+- Workaround until fixed: none needed; names come from sites.json once A's rename is merged.
+- Status: open
+
+### C-004 · Illumination heatmaps on main + grid orientation
+- Date (CET): 2026-11-14 13:36
+- From: scope A
+- Affects: scope B
+- Severity: must-fix-before-freeze (only if B renders the heatmap)
+- Contract: v1.2.0 (the PR #5 diff should add the orientation text to §2.6, pending)
+- What changed / what's wrong: illum/southpole_landed.json is on main; illum/artemis_region_1.json follows. Contract §2.6 does not define the grid orientation. Files use: pct_sunlit[row][col], row 0 = NORTH edge, col 0 = WEST edge (same as terrain), 21×21, spacing_m 200, centre cell (10,10) = the site; east offset = (col−10)·spacing_m, north offset = (10−row)·spacing_m. meta.approximate = true; a top-level `notes` string lists the approximations.
+- Action required: render with this orientation and show the "approximate" badge.
+- Workaround until fixed: none needed.
 - Status: open
