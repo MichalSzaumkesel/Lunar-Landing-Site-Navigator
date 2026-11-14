@@ -73,6 +73,7 @@ Every JSON file has a top-level `meta` object:
 - `status`: one of `landed`, `crashed`, `planned`, `candidate_region`.
 - `region_radius_km`: for Artemis candidate **regions**. `lat/lon` is then a representative point and must be described in `notes`.
 - `elevation_m`: from the DEM at the site (filled in by the pipeline). Can be `null` in mocks.
+- `slope_deg` (optional, since 1.3.0): terrain slope at the site, Horn 3×3 on the site's horizon DEM at its native resolution (`horizon/<id>.json` `dem.resolution_m`). Terrain scale, not lander-footprint scale. May be absent or `null`.
 - `source` is **mandatory**. No source means the site isn't in the file.
 - The coordinates above are placeholders and must be replaced from sources.
 
@@ -278,6 +279,6 @@ Written by scope A **first**, before anything else. `validation/fixtures/metrics
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-14 | Initial |
-| 1.3.0 | 2026-11-14 | §2.9 basemap files (additive, visual only). Numbered after PR #5 (§2.8, 1.2.0) |
+| 1.3.0 | 2026-11-14 | §2.9 basemap files (additive, visual only); optional `sites[].slope_deg`. Numbered after PR #5 (§2.8, 1.2.0) |
 | 1.1.1 | 2026-11-14 | Link to CRITICAL.md; every contract change needs a CRITICAL notice |
 | 1.1.0 | 2026-11-14 | Compact JSON + lazy load; Horizons fetch rules; terrain heightmaps (§2.5); fixed demo site IDs; mocks owned by scope B |
