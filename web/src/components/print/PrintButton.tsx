@@ -1,4 +1,5 @@
 import { type ButtonHTMLAttributes, type MouseEvent, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
 import { PrintBrief, type PrintBriefProps } from './PrintBrief'
 import './print.css'
 
@@ -67,7 +68,7 @@ export function PrintButton({
         <span>{children ?? label}</span>
       </button>
 
-      {renderBrief && <PrintBrief {...briefProps} />}
+      {renderBrief && createPortal(<PrintBrief {...briefProps} />, document.body)}
     </>
   )
 }

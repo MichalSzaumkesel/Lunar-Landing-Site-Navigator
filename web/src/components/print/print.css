@@ -347,26 +347,26 @@
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    height: 100% !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything on the page except the print brief container */
-  body * {
-    visibility: hidden !important;
+  /* The brief is a direct child of body (portal). Remove every other child from layout:
+     visibility:hidden would keep the app's height and add blank pages. */
+  body > *:not(.print-brief-container) {
+    display: none !important;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
   }
 
   .print-brief-container,
-  .print-brief-container * {
-    visibility: visible !important;
-  }
-
-  .print-brief-container {
+  .print-brief-container:not(.print-brief-container--visible) {
     display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;

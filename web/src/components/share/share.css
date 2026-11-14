@@ -45,3 +45,126 @@
   outline: 2px solid var(--focus, #ffffff);
   outline-offset: 2px;
 }
+
+/* Share and export menu */
+.share-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.share-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  width: 12.5rem; /* fixed so the toolbar never shifts when the label changes */
+}
+
+.share-menu__trigger > span {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.share-menu__chevron {
+  transition: transform 150ms ease;
+}
+
+.share-menu__trigger[aria-expanded='true'] .share-menu__chevron {
+  transform: rotate(180deg);
+}
+
+.share-menu__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.share-menu__popup,
+.share-menu__note {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: min(22rem, calc(100vw - 2rem));
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-1, 4px);
+  background: var(--panel, #0f1626);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius, 10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.share-menu__note {
+  gap: var(--space-1, 4px);
+  padding: var(--space-2, 8px);
+}
+
+.share-menu__popup {
+  animation: share-menu-in 150ms ease both;
+}
+
+.share-menu__popup[data-state='closed'] {
+  animation: share-menu-out 150ms ease both;
+  pointer-events: none;
+}
+
+@keyframes share-menu-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes share-menu-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+.share-menu__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  border: 1px solid transparent;
+  text-align: left;
+}
+
+.share-menu__item:hover:not(:disabled),
+.share-menu__item:focus-visible {
+  background: var(--panel-2, #161d2e);
+}
+
+.share-menu__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.share-menu__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.share-menu__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-menu__desc {
+  font-size: 14px;
+  color: var(--muted, #a3afc7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .share-menu__popup,
+  .share-menu__popup[data-state='closed'],
+  .share-menu__chevron {
+    animation: none;
+    transition: none;
+  }
+}
