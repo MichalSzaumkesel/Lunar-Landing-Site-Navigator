@@ -1,19 +1,27 @@
 import { useEffect } from 'react'
 import { MAX_SCENARIOS } from '../config/dataRange'
+import type { MissionRules } from '../lib/types'
 import type { AppState, Scenario } from './types'
 import { useAppStore, generateScenarioId } from './store'
 import { decodeState, encodeState, type UrlState } from './urlState'
+
+function sharedRules(r: MissionRules): NonNullable<UrlState['missionRules']> {
+  const { observerHeightM: _ignored, ...rules } = r
+  void _ignored
+  return rules
+}
 
 function serializeShareable(
   mode: string,
   observerHeightM: number,
   speedHPerSec: number,
   scenarios: Scenario[],
+  missionRules: MissionRules,
 ): string {
   const scStr = scenarios
     .map((s) => `${s.siteId}~${s.startUtc}~${s.durationH}~${s.slipDays}`)
     .join(';')
-  return `${mode}|${observerHeightM}|${speedHPerSec}|${scStr}`
+  return `${mode}|${observerHeightM}|${speedHPerSec}|${scStr}|${JSON.stringify(sharedRules(missionRules))}`
 }
 
 function applyHashToStore(): void {
@@ -34,6 +42,12 @@ function applyHashToStore(): void {
   }
   if (decoded.cursorH !== undefined) {
     patch.cursorH = decoded.cursorH
+  }
+  if (decoded.missionRules !== undefined) {
+    patch.missionRules = {
+      ...decoded.missionRules,
+      observerHeightM: decoded.observerHeightM ?? useAppStore.getState().observerHeightM,
+    }
   }
 
   if (Array.isArray(decoded.scenarios) && decoded.scenarios.length > 0) {
@@ -82,6 +96,7 @@ export function shareUrl(): string {
     })),
     cursorH: s.cursorH,
     speedHPerSec: s.speedHPerSec,
+    missionRules: sharedRules(s.missionRules),
   }
   const hash = encodeState(urlState)
   const url = new URL(window.location.href)
@@ -108,6 +123,7 @@ export function useUrlSync(): void {
       current.observerHeightM,
       current.speedHPerSec,
       current.scenarios,
+      current.missionRules,
     )
     let timer: ReturnType<typeof setTimeout> | null = null
 
@@ -117,6 +133,7 @@ export function useUrlSync(): void {
         state.observerHeightM,
         state.speedHPerSec,
         state.scenarios,
+        state.missionRules,
       )
 
       if (key !== lastKey) {
@@ -135,6 +152,7 @@ export function useUrlSync(): void {
             })),
             cursorH: s.cursorH,
             speedHPerSec: s.speedHPerSec,
+            missionRules: sharedRules(s.missionRules),
           }
           const hash = encodeState(urlState)
           window.history.replaceState(null, '', '#' + hash)

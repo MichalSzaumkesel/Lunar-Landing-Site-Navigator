@@ -1,4 +1,4 @@
-import type { ObserverHeightM } from '../lib/types'
+import type { MissionRules, ObserverHeightM } from '../lib/types'
 import type { Mode } from './types'
 import { MAX_SCENARIOS, MAX_SLIP_DAYS } from '../config/dataRange'
 import { SPEEDS_H_PER_SEC } from '../config/presets'
@@ -14,6 +14,46 @@ export interface UrlState {
   }>
   cursorH: number
   speedHPerSec: number
+  /** Window finder rules; the observer height travels as `observerHeightM`. */
+  missionRules?: Omit<MissionRules, 'observerHeightM'>
+}
+
+type SharedRules = NonNullable<UrlState['missionRules']>
+
+/** `r=<durationH>~<minPctSunlit>~<maxDarkH>~<earthAtLanding 0|1>~<minPctEarth>[~<minSunElDeg>]` */
+function encodeRules(r: SharedRules): string {
+  const fields = [
+    r.missionDurationH,
+    r.minPctSunlit,
+    r.maxLongestDarkH,
+    r.earthAtLandingRequired ? 1 : 0,
+    r.minPctEarth,
+  ]
+  if (r.minSunElAtLandingDeg !== undefined) fields.push(r.minSunElAtLandingDeg)
+  return fields.join('~')
+}
+
+function decodeRules(value: string): SharedRules | null {
+  const f = value.split('~')
+  if (f.length !== 5 && f.length !== 6) return null
+  if (f.some((x) => x.trim() === '')) return null
+  const n = f.map(Number)
+  if (n.some((x) => !Number.isFinite(x))) return null
+  const [dur, sun, dark, earthReq, earth, sunEl] = n
+  if (dur < 1 || dur > 1440) return null
+  if (sun < 0 || sun > 100 || earth < 0 || earth > 100) return null
+  if (dark < 0 || dark > 1440) return null
+  if (earthReq !== 0 && earthReq !== 1) return null
+  if (sunEl !== undefined && (sunEl < -90 || sunEl > 90)) return null
+  const rules: SharedRules = {
+    missionDurationH: dur,
+    minPctSunlit: sun,
+    maxLongestDarkH: dark,
+    earthAtLandingRequired: earthReq === 1,
+    minPctEarth: earth,
+  }
+  if (sunEl !== undefined) rules.minSunElAtLandingDeg = sunEl
+  return rules
 }
 
 function isValidCalendarDate(dateStr: string): boolean {
@@ -76,6 +116,8 @@ export function encodeState(s: UrlState): string {
     parts.push(`s=${scList.join(';')}`)
   }
 
+  if (s.missionRules) parts.push(`r=${encodeRules(s.missionRules)}`)
+
   return parts.join('&')
 }
 
@@ -125,6 +167,13 @@ export function decodeState(hash: string): Partial<UrlState> {
       if (Number.isFinite(v) && (SPEEDS_H_PER_SEC as readonly number[]).includes(v)) {
         result.speedHPerSec = v
       }
+    }
+
+    // mission rules: all-or-nothing, an invalid value drops the whole group
+    const rStr = params.get('r')
+    if (rStr) {
+      const rules = decodeRules(rStr)
+      if (rules) result.missionRules = rules
     }
 
     // scenarios: s=<siteId>~<YYYY-MM-DD[THH:MM:SSZ]>~<durationH>~<slipDays>;...
