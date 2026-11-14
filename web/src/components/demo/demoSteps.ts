@@ -50,8 +50,6 @@ export interface DemoStepContext {
 export interface DemoStep {
   id: string
   durationMs: number
-  /** Opens the sky loupe on the active card while this step is shown. */
-  showLoupe?: boolean
   /** Sections that hold what the step talks about; opened while it is shown. */
   reveal?: readonly SectionKey[]
   run(store: AppStore, ctx?: DemoStepContext): void
@@ -218,7 +216,6 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   {
     id: 'step-3-sunset-countdown',
     durationMs: 6000,
-    showLoupe: true,
     run(store, ctx) {
       store.setPlaying(false)
       if (typeof document !== 'undefined') {

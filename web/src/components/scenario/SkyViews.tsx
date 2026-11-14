@@ -1,11 +1,9 @@
 import { Component, Suspense, lazy, useId, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { FullscreenStage } from '../common/FullscreenStage'
-import { useTourStore } from '../help/tourState'
 import { Loupe } from '../sky/Loupe'
 import { Panorama } from '../sky/Panorama'
 import { SkyPlot } from '../sky/SkyPlot'
-import { useDemoStore } from '../demo/demoState'
 import { useAppStore } from '../../state/store'
 import { nextTabIndex } from './tabs'
 import './scenario.css'
@@ -45,40 +43,14 @@ class ViewBoundary extends Component<{ children: ReactNode }, BoundaryState> {
   }
 }
 
-function PolarPanel({ scenarioId, siteName }: { scenarioId: string; siteName?: string }) {
-  const isMulti = useAppStore((s) => s.scenarios.length > 1)
-  const isActive = useAppStore((s) => s.activeScenarioId === scenarioId)
-  const tourOpen = useTourStore((s) => s.isOpen)
-  const [loupeOpen, setLoupeOpen] = useState(!isMulti)
-  const [prevMulti, setPrevMulti] = useState(isMulti)
-  const loupeId = useId()
-
-  if (prevMulti !== isMulti) {
-    setPrevMulti(isMulti)
-    setLoupeOpen(!isMulti)
-  }
-
-  // Demo steps such as the sunset countdown open the loupe on the active card; the user's own choice is kept.
-  const demoLoupe = useDemoStore((s) => s.loupeOpen) && isActive
-  const isExpanded = tourOpen || loupeOpen || demoLoupe
-
+function PolarPanel({ scenarioId }: { scenarioId: string }) {
   return (
     <div className="views__polar">
       <div className="views__sky" data-tour="sky-plot">
         <SkyPlot scenarioId={scenarioId} />
       </div>
       <div className="views__loupe" data-tour="loupe">
-        <button
-          type="button"
-          className="views__loupe-toggle"
-          aria-expanded={isExpanded}
-          aria-controls={loupeId}
-          title={siteName ? `Loupe (${siteName})` : undefined}
-          onClick={() => setLoupeOpen((o) => !o)}
-        >
-          Loupe
-        </button>
-        <div id={loupeId}>{isExpanded && <Loupe scenarioId={scenarioId} />}</div>
+        <Loupe scenarioId={scenarioId} />
       </div>
     </div>
   )
@@ -132,7 +104,7 @@ export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteNam
           </div>
           <div className="views__stage">
             <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${view}`} className="views__panel">
-              {view === 'polar' && <PolarPanel scenarioId={scenarioId} siteName={siteName} />}
+              {view === 'polar' && <PolarPanel scenarioId={scenarioId} />}
               {view === 'panorama' && <Panorama scenarioId={scenarioId} />}
               {view === '3d' && (
                 <ViewBoundary>

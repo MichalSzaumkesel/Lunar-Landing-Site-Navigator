@@ -277,7 +277,7 @@ describe('demoSteps', () => {
       expect(findSunsetCursorH(scenario, [])).toBeNull()
     })
 
-    it('step 3 sets the cursor 2 h before the sunset on the second card and asks for the loupe', () => {
+    it('step 3 sets the cursor 2 h before the sunset on the second card', () => {
       const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
       const t0 = Date.parse(scenario.startUtc)
       const events = [{ kind: 'sunset' as const, ms: t0 + 184 * 3600000, utc: '' }]
@@ -290,11 +290,9 @@ describe('demoSteps', () => {
       const step = DEMO_STEPS[2]
       const store = { setPlaying: vi.fn(), setActiveScenario: vi.fn(), setCursorH: vi.fn() }
       step.run(store as unknown as AppStore, ctx)
-      expect(step.showLoupe).toBe(true)
       expect(store.setActiveScenario).toHaveBeenCalledWith('s2')
       expect(store.setCursorH).toHaveBeenCalledWith(182)
       expect(step.caption(ctx)).toContain('Sun sets in 2.0 h')
-      expect(DEMO_STEPS.filter((x) => x.showLoupe).length).toBe(1)
     })
 
     it('formatStep3Caption says "Sun sets in less than a minute" below 1 minute', () => {

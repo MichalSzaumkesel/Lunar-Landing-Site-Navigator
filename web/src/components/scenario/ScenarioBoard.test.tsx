@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PRESET_APOLLO_VS_ARTEMIS } from '../../config/presets'
 import type { SiteBundle } from '../../lib/types'
 import { useAppStore } from '../../state/store'
-import { useDemoStore } from '../demo/demoState'
 
 const meta = {
   contract_version: '1.1.1',
@@ -129,19 +128,10 @@ describe('ScenarioBoard preset (demo hook #1)', () => {
     expect(cards()[0].getAttribute('aria-current')).toBe('true')
   })
 
-  it('two cards keep the loupe closed; a demo step opens it on the active card only and restores after', async () => {
+  it('every card keeps its loupe visible and has no loupe toggle', async () => {
     await act(async () => useAppStore.getState().applyPreset(PRESET_APOLLO_VS_ARTEMIS))
-    const toggles = () => [...container.querySelectorAll('.views__loupe-toggle')]
-    expect(toggles().map((t) => t.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
-
-    await act(async () => useDemoStore.setState({ loupeOpen: true }))
-    expect(toggles().map((t) => t.getAttribute('aria-expanded'))).toEqual(['true', 'false'])
-
-    await act(async () => useAppStore.getState().setActiveScenario(useAppStore.getState().scenarios[1].id))
-    expect(toggles().map((t) => t.getAttribute('aria-expanded'))).toEqual(['false', 'true'])
-
-    await act(async () => useDemoStore.setState({ loupeOpen: false }))
-    expect(toggles().map((t) => t.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
+    expect(container.querySelectorAll('.views__loupe').length).toBe(2)
+    expect(container.querySelectorAll('.views__loupe-toggle').length).toBe(0)
   })
 })
 
