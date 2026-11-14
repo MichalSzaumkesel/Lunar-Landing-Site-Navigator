@@ -1,8 +1,8 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { clampStartUtc, dateInputBounds, nextEventAfter, splitEvents } from '../scenario/cardLogic'
 import { DataBadges } from '../badges/DataBadges'
 import { ShareButton } from '../share/ShareButton'
-import { SkyPlot } from '../sky/SkyPlot'
+import { FullscreenButton } from '../common/FullscreenButton'
 import { chooseSkyZoom, describeBody, pickMask, skyCentreText } from '../sky/geometry'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { useScenarioEvents } from '../../lib/useScenarioEvents'
@@ -10,7 +10,11 @@ import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
+import { DiagramStage } from './DiagramStage'
+import { VIEW_OPTIONS, readDiagramView, writeDiagramView } from './diagramView'
+import { FullscreenOverlay } from './FullscreenOverlay'
 import { SkyHelp } from './SkyHelp'
+import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
 import { displayName } from './placeLabels'
 import { formatWindowPlain, outOfRangeMessage, simpleStatus } from './simpleSummary'
@@ -36,6 +40,9 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   )
   const updateScenario = useAppStore((s) => s.updateScenario)
   const cursorH = useAppStore((s) => s.cursorH)
+  const [view, setView] = useState<DiagramView>(readDiagramView)
+  const [fullscreen, setFullscreen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const heightM = useAppStore((s) => s.observerHeightM)
 
   const { status, bundle } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
@@ -96,9 +103,31 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
 
       <div className="simple-grid">
         <div className="simple-sky-col">
-          <div className="simple-sky-wrap" data-tour="sky-plot">
-            <SkyPlot scenarioId={scenario.id} />
-            <SkyHelp centreText={centreText} />
+          <div className="simple-view-switch" role="group" aria-label="Diagram view">
+            {VIEW_OPTIONS.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                className="simple-view-switch__btn"
+                aria-pressed={view === o.key}
+                onClick={() => {
+                  setView(o.key)
+                  writeDiagramView(o.key)
+                }}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div ref={wrapRef} className="simple-sky-wrap" data-tour="sky-plot">
+            <div className="simple-stage" data-view={view}>
+              <DiagramStage view={view} scenarioId={scenario.id} />
+            </div>
+            <div className="simple-tools">
+              <SkyHelp centreText={centreText} view={view} />
+              <FullscreenButton targetRef={wrapRef} onChange={setFullscreen} />
+            </div>
+            {fullscreen && <FullscreenOverlay cursorMs={cursorMs} />}
           </div>
         </div>
 

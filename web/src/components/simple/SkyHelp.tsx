@@ -6,12 +6,20 @@ function skyHelpText(centreText: string): string {
   return `Sky seen from the ground. Gold circle: the Sun. Blue circle: the Earth. Grey: hills that block the sky. Centre: ${centreText}. Edge: the horizon.`
 }
 
+export type DiagramView = 'sky' | 'horizon' | '3d'
+
+const HELP_TEXT: Record<Exclude<DiagramView, 'sky'>, string> = {
+  horizon: 'The horizon as you would see it standing on the surface, looking around. Gold: the Sun. Blue: the Earth.',
+  '3d': 'A 3D view of the landing area. Drag to look around.',
+}
+
 export interface SkyHelpProps {
   centreText: string
+  view?: DiagramView
 }
 
 /** Small (?) marker for the top right corner of the sky plot card; its tooltip replaces a permanent legend. */
-export function SkyHelp({ centreText }: SkyHelpProps) {
+export function SkyHelp({ centreText, view = 'sky' }: SkyHelpProps) {
   const id = useId()
   const [hover, setHover] = useState(false)
   const [focus, setFocus] = useState(false)
@@ -42,7 +50,7 @@ export function SkyHelp({ centreText }: SkyHelpProps) {
       </button>
       {mounted && (
         <div id={id} role="tooltip" className="sky-help__tip" data-state={state}>
-          {skyHelpText(centreText)}
+          {view === 'sky' ? skyHelpText(centreText) : HELP_TEXT[view]}
         </div>
       )}
     </div>

@@ -290,11 +290,18 @@
   position: relative;
 }
 
-.sky-help {
+.simple-tools {
   position: absolute;
   top: var(--space-2, 8px);
   right: var(--space-2, 8px);
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.sky-help {
+  position: relative;
 }
 
 .sky-help__marker {
@@ -590,4 +597,147 @@
 
 .simple-places-error {
   animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+/* View switch above the diagram */
+.simple-view-switch {
+  display: flex;
+  gap: var(--space-1, 4px);
+  padding: var(--space-1, 4px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  align-self: flex-start;
+}
+
+.simple-view-switch__btn {
+  min-height: 2.25rem;
+  padding: 0 var(--space-4, 16px);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.simple-view-switch__btn[aria-pressed='true'] {
+  background: var(--panel-2);
+  border-color: var(--earth);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Fixed box: switching views never changes the card height. */
+.simple-sky-wrap {
+  flex-direction: column;
+}
+
+.simple-stage {
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  container-type: size;
+}
+
+/* Auto margins centre short views and let tall ones (3D with its controls) scroll from the top. */
+.simple-stage > * {
+  max-width: 100%;
+  margin-block: auto;
+}
+
+@media (max-width: 600px) {
+  .simple-stage {
+    aspect-ratio: 4 / 5;
+  }
+}
+
+.simple-stage__message {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--muted);
+  text-align: center;
+}
+
+.simple-stage__message--error {
+  color: var(--danger, #ff5d6c);
+}
+
+/* Full screen: the stage fills the screen and the view scales to it. */
+.simple-sky-wrap[data-fullscreen='true'] {
+  padding: var(--space-3, 12px);
+  justify-content: center;
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .simple-stage {
+  flex: 1;
+  aspect-ratio: auto;
+  height: auto;
+  min-height: 0;
+  padding-bottom: 3.5rem;
+  align-items: center;
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .sky__frame {
+  max-width: none;
+  width: min(100cqw, 100cqh);
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .sky__pano {
+  width: min(100cqw, calc(100cqh * 776 / 224));
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .surface {
+  width: 100%;
+  height: 100%;
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .surface__frame {
+  flex: 1;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.simple-sky-wrap[data-fullscreen='true'] .surface > :not(.surface__frame) {
+  display: none;
+}
+
+/* Keep the 3D badges clear of the (?) and full screen buttons. */
+.simple-stage .surface__badges {
+  right: 72px;
+}
+
+.simple-fs-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 16px);
+  padding: var(--space-3, 12px);
+}
+
+.simple-fs-bar__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.simple-fs-bar__play {
+  min-height: 2.5rem;
+  min-width: 5rem;
+  padding: 0 var(--space-4, 16px);
+  border: 1px solid var(--control-border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
 }
