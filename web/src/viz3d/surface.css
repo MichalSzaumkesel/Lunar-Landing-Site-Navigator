@@ -70,7 +70,9 @@
 .surface__overlay--bl {
   bottom: 8px;
   left: 8px;
-  color: var(--muted);
+  max-width: calc(100% - 16px);
+  background: rgba(7, 9, 15, 0.88);
+  color: var(--text);
 }
 
 .surface__overlay--br {

@@ -27,7 +27,7 @@ describe('tourSteps definitions', () => {
       'presets',
       'observer-height',
       'tools',
-      'card-header',
+      'scenario-cards',
       'view-tabs',
       'sky-plot',
       'loupe',

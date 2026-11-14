@@ -168,7 +168,7 @@ export function ScenarioBoard() {
         )}
       </div>
       {compareOpen && <CompareTable onClose={() => setCompareOpen(false)} />}
-      <div className={`board board--${scenarios.length}`}>
+      <div className={`board board--${scenarios.length}`} data-tour="scenario-cards">
         {scenarios.map((s) => (
           <ScenarioCard key={s.id} scenarioId={s.id} />
         ))}

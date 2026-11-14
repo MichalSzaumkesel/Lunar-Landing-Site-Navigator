@@ -24,6 +24,14 @@ function serializeShareable(
   return `${mode}|${observerHeightM}|${speedHPerSec}|${scStr}|${JSON.stringify(sharedRules(missionRules))}`
 }
 
+/** `?m=s` / `?m=a` picks the mode on load; a hash `m=` applied afterwards wins. */
+function applyQueryModeToStore(): void {
+  if (typeof window === 'undefined') return
+  const m = new URLSearchParams(window.location.search).get('m')
+  if (m === 's') useAppStore.setState({ mode: 'simple' })
+  else if (m === 'a') useAppStore.setState({ mode: 'advanced' })
+}
+
 function applyHashToStore(): void {
   if (typeof window === 'undefined') return
   const initialHash = window.location.hash
@@ -108,7 +116,8 @@ export function useUrlSync(): void {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // On mount: read window.location.hash and apply to store
+    // On mount: read the query mode, then window.location.hash, and apply to store
+    applyQueryModeToStore()
     applyHashToStore()
 
     const onHashChange = () => {

@@ -81,8 +81,8 @@ export const advancedSteps: TourStep[] = [
     placement: 'left',
   },
   {
-    id: 'card-header',
-    target: '[data-tour="card-header"]',
+    id: 'scenario-cards',
+    target: '[data-tour="scenario-cards"]',
     title: 'Scenario cards',
     text: 'Each card is one place and one time window. Add up to four to compare. A badge tells you when the data is synthetic or approximate.',
     placement: 'bottom',

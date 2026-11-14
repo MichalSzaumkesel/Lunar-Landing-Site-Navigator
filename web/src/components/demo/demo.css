@@ -52,9 +52,7 @@
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   animation: demo-text-fade var(--motion-duration-fast, 120ms) ease;
 }
 
