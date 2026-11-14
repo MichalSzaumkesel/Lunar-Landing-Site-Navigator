@@ -14,7 +14,6 @@ import { scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { DataBadges } from '../badges/DataBadges'
-import { useTourStore } from '../help/tourState'
 import { ExportCardPngButton } from '../share'
 import { SkyReadout } from '../sky/SkyReadout'
 import { EventChips } from '../timeline/EventChips'
@@ -25,8 +24,10 @@ import { ScenarioControls } from './ScenarioControls'
 import { SiteSelect } from './SiteSelect'
 import { SkyViews } from './SkyViews'
 import { CustomSiteNote } from './CustomSiteNote'
-import { formatSlip, formatWindow, siteSubtitle, slipChange } from './cardLogic'
+import { datesSummary, formatWindow, metricsSummary, rulesSummary, siteSubtitle, slipChange } from './cardLogic'
 import { CompareTable } from '../compare'
+import { Disclosure } from '../ui/Disclosure'
+import { useDisclosureStore } from '../../lib/disclosure'
 import './scenario.css'
 
 function headingText(status: SiteBundleStatus, bundle: SiteBundle | null): { title: string; sub: string } {
@@ -38,7 +39,6 @@ function headingText(status: SiteBundleStatus, bundle: SiteBundle | null): { tit
 const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   const active = useAppStore((s) => s.activeScenarioId === scenario.id)
   const canRemove = useAppStore((s) => s.scenarios.length > 1)
-  const tourOpen = useTourStore((s) => s.isOpen)
   const setActive = useAppStore((s) => s.setActiveScenario)
   const removeScenario = useAppStore((s) => s.removeScenario)
   const heightM = useAppStore((s) => s.observerHeightM)
@@ -53,11 +53,8 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   )
   const { title, sub } = headingText(status, bundle)
 
-  // Open by default at any card count: dates, slip and metrics are what a comparison needs.
-  const [userOpen, setUserOpen] = useState(true)
-
-  const tourDomOpen = typeof document !== 'undefined' && Boolean(document.querySelector('[data-tour-open]'))
-  const isDetailsOpen = tourOpen || tourDomOpen || userOpen
+  const missionRules = useAppStore((s) => s.missionRules)
+  const openExplore = useDisclosureStore((s) => s.openExplore)
 
   const activate = () => {
     if (!active) setActive(scenario.id)
@@ -81,10 +78,6 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
           <h2 className="card__title">{title}</h2>
           <p className="card__sub">{sub}</p>
           <SiteSelect scenarioId={scenario.id} siteId={scenario.siteId} />
-          <p className="card__dates">
-            {formatWindow(startMs, endMs)}
-            {scenario.slipDays !== 0 && ` · ${formatSlip(scenario.slipDays)}`}
-          </p>
         </div>
         <div className="card__aside">
           {bundle && (
@@ -114,23 +107,36 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
       <Countdowns scenario={scenario} bundle={bundle} events={events} heightM={heightM} metrics={metrics} change={change} />
       {bundle?.site.category === 'custom' && <CustomSiteNote site={bundle.site} scenarioId={scenario.id} />}
       <SkyViews scenarioId={scenario.id} siteName={bundle?.site.name ?? title} />
-      <SkyReadout scenarioId={scenario.id} />
-      <Timeline scenarioId={scenario.id} />
 
-      <details
-        className="card__more"
-        open={isDetailsOpen}
-        onToggle={(e) => {
-          if (!tourOpen && !tourDomOpen) {
-            setUserOpen(e.currentTarget.open)
-          }
-        }}
-      >
-        <summary className="card__more-summary">Details and controls</summary>
-        <EventChips scenario={scenario} bundle={bundle} events={events} heightM={heightM} />
-        <MetricsPanel scenario={scenario} bundle={bundle} heightM={heightM} change={change} />
-        <ScenarioControls scenario={scenario} siteName={bundle?.site.name ?? title} />
-      </details>
+      <div className="card__sections">
+        <Disclosure
+          sectionKey="dates"
+          title="Dates and slip"
+          summary={datesSummary(scenario.startUtc, scenario.durationH, scenario.slipDays)}
+        >
+          <ScenarioControls scenario={scenario} siteName={bundle?.site.name ?? title} change={change} />
+        </Disclosure>
+        <Disclosure sectionKey="metrics" title="Metrics and events" summary={metricsSummary(metrics)}>
+          <SkyReadout scenarioId={scenario.id} />
+          <EventChips scenario={scenario} bundle={bundle} events={events} heightM={heightM} />
+          <MetricsPanel scenario={scenario} bundle={bundle} heightM={heightM} />
+        </Disclosure>
+        <Disclosure
+          sectionKey="timeline"
+          title="Timeline details"
+          summary={`Sun and Earth bands over ${formatWindow(startMs, endMs)}`}
+        >
+          <Timeline scenarioId={scenario.id} />
+        </Disclosure>
+        <Disclosure sectionKey="rules" title="Mission rules" summary={rulesSummary(missionRules)}>
+          <p className="card__rules-note">
+            The mission bar in Timeline details turns green when a landing at that date meets these rules. The rules are shared by all cards.
+          </p>
+          <button type="button" className="secondary card__rules-edit" onClick={() => openExplore('window-map')}>
+            Edit rules in Window finder
+          </button>
+        </Disclosure>
+      </div>
     </section>
   )
 })

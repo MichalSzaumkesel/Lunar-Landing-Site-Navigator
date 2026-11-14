@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { isFullyInView, whenScrollSettled } from './scrollSettle'
 import { useTour } from './useTour'
+import { sectionsForTarget } from '../../lib/disclosure'
 import './tour.css'
 
+// A collapsed section expands with an animation; the step measures its target after it ends.
+const SECTION_OPEN_MS = 200
 const FADE_OUT_MS = 120
 
 function reducedMotion(): boolean {
@@ -123,7 +126,7 @@ export function Tour({ className = '' }: TourProps) {
       })
       if (reduce) settle()
       else cancelWait = whenScrollSettled(el, settle)
-    }, reducedMotion() ? 0 : FADE_OUT_MS)
+    }, reducedMotion() ? 0 : FADE_OUT_MS + (sectionsForTarget(currentStep.target).length > 0 ? SECTION_OPEN_MS : 0))
     return () => {
       clearTimeout(timer)
       cancelWait()

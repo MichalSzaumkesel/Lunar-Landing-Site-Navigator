@@ -1,7 +1,7 @@
 // Pure logic of the scenario card: formatting, date clamping, countdowns and metric rows.
 import { DATA_END_MS, DATA_START_MS, DAY_MS, HOUR_MS } from '../../config/dataRange'
 import type { SkyEvent, SkyEventKind } from '../../lib/events'
-import type { ScenarioMetrics, Site, SiteCategory } from '../../lib/types'
+import type { MissionRules, ScenarioMetrics, Site, SiteCategory } from '../../lib/types'
 import { fmtHours, fmtNum } from '../sky/geometry'
 
 export const DURATION_DAYS = [3, 7, 10, 14, 30, 60] as const
@@ -298,4 +298,28 @@ export function nearestSite(
     if (!best || d < best.distanceKm) best = { id: s.id, name: s.name, distanceKm: d }
   }
   return best
+}
+
+/** One-line summary of the dates section, for example "Start 2027-10-06, 30 days, slip +0 d". */
+export function datesSummary(startUtc: string, durationH: number, slipDays: number): string {
+  const length = durationH % 24 === 0 ? `${durationH / 24} days` : `${durationH} h`
+  const slip = `slip ${slipDays >= 0 ? '+' : '−'}${Math.abs(slipDays)} d`
+  return `Start ${startUtc.slice(0, 10)}, ${length}, ${slip}`
+}
+
+/** One-line summary of the metrics section. */
+export function metricsSummary(metrics: ScenarioMetrics | null): string {
+  if (!metrics) return 'Metrics, events and sky readout'
+  return `Longest dark ${Math.round(metrics.longest_dark_h)} h, no Earth ${Math.round(metrics.longest_no_earth_h)} h, Sun and Earth ${metrics.pct_both.toFixed(1)} %`
+}
+
+/** One-line summary of the mission rules. */
+export function rulesSummary(rules: MissionRules): string {
+  const parts = [
+    `Stay ${rules.missionDurationH} h`,
+    `Sun ≥ ${rules.minPctSunlit} %`,
+    `dark ≤ ${rules.maxLongestDarkH} h`,
+    `Earth ≥ ${rules.minPctEarth} %`,
+  ]
+  return parts.join(', ')
 }

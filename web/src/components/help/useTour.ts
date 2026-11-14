@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react'
 import { useAppStore } from '../../state/store'
+import { revealSections, sectionsForTarget } from '../../lib/disclosure'
 import {
   advancedSteps,
   nextAvailableStep,
@@ -23,7 +24,9 @@ export function useTour() {
   const steps: TourStep[] = mode === 'simple' ? simpleSteps : advancedSteps
 
   const exists = useCallback((selector: string) => {
-    return typeof document !== 'undefined' && Boolean(document.querySelector(selector))
+    if (typeof document === 'undefined') return false
+    // A target inside a collapsed section counts: the tour opens the section when the step is shown.
+    return Boolean(document.querySelector(selector)) || sectionsForTarget(selector).length > 0
   }, [])
 
   // Switching level closes an open tour; it never opens by itself (see TourChip).
@@ -47,6 +50,13 @@ export function useTour() {
       }
     }
   }, [isOpen, stepIndex, steps, exists, setStepIndex])
+
+  // Sections that hold the current target are opened for the step and released afterwards.
+  const currentTarget = isOpen ? steps[stepIndex]?.target : undefined
+  useEffect(() => {
+    revealSections(currentTarget ? sectionsForTarget(currentTarget) : [])
+    return () => revealSections([])
+  }, [currentTarget])
 
   const returnFocus = useCallback(() => {
     if (typeof document === 'undefined') return

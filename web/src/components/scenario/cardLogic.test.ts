@@ -5,6 +5,9 @@ import {
   bodyCountdown,
   clampStartUtc,
   cursorMetricRows,
+  datesSummary,
+  metricsSummary,
+  rulesSummary,
   dateInputBounds,
   durationOptionsH,
   formatCoords,
@@ -170,5 +173,29 @@ describe('slip change and nearest site', () => {
     expect(nearestSite(-88, 10, sites)?.id).toBe('a')
     expect(nearestSite(1, 1, sites)?.id).toBe('b')
     expect(nearestSite(0, 0, [])).toBeNull()
+  })
+})
+
+describe('disclosure summaries', () => {
+  it('summarises dates and slip', () => {
+    expect(datesSummary('2027-10-06T00:00:00Z', 720, 0)).toBe('Start 2027-10-06, 30 days, slip +0 d')
+    expect(datesSummary('2027-10-06T00:00:00Z', 36, -3)).toBe('Start 2027-10-06, 36 h, slip −3 d')
+  })
+
+  it('summarises mission rules', () => {
+    expect(
+      rulesSummary({
+        observerHeightM: 2,
+        missionDurationH: 240,
+        minPctSunlit: 70,
+        maxLongestDarkH: 48,
+        earthAtLandingRequired: true,
+        minPctEarth: 50,
+      }),
+    ).toBe('Stay 240 h, Sun ≥ 70 %, dark ≤ 48 h, Earth ≥ 50 %')
+  })
+
+  it('has a neutral metrics summary while loading', () => {
+    expect(metricsSummary(null)).toContain('Metrics')
   })
 })
