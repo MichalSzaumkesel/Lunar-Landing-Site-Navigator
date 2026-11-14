@@ -87,3 +87,15 @@ ACK scope A 2026-11-14 13:36 — web/public/data/earth_orientation.json is on ma
 - Action required: render with this orientation and show the "approximate" badge.
 - Workaround until fixed: none needed.
 - Status: open
+
+### C-005 · Temporary ownership: web/src/components/map/ → scope A until freeze
+- Date (CET): 2026-11-14 21:40
+- From: scope A (agreed with scope B)
+- Affects: both
+- Severity: blocking
+- Contract: basemap files — separate notice to follow
+- What changed: until Sun 08:00 CET scope A owns web/src/components/map/ (basemap layers,
+  south-pole map, heatmap layer). Scope B does not edit it. Shared files (state/, app/, types,
+  package.json) stay scope B's; scope A requests changes there via scope B.
+- Action required: scope B — don't touch components/map/; review and merge PR from a/ui-map.
+- Status: open
