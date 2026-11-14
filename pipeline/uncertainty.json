@@ -46,5 +46,22 @@
  "southpole_landed": {
   "recommended_uncertainty_deg": 0.05,
   "source": "validation/results/horizon_sensitivity_southpole_landed.json (a/research)"
+ },
+ "artemis_region_2": {
+  "recommended_uncertainty_deg": 0.75,
+  "source": "validation re-run of horizon_sensitivity for all 21 sites (a/research), lead-approved 2026-11-14",
+  "extra_note": "pct_sunlit sensitivity up to 7.3 pp (DEM x2 / +-1 px), see validation.json"
+ },
+ "hakuto_r_m1": {
+  "recommended_uncertainty_deg": 0.8,
+  "source": "validation re-run of horizon_sensitivity for all 21 sites (a/research), lead-approved 2026-11-14"
+ },
+ "luna_25": {
+  "recommended_uncertainty_deg": 0.6,
+  "source": "validation re-run of horizon_sensitivity for all 21 sites (a/research), lead-approved 2026-11-14"
+ },
+ "luna_9": {
+  "recommended_uncertainty_deg": 0.85,
+  "source": "validation re-run of horizon_sensitivity for all 21 sites (a/research), lead-approved 2026-11-14"
  }
 }

@@ -170,7 +170,7 @@ def uncertainty_site(site_id: str, dem: "Dem") -> tuple[float, str]:
             return float(u["recommended_uncertainty_deg"]), (
                 f"uncertainty_deg {u['recommended_uncertainty_deg']} = worst RMS of the pipeline's own horizon under "
                 f"DEM x2/x4 degradation and +-1 px site shifts ({u['source']}); "
-                "excludes LOLA height and geolocation error")
+                "excludes LOLA height and geolocation error" + (f". {u['extra_note']}" if u.get("extra_note") else ""))
     prod = str(dem.info.get("product", ""))
     val = 0.25 if ("80S" in prod.upper() or "256" in prod) else 0.15
     return val, f"uncertainty_deg {val} = per-product default for {prod} (no sensitivity result for this site)"

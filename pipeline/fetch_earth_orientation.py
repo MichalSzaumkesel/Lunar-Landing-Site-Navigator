@@ -7,9 +7,15 @@ QUANTITIES='14,17', hourly, same grid as ephem/ (18288 samples), CSV, ANG_FORMAT
     by the observer = the point on Earth that sees the Moon at the zenith. "Positive longitude is to the EAST for this
     target" (also the header: Target pole/equ ITRF93 {East-longitude positive}). Returned in -180..180 in practice; we
     normalise to -180..180 anyway. Latitude is planetodetic (geodetic on the Earth ellipsoid), not geocentric.
-  * Quantity 17 'NP.ang, NP.dist': apparent north-pole position angle, "counter-clockwise with respect to the direction
-    of the true-of-date reference-frame north pole" = measured from celestial north toward east on the sky, as the
-    contract wants. Normalised to 0..360.
+  * Quantity 17 'NP.ang, NP.dist': Horizons legend (response text; docs https://ssd-api.jpl.nasa.gov/doc/horizons.html):
+    "Targets' apparent north-pole position angle (counter-clockwise with respect to the direction of the true-of-date
+    reference-frame north-pole) and its angular distance from the sub-observer point". The legend does not say whose
+    pole the reference is for a non-Earth observer. VERIFIED (pipeline/crosscheck_pole_pa.py, Horizons VECTORS in the
+    ICRF and Moon BODY EQUATOR frames, max diff 0.18 deg over 21 samples): the reference direction is the OBSERVER BODY's
+    (the Moon's) north pole, i.e. lunar north (rotation axis, about 1.5 deg from ecliptic north), NOT Earth's celestial
+    north. So pole_pa_deg is the position angle of Earth's north pole measured from the projected lunar north pole toward
+    east (counter-clockwise on the sky as seen from the Moon); it swings about +-23 deg over a month and is stored 0..360
+    (wraps through 0; values near 360 are small negative angles).
 Sequential, cached in $LLSN_RAW_DIR/horizons/ (shared with fetch_ephem).
 """
 
@@ -67,8 +73,15 @@ def build() -> dict:
             "name": "JPL Horizons API: target 399 Earth seen from the Moon centre (500@301), QUANTITIES 14 (ObsSub-LON/LAT) and 17 (NP.ang)",
             "url": "https://ssd-api.jpl.nasa.gov/doc/horizons.html",
             "notes": "Query: " + "; ".join(f"{k}={v}" for k, v in q.items()) +
-                     ". ObsSub lon is East-positive (Horizons legend), lat planetodetic; NP.ang is counter-clockwise from "
-                     "true-of-date north = east of north; normalised to lon -180..180, pa 0..360."}]),
+                     ". ObsSub lon is East-positive (Horizons legend), lat planetodetic; normalised to lon -180..180. "
+                     "pole_pa_deg = NP.ang. Horizons legend: \"apparent north-pole position angle (counter-clockwise with "
+                     "respect to the direction of the true-of-date reference-frame north-pole)\" "
+                     "(https://ssd-api.jpl.nasa.gov/doc/horizons.html, response legend). For a Moon observer the "
+                     "reference is the MOON's north pole (lunar rotation axis, ~1.5 deg from ecliptic north), not Earth's "
+                     "celestial north; verified independently with Horizons VECTORS in ICRF and the Moon body-equator "
+                     "frame (pipeline/crosscheck_pole_pa.py, max diff 0.18 deg). So pole_pa_deg = position angle of "
+                     "Earth's north pole measured from lunar north toward east (counter-clockwise on the sky as seen "
+                     "from the Moon), 0..360 (wraps through 0)."}]),
         "start_utc": common.EPHEM_START_UTC,
         "step_minutes": 60,
         "count": EXPECTED,
