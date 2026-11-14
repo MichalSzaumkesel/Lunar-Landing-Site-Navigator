@@ -221,6 +221,10 @@ def main() -> None:
     doc = build_horizon(a.site_id, a.lat, a.lon, dem, side["product"], side["url"])
     out = a.out or common.DATA_DIR / "horizon" / f"{a.site_id}.json"
     h0 = write_horizon(doc, out)
+    hp = Path(__file__).resolve().parent / "site_heights.json"
+    heights = json.loads(hp.read_text()) if hp.exists() else {}
+    heights[a.site_id] = {"height_m": round(h0, 1), "dem": side["product"]}
+    hp.write_text(json.dumps(heights, indent=1))
     print(f"site height {h0:.1f} m")
     print(summary(doc))
     print("wrote", out, out.stat().st_size, "bytes")
