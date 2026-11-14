@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { usePresenceValue } from '../../lib/usePresence'
 import type { ReactElement } from 'react'
 import { downloadText, scenariosToCsv, type ScenarioCsvRow } from '../../lib/exportCsv'
 import { dataSource as defaultDataSource } from '../../lib/loader'
@@ -55,6 +56,7 @@ export function CompareTable({
   const [sortCriterion, setSortCriterion] = useState<CompareCriterionId | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [copyMsg, setCopyMsg] = useState<string | null>(null)
+  const copyP = usePresenceValue(copyMsg)
 
   // Derived loading state: true if any active scenario is not yet in bundles
   const loading = scenarios.some((s) => !bundles.has(s.id))
@@ -230,9 +232,9 @@ export function CompareTable({
           </span>
         </div>
         <div className="compare-actions">
-          {copyMsg && (
-            <span role="status" className="compare-status-msg">
-              {copyMsg}
+          {copyP.mounted && (
+            <span role="status" className="compare-status-msg presence-fade" data-state={copyP.state}>
+              {copyP.value}
             </span>
           )}
           {sortCriterion !== null && (

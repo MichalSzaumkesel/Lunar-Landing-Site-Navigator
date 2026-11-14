@@ -63,6 +63,10 @@ describe('ShareButton', () => {
     act(() => {
       vi.advanceTimersByTime(2000)
     })
+    // Then the exit animation.
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
     expect(liveRegion?.textContent).toBe('')
 
     vi.unstubAllGlobals()

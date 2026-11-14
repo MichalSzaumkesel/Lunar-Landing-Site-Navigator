@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MetaInput } from '../../lib/types'
 import { useSiteBundle } from '../../lib/useSiteBundle'
+import type { PresenceState } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
 import { REPO_DOCS_URL, summariseValidation } from './validationSummary'
 import type { ValidationSummary } from './validationSummary'
@@ -52,7 +53,7 @@ function Provenance() {
   )
 }
 
-export default function AboutData({ onClose }: { onClose: () => void }) {
+export default function AboutData({ onClose, state = 'open' }: { onClose: () => void; state?: PresenceState }) {
   const validation = useValidation()
   const closeRef = useRef<HTMLButtonElement | null>(null)
 
@@ -66,9 +67,10 @@ export default function AboutData({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   return (
-    <div className="about__backdrop" onClick={onClose}>
+    <div className="about__backdrop presence-fade" data-state={state} onClick={onClose}>
       <div
-        className="about"
+        className="about presence-rise"
+        data-state={state}
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-title"

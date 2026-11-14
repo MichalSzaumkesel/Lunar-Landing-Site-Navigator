@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
+import { usePresence, usePresenceValue } from '../../lib/usePresence'
 import { shareUrl } from '../../state/useUrlSync'
 import './share.css'
 
@@ -63,6 +64,9 @@ export function ShareButton({
     setError('Could not copy. Copy the address from the box.')
   }
 
+  const copiedPresence = usePresence(copied)
+  const fallback = usePresenceValue(fallbackUrl)
+
   return (
     <div className="share-wrap">
       <div className="share-action-row">
@@ -76,12 +80,16 @@ export function ShareButton({
           Copy link
         </button>
         <span aria-live="polite" className="share-status">
-          {copied ? 'Link copied' : ''}
+          {copiedPresence.mounted && (
+            <span className="presence-fade" data-state={copiedPresence.state}>
+              Link copied
+            </span>
+          )}
         </span>
       </div>
 
-      {fallbackUrl && (
-        <div className="share-fallback">
+      {fallback.mounted && (
+        <div className="share-fallback presence-rise" data-state={fallback.state}>
           {error && (
             <p role="alert" className="share-error">
               {error}
@@ -91,7 +99,7 @@ export function ShareButton({
             ref={inputRef}
             type="text"
             readOnly
-            value={fallbackUrl}
+            value={fallback.value ?? ''}
             className="share-fallback-input"
             aria-label="Share URL fallback"
             onFocus={(e) => e.currentTarget.select()}

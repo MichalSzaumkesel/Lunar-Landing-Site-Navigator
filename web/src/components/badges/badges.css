@@ -3,3 +3,7 @@
   align-items: center;
   gap: var(--space-1, 4px);
 }
+
+.data-badges .badge {
+  animation: presence-fade-in var(--motion-duration-normal) var(--motion-ease-out);
+}

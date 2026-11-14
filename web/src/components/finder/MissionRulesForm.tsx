@@ -1,8 +1,20 @@
 import { useState } from 'react'
+import { usePresenceValue } from '../../lib/usePresence'
 import type { ChangeEvent } from 'react'
 import type { MissionRules } from '../../lib/types'
 import { useAppStore } from '../../state/store'
 import './finder.css'
+
+/** Inline field error that fades in and out instead of popping. */
+function FieldError({ id, message }: { id: string; message: string | undefined }) {
+  const p = usePresenceValue(message)
+  if (!p.mounted) return null
+  return (
+    <p id={id} className="finder-form__error presence-rise" data-state={p.state} role="alert">
+      {p.value}
+    </p>
+  )
+}
 
 export interface MissionRulesFormProps {
   className?: string
@@ -221,11 +233,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             aria-describedby={errors.missionDurationH ? 'error-missionDurationH' : undefined}
             title="Total mission duration on the lunar surface (contract §3: missionDurationH, 1 to 1440 hours)"
           />
-          {errors.missionDurationH && (
-            <p id="error-missionDurationH" className="finder-form__error" role="alert">
-              {errors.missionDurationH}
-            </p>
-          )}
+          <FieldError id="error-missionDurationH" message={errors.missionDurationH} />
         </div>
 
         {/* Min share Sun visible */}
@@ -251,11 +259,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             aria-describedby={errors.minPctSunlit ? 'error-minPctSunlit' : undefined}
             title="Required minimum percentage of mission duration with the Sun visible above horizon (contract §3: minPctSunlit, 0 to 100%)"
           />
-          {errors.minPctSunlit && (
-            <p id="error-minPctSunlit" className="finder-form__error" role="alert">
-              {errors.minPctSunlit}
-            </p>
-          )}
+          <FieldError id="error-minPctSunlit" message={errors.minPctSunlit} />
         </div>
 
         {/* Longest dark stretch */}
@@ -281,11 +285,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             aria-describedby={errors.maxLongestDarkH ? 'error-maxLongestDarkH' : undefined}
             title="Maximum allowable continuous duration where the Sun is below horizon (contract §3: maxLongestDarkH, 0 to 1440 hours)"
           />
-          {errors.maxLongestDarkH && (
-            <p id="error-maxLongestDarkH" className="finder-form__error" role="alert">
-              {errors.maxLongestDarkH}
-            </p>
-          )}
+          <FieldError id="error-maxLongestDarkH" message={errors.maxLongestDarkH} />
         </div>
 
         {/* Earth in view at landing */}
@@ -330,11 +330,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             aria-describedby={errors.minPctEarth ? 'error-minPctEarth' : undefined}
             title="Required minimum percentage of mission duration with Earth in view above horizon (contract §3: minPctEarth, 0 to 100%)"
           />
-          {errors.minPctEarth && (
-            <p id="error-minPctEarth" className="finder-form__error" role="alert">
-              {errors.minPctEarth}
-            </p>
-          )}
+          <FieldError id="error-minPctEarth" message={errors.minPctEarth} />
         </div>
 
         {/* Min Sun elevation at landing */}
@@ -361,11 +357,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             aria-describedby={errors.minSunElAtLandingDeg ? 'error-minSunElAtLandingDeg' : undefined}
             title="Optional minimum elevation angle of the Sun above horizon at landing in degrees (contract §3: minSunElAtLandingDeg). Empty means no rule."
           />
-          {errors.minSunElAtLandingDeg && (
-            <p id="error-minSunElAtLandingDeg" className="finder-form__error" role="alert">
-              {errors.minSunElAtLandingDeg}
-            </p>
-          )}
+          <FieldError id="error-minSunElAtLandingDeg" message={errors.minSunElAtLandingDeg} />
         </div>
       </div>
 

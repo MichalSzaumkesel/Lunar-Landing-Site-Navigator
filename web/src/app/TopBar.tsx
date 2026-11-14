@@ -3,6 +3,7 @@ import type { ObserverHeightM } from '../lib/types'
 import { useDemoStore } from '../components/demo/demoState'
 import { useBundleLoading } from '../components/demo/useBundleLoading'
 import { useTourStore } from '../components/help/tourState'
+import { usePresence } from '../lib/usePresence'
 import { useAppStore } from '../state/store'
 import type { Mode } from '../state/types'
 import { PresetBar } from './PresetBar'
@@ -28,6 +29,7 @@ export function TopBar() {
   const stopDemo = useDemoStore((s) => s.stopDemo)
   const isBundleLoading = useBundleLoading()
   const [aboutOpen, setAboutOpen] = useState(false)
+  const about = usePresence(aboutOpen)
 
   const handleDemoClick = () => {
     if (isDemoActive) {
@@ -96,9 +98,9 @@ export function TopBar() {
           </button>
         ))}
       </div>
-      {aboutOpen && (
+      {about.mounted && (
         <Suspense fallback={null}>
-          <AboutData onClose={() => setAboutOpen(false)} />
+          <AboutData state={about.state} onClose={() => setAboutOpen(false)} />
         </Suspense>
       )}
     </header>

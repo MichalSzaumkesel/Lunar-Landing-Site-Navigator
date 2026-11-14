@@ -120,6 +120,10 @@ describe('ScenarioBoard preset (demo hook #1)', () => {
 
     const remove = container.querySelector('button[aria-label="Remove scenario Apollo 11"]') as HTMLButtonElement
     await act(async () => remove.click())
+    // The removed card stays for its exit animation.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 250))
+    })
 
     expect(cards().map((c) => c.getAttribute('aria-label'))).toEqual(['Scenario Artemis III region'])
     expect(cards()[0].getAttribute('aria-current')).toBe('true')
