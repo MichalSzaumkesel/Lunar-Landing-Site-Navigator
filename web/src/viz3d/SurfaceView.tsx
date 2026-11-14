@@ -143,6 +143,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   const [searchProgress, setSearchProgress] = useState(0)
   const [searchMessage, setSearchMessage] = useState<string | null>(null)
   const [bestSpotResult, setBestSpotResult] = useState<BestSpotResult | null>(null)
+  const [dismissedResult, setDismissedResult] = useState<BestSpotResult | null>(null)
+  const chipResult = bestSpotResult !== dismissedResult ? bestSpotResult : null
+  const chipPresence = usePresence(chipResult !== null)
   const [showComparison, setShowComparison] = useState(false)
 
   // Readouts update about 10 times a second; the sky itself is pushed to the scene per frame below.
@@ -723,6 +726,27 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
           role="img"
           aria-label={`3D view of ${bundle.site.name}, ${fmtUtc(cursorMs)}`}
         />
+        {simple && chipPresence.mounted && chipResult && (
+          <div
+            className="surface__result-card surface__result-chip presence-rise"
+            data-state={chipPresence.state}
+            role="status"
+            aria-live="polite"
+            aria-label="Sunniest spot result"
+          >
+            <div className="surface__result-sentence">
+              {formatSimpleResultSentence(landerOffset, deltaHours)}
+            </div>
+            {!isAtOrigin && (
+              <button type="button" onClick={handleResetPosition}>
+                Move back
+              </button>
+            )}
+            <button type="button" className="surface__chip-close" aria-label="Dismiss result" onClick={() => setDismissedResult(bestSpotResult)}>
+              ×
+            </button>
+          </div>
+        )}
         {!simple && <Badges bundle={bundle} edgeWarning={isClamped} moved={!isAtOrigin} />}
         <div className="surface__overlay surface__overlay--tl">
           <div className="surface__time">{fmtUtc(cursorMs)}</div>
@@ -929,21 +953,6 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
       {searchMessage && (
         <div className="surface__best-spot-alert" role="status">
           {searchMessage}
-        </div>
-      )}
-
-      {simple && bestSpotResult && (
-        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
-          <div className="surface__result-sentence">
-            {formatSimpleResultSentence(landerOffset, deltaHours)}
-          </div>
-          {!isAtOrigin && (
-            <div className="surface__result-actions">
-              <button type="button" onClick={handleResetPosition}>
-                Move back
-              </button>
-            </div>
-          )}
         </div>
       )}
 

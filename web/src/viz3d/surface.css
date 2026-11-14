@@ -597,4 +597,35 @@
   .lockbtn__icon {
     animation: none;
   }
+
+/* Simple mode result: compact chip over the bottom of the 3D frame, so it is visible without scrolling. */
+.surface__result-chip {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+}
+
+.surface__result-chip .surface__result-sentence {
+  flex: 1 1 8rem;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.surface__chip-close {
+  padding: 0 0.5rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  line-height: 1;
+}
+
+.surface__result-chip button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
 }

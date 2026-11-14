@@ -164,7 +164,7 @@ export function windowGroups(
   const sun: SimpleRow[] = [
     {
       id: 'sun',
-      label: 'Sun visible',
+      label: 'Sun visible over the window',
       value: `${Math.round(metrics.pct_sunlit)}% of ${span}`,
       hint: 'Share of the window when the centre of the Sun is above the local horizon, hills included.',
     },
@@ -191,7 +191,7 @@ export function windowGroups(
       rows: [
         {
           id: 'earth',
-          label: 'Earth in view',
+          label: 'Earth in view over the window',
           value: `${Math.round(metrics.pct_earth)}% of ${span}`,
           hint: 'Share of the window when the centre of the Earth is above the local horizon, hills included.',
         },
