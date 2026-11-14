@@ -11,7 +11,7 @@ export function DemoCaption() {
 
   useEffect(() => {
     if (isRecording) {
-      stopButtonRef.current?.focus()
+      stopButtonRef.current?.focus({ preventScroll: true })
     }
   }, [isRecording])
 

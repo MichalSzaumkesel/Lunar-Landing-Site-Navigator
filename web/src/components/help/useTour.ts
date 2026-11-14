@@ -52,10 +52,10 @@ export function useTour() {
     if (typeof document === 'undefined') return
     const prev = useTourStore.getState().previousFocus
     if (prev && document.contains(prev)) {
-      prev.focus()
+      prev.focus({ preventScroll: true })
     } else {
       const btn = document.querySelector<HTMLElement>('[data-tour="help-button"]')
-      btn?.focus()
+      btn?.focus({ preventScroll: true })
     }
   }, [])
 
