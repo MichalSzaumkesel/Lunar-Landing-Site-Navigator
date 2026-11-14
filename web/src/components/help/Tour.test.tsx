@@ -45,24 +45,88 @@ describe('Tour component', () => {
     localStorage.clear()
   })
 
-  it('scrolls the target smoothly, or instantly with reduced motion', async () => {
-    const spy = vi.fn()
-    Element.prototype.scrollIntoView = spy
-    for (const [reduce, behavior] of [
-      [false, 'smooth'],
-      [true, 'auto'],
-    ] as const) {
-      spy.mockClear()
+  describe('step transitions', () => {
+    const outOfView = { top: 2000, bottom: 2040, left: 10, right: 110, width: 100, height: 40 }
+    let rect: typeof outOfView
+    let scrollSpy: ReturnType<typeof vi.fn>
+
+    const mount = async (reduce: boolean) => {
       window.matchMedia = vi.fn().mockReturnValue({ matches: reduce }) as never
-      useTourStore.setState({ isOpen: true, stepIndex: 0 })
       await act(async () => {
         root.render(createElement(Tour))
       })
-      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ block: 'center', behavior }))
+      await act(async () => {
+        useTourStore.getState().openTour(0)
+      })
+    }
+    const advance = async (ms: number) => {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(ms)
+      })
+    }
+    const card = () => container.querySelector('[role="dialog"]') as HTMLElement
+    const cutout = () => container.querySelector('.tour-cutout')
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      rect = { ...outOfView }
+      scrollSpy = vi.fn()
+      Element.prototype.scrollIntoView = scrollSpy as never
+      Element.prototype.getBoundingClientRect = (() => rect) as never
+      Object.defineProperty(window, 'onscrollend', { value: null, configurable: true })
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+      delete (window as { onscrollend?: unknown }).onscrollend
+    })
+
+    it('hides the overlay during a smooth scroll and shows it after scrollend', async () => {
+      await mount(false)
+      expect(card().classList.contains('tour-card--on')).toBe(false)
+      await advance(130)
+      expect(scrollSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ block: 'center', behavior: 'smooth' }),
+      )
+      rect = { ...rect, top: 300, bottom: 340 }
+      await advance(300)
+      expect(card().classList.contains('tour-card--on')).toBe(false)
+      expect(cutout()).toBeNull()
+      await act(async () => {
+        window.dispatchEvent(new Event('scrollend'))
+      })
+      expect(card().classList.contains('tour-card--on')).toBe(true)
+      expect(cutout()?.classList.contains('tour-cutout--on')).toBe(true)
+      expect((cutout() as HTMLElement).style.top).toBe('296px')
+    })
+
+    it('falls back to polling the target rect when scrollend is missing', async () => {
+      delete (window as { onscrollend?: unknown }).onscrollend
+      await mount(false)
+      await advance(130)
+      expect(card().classList.contains('tour-card--on')).toBe(false)
+      rect = { ...rect, top: 300, bottom: 340 }
+      await advance(50)
+      expect(card().classList.contains('tour-card--on')).toBe(false)
+      await advance(200)
+      expect(card().classList.contains('tour-card--on')).toBe(true)
+    })
+
+    it('shows immediately with reduced motion and when the target is in view', async () => {
+      await mount(true)
+      await advance(5)
+      expect(scrollSpy).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }))
+      expect(card().classList.contains('tour-card--on')).toBe(true)
+
       await act(async () => {
         root.render(null)
       })
-    }
+      scrollSpy.mockClear()
+      rect = { top: 100, bottom: 140, left: 10, right: 110, width: 100, height: 40 }
+      await mount(false)
+      await advance(130)
+      expect(scrollSpy).not.toHaveBeenCalled()
+      expect(card().classList.contains('tour-card--on')).toBe(true)
+    })
   })
 
   it('renders nothing when closed', async () => {

@@ -1,15 +1,32 @@
 /* Guided tour overlay, cutout and popover card */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  pointer-events: none;
+  z-index: 890;
+  transition: opacity 150ms ease-out;
+}
+
+.tour-backdrop--off {
+  opacity: 0;
+}
+
+/* Frame is placed while hidden; only opacity animates */
 .tour-cutout {
   position: fixed;
   border-radius: var(--radius, 8px);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
   pointer-events: none;
   z-index: 900;
   border: 2px solid var(--earth, #4aa8ff);
-  transition: top var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
-              left var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
-              width var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
-              height var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.tour-cutout--on {
+  opacity: 1;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
+  transition-duration: 150ms;
 }
 
 .tour-card {
@@ -26,20 +43,13 @@
   flex-direction: column;
   gap: var(--space-3, 12px);
   color: var(--text, #f2f5fb);
-  transition: top var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out),
-              left var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
-  animation: tour-card-enter var(--motion-duration-fast, 120ms) var(--motion-ease-out, ease-out);
+  opacity: 0;
+  transition: opacity 120ms ease-out;
 }
 
-@keyframes tour-card-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.tour-card--on {
+  opacity: 1;
+  transition-duration: 150ms;
 }
 
 .tour-sr-only,
@@ -119,6 +129,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tour-backdrop,
   .tour-cutout,
   .tour-card {
     transition: none !important;
