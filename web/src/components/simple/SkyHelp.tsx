@@ -11,7 +11,7 @@ export type DiagramView = 'sky' | 'horizon' | '3d'
 
 const HELP_TEXT: Record<Exclude<DiagramView, 'sky'>, string> = {
   horizon: 'The horizon as you would see it standing on the surface, looking around. Gold: the Sun. Blue: the Earth.',
-  '3d': 'A 3D view of the landing area. Drag to look around.',
+  '3d': 'A 3D view of the landing area. Drag to look around, click the terrain or use the arrow keys to move the lander. The terrain is a local approximation. Credits are under the i button.',
 }
 
 export interface SkyHelpProps {

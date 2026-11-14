@@ -39,7 +39,7 @@ export function DiagramStage({ view, scenarioId }: { view: DiagramView; scenario
             </div>
           }
         >
-          <SurfaceView scenarioId={scenarioId} />
+          <SurfaceView scenarioId={scenarioId} variant="simple" />
         </Suspense>
       </ViewBoundary>
     )

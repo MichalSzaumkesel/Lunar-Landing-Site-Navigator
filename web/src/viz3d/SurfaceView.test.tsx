@@ -199,6 +199,25 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(control?.getAttribute('aria-label')).toContain('Arrow keys nudge')
   })
 
+  it('Simple variant hides planner readouts and keeps the single search action', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
+    })
+    const text = container.textContent ?? ''
+    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sunlight map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery']) {
+      expect(text).not.toContain(t)
+    }
+    const labels = Array.from(container.querySelectorAll('button')).map((b) => b.textContent)
+    expect(labels).toContain('Find the sunniest spot nearby')
+    expect(labels).toContain('Face the Sun')
+    expect(labels).not.toContain('Move back')
+    const info = container.querySelector('button[aria-label="Terrain and image credits"]') as HTMLButtonElement
+    await act(async () => {
+      info.click()
+    })
+    expect(container.textContent).toContain('Earth imagery: NASA Blue Marble')
+  })
+
   it('Face the Sun orbits the camera in Overview instead of being disabled', async () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))

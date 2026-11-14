@@ -19,7 +19,7 @@ import { heightAt } from './terrain'
 import { horizonFromTerrain } from './terrainHorizon'
 import { cancelLocalSunlitGrid, localSunlitGridAsync } from './localIllumClient'
 import { cancelBestSpotSearch, findBestSpotAsync } from './bestSpotClient'
-import { clampSearchRadius, formatResultSentence } from './bestSpot'
+import { clampSearchRadius, formatResultSentence, formatSimpleResultSentence } from './bestSpot'
 import type { BestSpotResult } from './bestSpot'
 import { createHeatmapTexture } from './heatmapTexture'
 import {
@@ -38,6 +38,7 @@ import { MOVE_MS } from './tween'
 /** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
 const LANDER_M_PER_S = 400
 const READOUT_MS = 100
+import { usePresence } from '../lib/usePresence'
 import { useTerrainHeights } from './useTerrainHeights'
 import {
   belowHorizonText,
@@ -53,6 +54,30 @@ import {
 import './surface.css'
 
 const MAX_EXAGGERATION = 5
+
+// The first-view hint shows once per session, then fades after a few seconds.
+let lookHintShown = false
+
+function LookHint() {
+  const [open, setOpen] = useState(!lookHintShown)
+  const { mounted, state } = usePresence(open)
+  useEffect(() => {
+    lookHintShown = true
+    const t = setTimeout(() => setOpen(false), 4000)
+    return () => clearTimeout(t)
+  }, [])
+  if (!mounted) return null
+  return (
+    <div className="surface__overlay surface__overlay--br surface__hint" data-state={state}>
+      Drag to look around. Click terrain to move the lander.
+    </div>
+  )
+}
+
+function simpleSunText(visible: boolean, el: number): string {
+  if (visible) return 'Sun visible'
+  return el < 0 ? 'Sun below the horizon' : 'Sun hidden behind hills'
+}
 
 function faceTitle(body: 'Sun' | 'Earth', mode: ViewMode, hasSample: boolean): string {
   if (!hasSample) return `${body} direction is not available at this time`
@@ -73,19 +98,23 @@ function Badges({ bundle, edgeWarning, moved }: { bundle: SiteBundle; edgeWarnin
   )
 }
 
+export type SurfaceVariant = 'full' | 'simple'
+
 interface StageProps {
+  simple: boolean
   scenario: Scenario
   bundle: SiteBundle
   terrain: TerrainFile
   heights: Float32Array
 }
 
-function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
+function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps) {
   const holderRef = useRef<HTMLDivElement>(null)
   const [scene, setScene] = useState<SurfaceScene | null>(null)
   const [mode, setMode] = useState<ViewMode>('surface')
   const [exaggeration, setExaggeration] = useState(1)
   const [sizeScale, setSizeScale] = useState(SIZE_MIN)
+  const [showCredits, setShowCredits] = useState(false)
   const [facing, setFacing] = useState<'sun' | 'earth' | null>(null)
 
   // Lander movement and what-if state (local only, not in global store)
@@ -627,17 +656,32 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
 
   return (
     <>
-      <div className="surface__frame">
+      <div
+        className="surface__frame"
+        {...(simple
+          ? {
+              tabIndex: 0,
+              'aria-label': '3D view. Arrow keys move the lander.',
+              onKeyDown: handleLanderKeyDown,
+              onKeyUp: handleLanderKeyUp,
+              onBlur: () => keyMotionRef.current?.release(),
+            }
+          : {})}
+      >
         <div
           ref={holderRef}
           className="surface__canvas"
           role="img"
           aria-label={`3D view of ${bundle.site.name}, ${fmtUtc(cursorMs)}`}
         />
-        <Badges bundle={bundle} edgeWarning={isClamped} moved={!isAtOrigin} />
+        {!simple && <Badges bundle={bundle} edgeWarning={isClamped} moved={!isAtOrigin} />}
         <div className="surface__overlay surface__overlay--tl">
           <div className="surface__time">{fmtUtc(cursorMs)}</div>
-          {sample && sunRead ? (
+          {simple ? (
+            <div className={sunRead?.visible ? 'surface__state surface__state--on' : 'surface__state'}>
+              {sample && sunRead ? simpleSunText(sunRead.visible, sample.sun.el) : 'Outside data range'}
+            </div>
+          ) : sample && sunRead ? (
             <>
               <div className={sunRead.visible ? 'surface__state surface__state--on' : 'surface__state'}>
                 {sunStateText(sunRead.visible)}
@@ -658,6 +702,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
             {facingNote}
           </div>
         )}
+        {!simple && (
+          <>
         <div className="surface__overlay surface__overlay--bl">
           <div>{legend}</div>
           <div>{earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}</div>
@@ -667,6 +713,9 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
             ? 'Drag or arrow keys to look around; click terrain to move lander'
             : 'Drag to orbit, scroll to zoom; click terrain to move lander'}
         </div>
+          </>
+        )}
+        {simple && <LookHint />}
       </div>
 
       <div className="surface__controls">
@@ -707,6 +756,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         >
           Face the Earth
         </button>
+        {!simple && (
+          <>
         <label className="group">
           <span className="group__label">Vertical exaggeration</span>
           <input
@@ -743,7 +794,20 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           Sunlight map
         </button>
 
+          </>
+        )}
+        {simple && (
+          <button
+            type="button"
+            aria-label="Terrain and image credits"
+            aria-expanded={showCredits}
+            onClick={() => setShowCredits((v) => !v)}
+          >
+            i
+          </button>
+        )}
         <div className="group" role="group" aria-label="Sunniest spot search">
+          {!simple && (
           <label className="group">
             <span className="group__label">Radius</span>
             <select
@@ -760,12 +824,13 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
               <option value={2000}>2 km</option>
             </select>
           </label>
+          )}
           <button
             type="button"
             disabled={isSearching}
             onClick={handleFindBestSpot}
           >
-            Find sunniest spot
+            {simple ? 'Find the sunniest spot nearby' : 'Find sunniest spot'}
           </button>
           {isSearching && (
             <button
@@ -779,6 +844,12 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         </div>
       </div>
 
+      {simple && showCredits && (
+        <div className="surface__credits">
+          {legend}. {earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}.
+        </div>
+      )}
+
       {isSearching && (
         <div className="surface__search-progress" role="status" aria-live="polite">
           Searching for sunniest spot: {Math.round(searchProgress * 100)}%
@@ -791,8 +862,23 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         </div>
       )}
 
+      {simple && bestSpotResult && (
+        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
+          <div className="surface__result-sentence">
+            {formatSimpleResultSentence(landerOffset, deltaHours)}
+          </div>
+          {!isAtOrigin && (
+            <div className="surface__result-actions">
+              <button type="button" onClick={handleResetPosition}>
+                Move back
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Best Spot Result Card */}
-      {bestSpotResult && (
+      {!simple && bestSpotResult && (
         <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
           <div className="surface__result-badges">
             {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
@@ -840,6 +926,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       )}
 
       {/* Lander Position and What-If Horizon Recompute */}
+      {!simple && (
       <div className="surface__lander-box">
         <div className="surface__lander-header">
           <div
@@ -886,8 +973,10 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         </div>
       </div>
 
+      )}
+
       {/* Sunlight Heatmap Legend & Cell Inspector */}
-      {showHeatmap && (
+      {!simple && showHeatmap && (
         <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
           {heatmapLoading ? (
             <div className="surface__heatmap-loading" role="status" aria-busy="true">
@@ -927,7 +1016,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   )
 }
 
-function SurfaceViewInner({ scenario }: { scenario: Scenario }) {
+function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: boolean }) {
   const { status, bundle, error } = useSiteBundle(scenario.siteId)
   const terrain = bundle?.terrain ?? null
   const heights = useTerrainHeights(terrain)
@@ -968,6 +1057,7 @@ function SurfaceViewInner({ scenario }: { scenario: Scenario }) {
   } else {
     body = (
       <SurfaceStage
+        simple={simple}
         key={`${scenario.id}-${bundle.site.id}`}
         scenario={scenario}
         bundle={bundle}
@@ -980,8 +1070,8 @@ function SurfaceViewInner({ scenario }: { scenario: Scenario }) {
   return <div className="surface">{body}</div>
 }
 
-export function SurfaceView({ scenarioId }: { scenarioId: string }) {
+export function SurfaceView({ scenarioId, variant = 'full' }: { scenarioId: string; variant?: SurfaceVariant }) {
   const scenario = useAppStore((s) => s.scenarios.find((x) => x.id === scenarioId))
   if (!scenario) return null
-  return <SurfaceViewInner scenario={scenario} />
+  return <SurfaceViewInner scenario={scenario} simple={variant === 'simple'} />
 }
