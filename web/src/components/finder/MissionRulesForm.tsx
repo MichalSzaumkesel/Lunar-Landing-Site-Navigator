@@ -4,7 +4,7 @@ import type { ChangeEvent } from 'react'
 import type { MissionRules } from '../../lib/types'
 import { useAppStore } from '../../state/store'
 import './finder.css'
-
+
 /** Inline field error that fades in and out instead of popping. */
 function FieldError({ id, message }: { id: string; message: string | undefined }) {
   const p = usePresenceValue(message)
@@ -210,14 +210,14 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
       </div>
 
       <div className="finder-form__fields">
-        {/* Window length */}
+        {/* Mission length */}
         <div className="finder-form__field">
           <label
             htmlFor="rule-missionDurationH"
             className="finder-form__label"
             title="Total mission duration on the lunar surface (contract §3: missionDurationH, 1 to 1440 hours)"
           >
-            <span>Window length</span>
+            <span>Mission length</span>
             <span className="finder-form__unit">hours ({daysDisplay} days)</span>
           </label>
           <input
