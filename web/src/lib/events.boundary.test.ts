@@ -56,7 +56,17 @@ describe('listSkyEvents at exact sample boundaries', () => {
     expect(events.filter((e) => e.kind === 'sunset' || e.kind === 'sunrise')).toHaveLength(0)
   })
 
-  // Known bug (review R12 #6): a grazing contact from below at a sample emits
-  // a sunrise and a sunset at the same millisecond. Enable once listSkyEvents is fixed.
-  it.todo('does not emit a sunrise and a sunset at the same millisecond for a grazing contact from below')
+  it('does not emit a sunrise and a sunset at the same millisecond for a grazing contact from below', () => {
+    const events = listSkyEvents(bundleWithSunEl([-1, 0, -1]), 2, T0, T0 + 2 * HOUR_MS)
+
+    expect(events.filter((e) => e.kind === 'sunset' || e.kind === 'sunrise')).toHaveLength(0)
+  })
+
+  it('reports a sunset that reaches the horizon exactly at the final sample', () => {
+    const events = listSkyEvents(bundleWithSunEl([2, 1, 0]), 2, T0, T0 + 3 * HOUR_MS)
+    const sun = events.filter((e) => e.kind === 'sunset' || e.kind === 'sunrise')
+
+    expect(sun.map((e) => e.kind)).toEqual(['sunset'])
+    expect(sun[0].ms).toBe(T0 + 2 * HOUR_MS)
+  })
 })
