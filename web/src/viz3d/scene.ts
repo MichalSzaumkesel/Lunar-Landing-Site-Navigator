@@ -39,6 +39,7 @@ import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { earthLitFraction, faceTarget } from './viewMath'
+import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
 
 /**
  * Frame mapping, the only place it is defined.
@@ -137,12 +138,7 @@ export function shouldUpdateShadow(input: ShadowUpdateDecisionInput): boolean {
 }
 
 /** Pure easing function (ease-in-out cubic) for cinematic camera panning. */
-export function cameraEase(t: number): number {
-  const clamped = Math.max(0, Math.min(1, t))
-  return clamped < 0.5
-    ? 4 * clamped * clamped * clamped
-    : 1 - Math.pow(-2 * clamped + 2, 3) / 2
-}
+export const cameraEase = easeInOutCubic
 
 export interface SceneStats {
   tier: QualityTier
@@ -202,7 +198,6 @@ export class SurfaceScene {
   private maskStepDeg = 0.5
   private raf = 0
   private hoverRaf = 0
-  private animationRaf = 0
   private heatmapRaf = 0
   private landerAnimationCancel: (() => void) | null = null
   private benchRaf = 0
@@ -546,15 +541,9 @@ export class SurfaceScene {
   }
 
   cancelLanderAnimation(): void {
-    if (this.animationRaf) {
-      cancelAnimationFrame(this.animationRaf)
-      this.animationRaf = 0
-    }
-    if (this.landerAnimationCancel) {
-      const cb = this.landerAnimationCancel
-      this.landerAnimationCancel = null
-      cb()
-    }
+    const cancel = this.landerAnimationCancel
+    this.landerAnimationCancel = null
+    cancel?.()
   }
 
   /** Force an unthrottled shadow update (e.g. on playback pause). */
@@ -668,65 +657,39 @@ export class SurfaceScene {
     this.invalidate()
   }
 
-  animateLanderTo(target: OffsetM, durationMs: number = 1200): Promise<void> {
+  /**
+   * Eased move of the lander (and so the marker ring and the camera target that follow it).
+   * A new call or any user input cancels the running move; the next one starts from the current
+   * interpolated position. Resolves with where the lander ended up. Instant under reduced motion.
+   */
+  animateLanderTo(target: OffsetM, durationMs: number = MOVE_MS): Promise<{ finished: boolean; offset: OffsetM }> {
     this.cancelLanderAnimation()
+    const done = (finished: boolean) => ({ finished, offset: { ...this.landerOffset } })
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    const from = { ...this.landerOffset }
 
-    if (prefersReducedMotion || durationMs <= 0) {
+    if (this.disposed) return Promise.resolve(done(false))
+    if (prefersReducedMotion || durationMs <= 0 || Math.hypot(target.eastM - from.eastM, target.northM - from.northM) < 1) {
       this.setLanderOffset(target.eastM, target.northM)
-      return Promise.resolve()
-    }
-
-    const startEast = this.landerOffset.eastM
-    const startNorth = this.landerOffset.northM
-    const dEast = target.eastM - startEast
-    const dNorth = target.northM - startNorth
-
-    if (Math.hypot(dEast, dNorth) < 1) {
-      this.setLanderOffset(target.eastM, target.northM)
-      return Promise.resolve()
+      return Promise.resolve(done(true))
     }
 
     return new Promise((resolve) => {
-      this.landerAnimationCancel = () => {
-        resolve()
-      }
-
-      const startTime = performance.now()
-
-      const step = (now: number) => {
-        if (this.disposed) {
-          this.animationRaf = 0
+      this.landerAnimationCancel = startTween({
+        durationMs,
+        onFrame: (e) => {
+          if (this.disposed) return
+          const p = lerpOffset(from, target, e)
+          this.setLanderOffset(p.eastM, p.northM)
+        },
+        onEnd: (finished) => {
           this.landerAnimationCancel = null
-          resolve()
-          return
-        }
-
-        const elapsed = now - startTime
-        const rawT = Math.min(1, elapsed / durationMs)
-        const ease = cameraEase(rawT)
-
-        const curEast = startEast + dEast * ease
-        const curNorth = startNorth + dNorth * ease
-
-        this.setLanderOffset(curEast, curNorth)
-
-        if (rawT < 1 && !this.disposed) {
-          this.animationRaf = requestAnimationFrame(step)
-        } else {
-          this.animationRaf = 0
-          this.landerAnimationCancel = null
-          if (!this.disposed) {
-            this.setLanderOffset(target.eastM, target.northM)
-          }
-          resolve()
-        }
-      }
-
-      this.animationRaf = requestAnimationFrame(step)
+          resolve(done(finished))
+        },
+      })
     })
   }
 
@@ -831,8 +794,6 @@ export class SurfaceScene {
     this.raf = 0
     if (this.hoverRaf) cancelAnimationFrame(this.hoverRaf)
     this.hoverRaf = 0
-    if (this.animationRaf) cancelAnimationFrame(this.animationRaf)
-    this.animationRaf = 0
     if (this.heatmapRaf) cancelAnimationFrame(this.heatmapRaf)
     this.heatmapRaf = 0
     if (this.benchRaf) cancelAnimationFrame(this.benchRaf)
