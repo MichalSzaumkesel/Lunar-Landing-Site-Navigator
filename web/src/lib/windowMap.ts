@@ -71,7 +71,7 @@ export function computeWindowMap(
   }
 
   const coverages = validInputs.map((input) => ephemCoverage(input.bundle.ephem))
-  const start0Ms = Math.max(...coverages.map((c) => c.startMs))
+  const start0Ms = Math.min(...coverages.map((c) => c.startMs))
   const end0Ms = Math.max(...coverages.map((c) => c.endMs))
 
   const reqStartMs =
@@ -159,10 +159,12 @@ export function computeWindowMap(
 
     const sunlit = new Uint8Array(ephemCount)
     const earth = new Uint8Array(ephemCount)
+    const sunClearance = new Float32Array(ephemCount)
 
     for (let i = 0; i < ephemCount; i++) {
       const hSun = horizonAt(mask, azStepDeg, ephem.sun.az[i])
-      sunlit[i] = ephem.sun.el[i] - hSun >= 0 ? 1 : 0
+      sunClearance[i] = ephem.sun.el[i] - hSun
+      sunlit[i] = sunClearance[i] >= 0 ? 1 : 0
 
       const hEarth = horizonAt(mask, azStepDeg, ephem.earth.az[i])
       earth[i] = ephem.earth.el[i] - hEarth >= 0 ? 1 : 0
@@ -239,7 +241,7 @@ export function computeWindowMap(
       if (
         isValid &&
         rules.minSunElAtLandingDeg !== undefined &&
-        ephem.sun.el[k] < rules.minSunElAtLandingDeg
+        sunClearance[k] < rules.minSunElAtLandingDeg
       ) {
         isValid = false
       }

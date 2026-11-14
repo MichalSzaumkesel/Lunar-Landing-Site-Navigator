@@ -4,17 +4,19 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { listSkyEvents } from '../../lib/events'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import {
+  computeAmbientParams,
   findEventsBetween,
   getSoundEngine,
+  shouldUpdateAmbient,
   type SoundEngine,
 } from '../../lib/sound'
 
 /**
- * Watches playback and cues sound events (sunrise, sunset, earthrise, earthset)
- * for the active scenario.
+ * Watches playback and time cursor to drive sound for the active scenario:
+ * - Continuous calm ambient tone (Sun & Earth visibility) in Ambient mode.
+ * - Event beeps (sunrise, sunset, earthrise, earthset) in Cues mode.
  *
  * Mounted once. Subscribes to store changes without per-frame re-renders.
- * Skips cues when sound is disabled, paused, scrubbing, or when speed > 72 h/s.
  */
 export function useEventSounds(customEngine?: SoundEngine): void {
   const activeScenarioId = useAppStore((s) => s.activeScenarioId)
@@ -48,6 +50,8 @@ export function useEventSounds(customEngine?: SoundEngine): void {
 
   const eventsRef = useRef(skyEvents)
   const activeScenarioRef = useRef(activeScenario)
+  const bundleRef = useRef(bundle)
+  const observerHeightRef = useRef(observerHeightM)
 
   useEffect(() => {
     eventsRef.current = skyEvents
@@ -56,6 +60,14 @@ export function useEventSounds(customEngine?: SoundEngine): void {
   useEffect(() => {
     activeScenarioRef.current = activeScenario
   }, [activeScenario])
+
+  useEffect(() => {
+    bundleRef.current = bundle
+  }, [bundle])
+
+  useEffect(() => {
+    observerHeightRef.current = observerHeightM
+  }, [observerHeightM])
 
   const prevCursorMsRef = useRef<number | null>(null)
 
@@ -66,8 +78,33 @@ export function useEventSounds(customEngine?: SoundEngine): void {
 
   useEffect(() => {
     const engine = customEngine ?? getSoundEngine()
+    let lastAmbientUpdateMs = -Infinity
 
-    const unsubscribe = useAppStore.subscribe((state) => {
+    const pushAmbientUpdate = (cursorMs: number): void => {
+      if (engine.getMode() !== 'ambient') return
+      const params = computeAmbientParams(
+        bundleRef.current,
+        observerHeightRef.current,
+        cursorMs,
+      )
+      engine.updateAmbient(params)
+    }
+
+    // When mode switches to ambient, immediately push current state
+    const unsubMode = engine.addListener((mode) => {
+      if (mode === 'ambient') {
+        const scenario = activeScenarioRef.current
+        if (scenario) {
+          const currMs = scenarioCursorMs(
+            scenario,
+            useAppStore.getState().cursorH,
+          )
+          pushAmbientUpdate(currMs)
+        }
+      }
+    })
+
+    const unsubscribeStore = useAppStore.subscribe((state) => {
       const scenario = activeScenarioRef.current
       if (!scenario) return
 
@@ -75,35 +112,66 @@ export function useEventSounds(customEngine?: SoundEngine): void {
       const prevMs = prevCursorMsRef.current
       prevCursorMsRef.current = currMs
 
-      // Only evaluate cues while playing and sound is enabled
-      if (!state.playing || !engine.isEnabled()) {
-        return
+      // 1. Ambient mode: continuous sound updated on cursor move (play or scrub)
+      if (engine.getMode() === 'ambient') {
+        const now =
+          typeof performance !== 'undefined' ? performance.now() : Date.now()
+        if (shouldUpdateAmbient(now, lastAmbientUpdateMs)) {
+          lastAmbientUpdateMs = now
+          pushAmbientUpdate(currMs)
+        }
       }
 
-      // First tick after starting playback or seek: establish baseline without firing cues
-      if (prevMs === null) {
-        return
-      }
+      // 2. Cues mode: short tones during playback
+      if (engine.getMode() === 'cues' && state.playing) {
+        if (prevMs === null) return
+        const events = eventsRef.current
+        if (!events || events.length === 0) return
 
-      const events = eventsRef.current
-      if (!events || events.length === 0) return
+        const cues = findEventsBetween(
+          events,
+          prevMs,
+          currMs,
+          state.speedHPerSec,
+          72,
+          12,
+        )
 
-      const cues = findEventsBetween(
-        events,
-        prevMs,
-        currMs,
-        state.speedHPerSec,
-        72,
-        12,
-      )
-
-      for (const evt of cues) {
-        engine.cue(evt.kind)
+        for (const evt of cues) {
+          engine.cue(evt.kind)
+        }
       }
     })
 
+    // If already ambient on mount, push initial state
+    if (engine.getMode() === 'ambient' && activeScenarioRef.current) {
+      const currMs = scenarioCursorMs(
+        activeScenarioRef.current,
+        useAppStore.getState().cursorH,
+      )
+      pushAmbientUpdate(currMs)
+    }
+
     return () => {
-      unsubscribe()
+      unsubMode()
+      unsubscribeStore()
     }
   }, [customEngine])
+
+  // Also push ambient update when bundle or observer height finishes loading
+  useEffect(() => {
+    const engine = customEngine ?? getSoundEngine()
+    if (engine.getMode() === 'ambient' && activeScenarioRef.current && bundle) {
+      const currMs = scenarioCursorMs(
+        activeScenarioRef.current,
+        useAppStore.getState().cursorH,
+      )
+      const params = computeAmbientParams(
+        bundle,
+        observerHeightM,
+        currMs,
+      )
+      engine.updateAmbient(params)
+    }
+  }, [bundle, observerHeightM, customEngine])
 }
