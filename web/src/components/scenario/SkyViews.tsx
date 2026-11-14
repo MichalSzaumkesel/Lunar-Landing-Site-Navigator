@@ -4,6 +4,7 @@ import { useTourStore } from '../help/tourState'
 import { Loupe } from '../sky/Loupe'
 import { Panorama } from '../sky/Panorama'
 import { SkyPlot } from '../sky/SkyPlot'
+import { useDemoStore } from '../demo/demoState'
 import { useAppStore } from '../../state/store'
 import { nextTabIndex } from './tabs'
 import './scenario.css'
@@ -45,6 +46,7 @@ class ViewBoundary extends Component<{ children: ReactNode }, BoundaryState> {
 
 function PolarPanel({ scenarioId, siteName }: { scenarioId: string; siteName?: string }) {
   const isMulti = useAppStore((s) => s.scenarios.length > 1)
+  const isActive = useAppStore((s) => s.activeScenarioId === scenarioId)
   const tourOpen = useTourStore((s) => s.isOpen)
   const [loupeOpen, setLoupeOpen] = useState(!isMulti)
   const [prevMulti, setPrevMulti] = useState(isMulti)
@@ -55,7 +57,9 @@ function PolarPanel({ scenarioId, siteName }: { scenarioId: string; siteName?: s
     setLoupeOpen(!isMulti)
   }
 
-  const isExpanded = tourOpen || loupeOpen
+  // Demo steps such as the sunset countdown open the loupe on the active card; the user's own choice is kept.
+  const demoLoupe = useDemoStore((s) => s.loupeOpen) && isActive
+  const isExpanded = tourOpen || loupeOpen || demoLoupe
 
   return (
     <div className="views__polar">
