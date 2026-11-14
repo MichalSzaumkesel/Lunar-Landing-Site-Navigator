@@ -6,14 +6,17 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ## Screenshots
 
-Screenshots will be added after the final UI pass. Planned files (not yet in the repository):
+![Compare: scenario cards side by side](docs/screenshots/01-compare-scenario-cards.png)
 
-- `docs/screenshots/01-compare-scenario-cards.png` - up to four scenario cards side by side
-- `docs/screenshots/02-polar-sky-plot-and-loupe.png` - polar sky plot and solar disc loupe
-- `docs/screenshots/03-surface-3d.png` - 3D terrain view with shadows and lander
-- `docs/screenshots/04-sunniest-spot.png` - sunlight heatmap and "Find sunniest spot" result
-- `docs/screenshots/05-window-map.png` - window map for the mission rules
-- `docs/screenshots/06-simple-mode.png` - Simple mode summary
+![Polar sky plot and solar disc loupe](docs/screenshots/02-polar-sky-plot-and-loupe.png)
+
+![3D terrain view with lander](docs/screenshots/03-surface-3d.png)
+
+![Sunlight map and "Find sunniest spot" result](docs/screenshots/04-sunniest-spot.png)
+
+![Window map for the mission rules](docs/screenshots/05-window-map.png)
+
+![Simple mode summary](docs/screenshots/06-simple-mode.png)
 
 ## Features
 
