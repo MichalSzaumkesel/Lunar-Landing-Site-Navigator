@@ -143,7 +143,7 @@ export function formatStep5Caption(
 /** Step 6 caption: concluding end card before looping. */
 export function formatStep6Caption(ctx: DemoStepContext): string {
   return appendDemoDataNotice(
-    'Tour complete. Press Esc or click Stop demo to explore freely.',
+    'Demo complete. Press Esc or click Stop demo to explore freely.',
     ctx.isSynthetic,
   )
 }

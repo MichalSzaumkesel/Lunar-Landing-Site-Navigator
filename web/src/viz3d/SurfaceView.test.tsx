@@ -1,0 +1,312 @@
+// @vitest-environment jsdom
+import { act, createElement } from 'react'
+import { createRoot } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { SurfaceView } from './SurfaceView'
+import * as useSiteBundleModule from '../lib/useSiteBundle'
+import * as useTerrainHeightsModule from './useTerrainHeights'
+import * as bestSpotClientModule from './bestSpotClient'
+import { useAppStore } from '../state/store'
+import type { SiteBundle } from '../lib/types'
+
+;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver
+
+vi.mock('./bestSpotClient', () => ({
+  cancelBestSpotSearch: vi.fn(),
+  findBestSpotAsync: vi.fn(),
+}))
+
+vi.mock('./heatmapTexture', () => {
+  return {
+    createHeatmapTexture: vi.fn().mockReturnValue({
+      texture: { dispose: vi.fn() },
+    }),
+  }
+})
+
+vi.mock('./scene', () => {
+  return {
+    SurfaceScene: class {
+      lookAtAzimuth = vi.fn()
+      setSize = vi.fn()
+      dispose = vi.fn()
+      setHorizon = vi.fn()
+      setOnUserLook = vi.fn()
+      setMode = vi.fn()
+      setExaggeration = vi.fn()
+      setEyeHeight = vi.fn()
+      setSky = vi.fn()
+      setLanderOffset = vi.fn()
+      setOnTerrainClick = vi.fn()
+      setOnTerrainHover = vi.fn()
+      setHeatmapTexture = vi.fn()
+      invalidateShadow = vi.fn()
+      animateLanderTo = vi.fn().mockResolvedValue(undefined)
+    },
+  }
+})
+
+describe('SurfaceView 3D View Fixes', () => {
+  let container: HTMLDivElement
+  let root: Root
+
+  const mockBundle: SiteBundle = {
+    site: {
+      id: 'mock_site',
+      name: '[MOCK] Test Site',
+      category: 'clps',
+      mission: null,
+      agency: null,
+      country: null,
+      lat_deg: -89.9,
+      lon_deg: 0,
+      elevation_m: 0,
+      landing_date_utc: null,
+      status: 'landed',
+      region_radius_km: null,
+      source: { title: 'NASA', url: '' },
+      notes: '',
+    },
+    ephem: {
+      meta: {
+        contract_version: '1.1.1',
+        generated_utc: '2026-01-01T00:00:00Z',
+        generator: 'test',
+        synthetic: true,
+        approximate: true,
+        inputs: [],
+      },
+      site_id: 'mock_site',
+      start_utc: '2026-01-01T00:00:00Z',
+      step_minutes: 60,
+      count: 24,
+      sun: { az: new Array(24).fill(0), el: new Array(24).fill(1) },
+      earth: { az: new Array(24).fill(0), el: new Array(24).fill(1) },
+      sun_ang_radius_deg: 0.25,
+      earth_ang_radius_deg: 1.0,
+    },
+    horizon: {
+      meta: {
+        contract_version: '1.1.1',
+        generated_utc: '2026-01-01T00:00:00Z',
+        generator: 'test',
+        synthetic: true,
+        approximate: true,
+        inputs: [],
+      },
+      site_id: 'mock_site',
+      az_step_deg: 1,
+      n: 360,
+      observer_heights_m: [2, 10],
+      masks: {
+        '2': new Array(360).fill(0),
+        '10': new Array(360).fill(0),
+      },
+    },
+    terrain: {
+      meta: {
+        contract_version: '1.1.1',
+        generated_utc: '2026-01-01T00:00:00Z',
+        generator: 'test',
+        synthetic: true,
+        approximate: true,
+        inputs: [],
+      },
+      site_id: 'mock_site',
+      spacing_m: 80,
+      size_px: 64,
+      frame: 'local_tangent_enu',
+      origin: 'site',
+      encoding: 'uint16-le',
+      bin: 'mock.bin',
+      height_min_m: 0,
+      height_max_m: 100,
+      site_height_m: 0,
+    },
+    provenance: 'mock',
+    synthetic: true,
+    approximate: true,
+  }
+
+  const heights = new Float32Array(64 * 64).fill(0)
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+
+    vi.spyOn(useSiteBundleModule, 'useSiteBundle').mockReturnValue({
+      status: 'ready',
+      bundle: mockBundle,
+      error: null,
+    })
+
+    vi.spyOn(useTerrainHeightsModule, 'useTerrainHeights').mockReturnValue({
+      status: 'ready',
+      heights,
+      error: null,
+    })
+
+    useAppStore.setState({
+      scenarios: [
+        {
+          id: 'sc1',
+          siteId: 'mock_site',
+          startUtc: '2026-01-01T00:00:00Z',
+          durationH: 24,
+          slipDays: 0,
+        },
+      ],
+      activeScenarioId: 'sc1',
+      cursorH: 0,
+      observerHeightM: 2,
+    })
+  })
+
+  afterEach(() => {
+    act(() => {
+      root.unmount()
+    })
+    container.remove()
+    vi.restoreAllMocks()
+  })
+
+  it('renders lander position control with role="group", aria-roledescription="position control", and aria-label', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    const control = container.querySelector('.surface__nudge-control')
+    expect(control).not.toBeNull()
+    expect(control?.getAttribute('role')).toBe('group')
+    expect(control?.getAttribute('aria-roledescription')).toBe('position control')
+    expect(control?.getAttribute('aria-label')).toContain('Lander position')
+    expect(control?.getAttribute('aria-label')).toContain('Arrow keys nudge')
+  })
+
+  it('renders badges in lander box (Approximate and Synthetic)', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    const hoursRow = container.querySelector('.surface__hours-row')
+    expect(hoursRow).not.toBeNull()
+    const badges = hoursRow?.querySelectorAll('.badge')
+    const badgeTexts = Array.from(badges ?? []).map((b) => b.textContent)
+    expect(badgeTexts).toContain('Approximate')
+    expect(badgeTexts).toContain('Synthetic data')
+  })
+
+  it('renders vertical exaggeration slider with aria-label="Vertical exaggeration"', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    const slider = container.querySelector('input[type="range"][aria-label="Vertical exaggeration"]')
+    expect(slider).not.toBeNull()
+  })
+
+  it('renders sunlight map legend with badges and cell inspector without tabIndex and with aria-live="polite"', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    // Click Sunlight map toggle button
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const mapBtn = buttons.find((b) => b.textContent?.includes('Sunlight map'))
+    expect(mapBtn).toBeDefined()
+
+    await act(async () => {
+      mapBtn?.click()
+    })
+
+    // Now heatmap panel is rendered
+    const heatmapPanel = container.querySelector('.surface__heatmap-panel')
+    expect(heatmapPanel).not.toBeNull()
+
+    // Inspector readout should NOT have tabIndex
+    const inspector = container.querySelector('.surface__cell-inspector')
+    expect(inspector?.getAttribute('tabIndex')).toBeNull()
+    expect(inspector?.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('renders sunniest spot result card with role="status" and aria-live="polite"', async () => {
+    vi.mocked(bestSpotClientModule.findBestSpotAsync).mockResolvedValueOnce({
+      result: {
+        row: 10,
+        col: 12,
+        index: 120,
+        offset: { eastM: 100, northM: 200 },
+        distanceM: 223.6,
+        sunlitVal: 85,
+        slopeDeg: 3.2,
+      },
+    })
+
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    const findBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Find sunniest spot'),
+    )
+    expect(findBtn).toBeDefined()
+
+    await act(async () => {
+      findBtn?.click()
+    })
+
+    const resultCard = container.querySelector('.surface__result-card')
+    expect(resultCard).not.toBeNull()
+    expect(resultCard?.getAttribute('role')).toBe('status')
+    expect(resultCard?.getAttribute('aria-live')).toBe('polite')
+    expect(resultCard?.getAttribute('aria-label')).toBe('Sunniest spot result')
+  })
+
+  it('displays "Outside ephemeris coverage" when search returns no result on out-of-range dates', async () => {
+    vi.mocked(bestSpotClientModule.findBestSpotAsync).mockResolvedValueOnce({
+      result: null,
+    })
+
+    // Set scenario dates outside the 2026-01-01 ephemeris coverage
+    useAppStore.setState({
+      scenarios: [
+        {
+          id: 'sc1',
+          siteId: 'mock_site',
+          startUtc: '2028-06-01T00:00:00Z',
+          durationH: 24,
+          slipDays: 0,
+        },
+      ],
+      activeScenarioId: 'sc1',
+      cursorH: 0,
+      observerHeightM: 2,
+    })
+
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+
+    const findBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Find sunniest spot'),
+    )
+    expect(findBtn).toBeDefined()
+
+    await act(async () => {
+      findBtn?.click()
+    })
+
+    const alert = container.querySelector('.surface__best-spot-alert')
+    expect(alert).not.toBeNull()
+    expect(alert?.textContent).toBe('Outside ephemeris coverage')
+  })
+})

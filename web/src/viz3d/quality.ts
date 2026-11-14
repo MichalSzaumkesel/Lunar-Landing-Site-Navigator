@@ -28,7 +28,7 @@ export const TIERS: Record<QualityTier, TierSettings> = {
     shadowRocks: 600,
     boulders: 400,
     craters: 250,
-    detailTexSize: 512,
+    detailTexSize: 256,
     stars: 2600,
     milkyWay: [256, 128],
     anisotropy: 8,
@@ -67,7 +67,9 @@ export const TIERS: Record<QualityTier, TierSettings> = {
   },
 }
 
-export const BENCHMARK_MS = 2000
+/** Normal frames observed at start-up; the first ones pay for shader compilation. */
+export const BENCHMARK_SKIP_FRAMES = 3
+export const BENCHMARK_FRAMES = 10
 export const MIN_BENCHMARK_FRAMES = 8
 const HIGH_MAX_MS = 14
 const MEDIUM_MAX_MS = 30
@@ -87,6 +89,13 @@ export function medianMs(samples: readonly number[]): number {
   const s = [...samples].sort((a, b) => a - b)
   const mid = s.length >> 1
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
+}
+
+/** Tier from the median interval between normal animation frames (vsync gives about 16 ms). */
+export function tierForIntervalMs(ms: number): QualityTier {
+  if (ms > 33) return 'low'
+  if (ms > 20) return 'medium'
+  return 'high'
 }
 
 export function tierForFrameMs(ms: number): QualityTier {

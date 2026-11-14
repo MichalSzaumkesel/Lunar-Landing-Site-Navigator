@@ -42,8 +42,13 @@ export interface MetricsInput {
 }
 
 function formatIsoUtc(ms: number): string {
+  if (!Number.isFinite(ms)) return '';
   const roundedSecMs = Math.round(ms / 1000) * 1000;
-  return new Date(roundedSecMs).toISOString().slice(0, 19) + 'Z';
+  try {
+    return new Date(roundedSecMs).toISOString().slice(0, 19) + 'Z';
+  } catch {
+    return '';
+  }
 }
 
 export function computeMetrics(
@@ -247,12 +252,12 @@ export function computeMetrics(
 
   const time_to_sunset_h =
     next_sunset_utc !== null
-      ? normZero(Math.max(0, (Date.parse(next_sunset_utc) - rawRefMs) / 3_600_000))
+      ? normZero(Math.max(0, (Date.parse(next_sunset_utc) - clampedRefMs) / 3_600_000))
       : null;
 
   const time_to_earthset_h =
     next_earthset_utc !== null
-      ? normZero(Math.max(0, (Date.parse(next_earthset_utc) - rawRefMs) / 3_600_000))
+      ? normZero(Math.max(0, (Date.parse(next_earthset_utc) - clampedRefMs) / 3_600_000))
       : null;
 
   const gaps: ScenarioMetrics['gaps'] = {};

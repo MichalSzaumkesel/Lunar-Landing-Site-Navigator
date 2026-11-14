@@ -7,3 +7,4 @@ README.md: sections: what it is (2 sentences), screenshot placeholders as a list
 docs/demo-script.md: tighten to a 2-minute live demo and a 30 s video shot list that match the CURRENT UI (Demo button with captions, Video 30 s, Tutorial button, Find sunniest spot, mission bar, window map, Simple mode), numbers are read from the screen not typed, fallbacks if something fails, a pre-demo checklist (F11, zoom 90%, ?tour=0, sound off, data loaded, offline test). Polish for spoken lines is fine as in the current file.
 
 Acceptance: files render as clean Markdown, no broken relative links (check each link target exists). Report short: STATUS, FILES, OPEN.
+Note (rerun): a previous run stalled; inspect git diff and existing files, continue, do not redo finished items. Run shell commands in steps under 60 s.

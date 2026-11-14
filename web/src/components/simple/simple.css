@@ -8,7 +8,8 @@
 
 .simple-places {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.1fr);
+  align-items: stretch;
   gap: var(--space-3, 12px);
   width: 100%;
 }
@@ -52,6 +53,28 @@
   color: var(--muted);
   margin-top: var(--space-1, 4px);
   line-height: 1.2;
+}
+
+.simple-place-select {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1, 4px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.simple-place-select select {
+  min-height: 2.5rem;
+  background: var(--panel-2);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0 var(--space-2, 8px);
+  width: 100%;
 }
 
 .simple-place-btn:disabled {
@@ -182,6 +205,97 @@
   padding-top: var(--space-4, 16px);
 }
 
+.simple-headline {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* Shape, not only colour: a filled disc for sunlit, a ring for dark. */
+.simple-headline::before {
+  content: '';
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.simple-headline--sun::before {
+  background: var(--sun);
+}
+
+.simple-headline--dark::before {
+  border: 3px solid var(--muted);
+}
+
+.simple-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.simple-chip {
+  padding: var(--space-1, 4px) var(--space-3, 12px);
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.simple-chip--on.simple-chip--sun {
+  border-color: var(--sun);
+}
+
+.simple-chip--on.simple-chip--earth {
+  border-color: var(--earth);
+}
+
+.simple-chip--off {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.simple-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  margin: 0;
+  padding-top: var(--space-3, 12px);
+  border-top: 1px solid var(--line);
+}
+
+.simple-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  font-size: 0.9375rem;
+}
+
+.simple-row dt {
+  color: var(--muted);
+}
+
+.simple-row dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.simple-summary__note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 .simple-summary__sentence {
   margin: 0;
   font-size: 0.9375rem;
@@ -227,5 +341,19 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* Re-keyed per site, so the summary text cross-fades on site change */
+.simple-summary__sentence {
+  animation: summary-fade var(--motion-duration-fast, 120ms) ease;
+}
+
+@keyframes summary-fade {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
   }
 }

@@ -3,6 +3,7 @@
 // Note: Other sites load on demand.
 import { dataSource } from './loader'
 import type { SiteDataSource } from './types'
+import { terrainBinUrl } from '../viz3d/terrain'
 
 export const DEMO_SITE_IDS = ['apollo_11', 'artemis_region_1', 'southpole_landed'] as const
 
@@ -14,6 +15,7 @@ export function resetPrefetchForTest(): void {
 
 /**
  * Fetches the demo sites using the existing loader so validation and mock/real choice stay.
+ * Also prefetches binary terrain heightmaps when terrain metadata is present (L5 #6).
  * Runs once after first paint using requestIdleCallback (fallback setTimeout), ignoring errors.
  */
 export function prefetchDemoSites(
@@ -35,7 +37,21 @@ export function prefetchDemoSites(
 
     schedule(async () => {
       try {
-        await Promise.allSettled(siteIds.map((id) => source.loadSite(id)))
+        await Promise.allSettled(
+          siteIds.map(async (id) => {
+            const bundle = await source.loadSite(id)
+            if (bundle?.terrain) {
+              const baseUrl =
+                typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL
+                  ? import.meta.env.BASE_URL
+                  : '/'
+              const binUrl = terrainBinUrl(baseUrl, bundle.terrain)
+              if (typeof fetch === 'function') {
+                await fetch(binUrl).catch(() => {})
+              }
+            }
+          }),
+        )
       } catch {
         // Ignore failures
       } finally {

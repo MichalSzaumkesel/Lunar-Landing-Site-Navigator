@@ -1,10 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { EphemFile, HorizonFile, SiteBundle } from './types.ts';
-import { ephemCoverage } from './ephem.ts';
-import { computeMetrics } from './metrics.ts';
-import { listSkyEvents, longestStretches } from './events.ts';
+import type { EphemFile, HorizonFile, SiteBundle } from './types';
+import { ephemCoverage } from './ephem';
+import { computeMetrics } from './metrics';
+import { listSkyEvents, longestStretches } from './events';
 
 function createHandBuiltBundle(): Pick<SiteBundle, 'horizon' | 'ephem'> {
   const count = 16;
@@ -338,5 +338,102 @@ describe('regression on mock files', () => {
     });
     expect(spMetrics).not.toBeNull();
     expect(longestDark!.hours).toBe(spMetrics?.longest_dark_h);
+  });
+
+  it('filters out phantom grazing pairs where clearance touches 0 from below (L4 #1)', () => {
+    // 5 samples: clearance [-1, 0, -1, -2, -3]
+    // Grazing at index 1: clearance touches 0 from below and immediately returns below.
+    const count = 5;
+    const t0 = Date.parse('2027-01-01T00:00:00Z');
+    const bundle: Pick<SiteBundle, 'horizon' | 'ephem'> = {
+      horizon: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        az_step_deg: 1,
+        n: 360,
+        observer_heights_m: [2, 10],
+        masks: { '2': new Array(360).fill(0), '10': new Array(360).fill(0) },
+      },
+      ephem: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        start_utc: '2027-01-01T00:00:00Z',
+        step_minutes: 60,
+        count,
+        sun: { az: new Array(count).fill(0), el: [-1, 0, -1, -2, -3] },
+        earth: { az: new Array(count).fill(0), el: [-1, 0, -1, -2, -3] },
+        sun_ang_radius_deg: 0.25,
+        earth_ang_radius_deg: 1.0,
+      },
+    };
+
+    const events = listSkyEvents(bundle, 2, t0, t0 + count * 3_600_000);
+    // Phantom simultaneous sunrise and sunset at index 1 must be filtered out
+    expect(events).toEqual([]);
+  });
+
+  it('detects terminal sample sunset and earthset when clearance reaches 0 at final coverage sample (L4 #2)', () => {
+    // 3 samples: clearance [2.0, 1.0, 0.0]
+    // Final sample (k=2) reaches exactly 0 from above. Terminal sunset must be recorded.
+    const count = 3;
+    const t0 = Date.parse('2027-01-01T00:00:00Z');
+    const bundle: Pick<SiteBundle, 'horizon' | 'ephem'> = {
+      horizon: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        az_step_deg: 1,
+        n: 360,
+        observer_heights_m: [2, 10],
+        masks: { '2': new Array(360).fill(0), '10': new Array(360).fill(0) },
+      },
+      ephem: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        start_utc: '2027-01-01T00:00:00Z',
+        step_minutes: 60,
+        count,
+        sun: { az: [0, 0, 0], el: [2, 1, 0] },
+        earth: { az: [0, 0, 0], el: [2, 1, 0] },
+        sun_ang_radius_deg: 0.25,
+        earth_ang_radius_deg: 1.0,
+      },
+    };
+
+    const events = listSkyEvents(bundle, 2, t0, t0 + count * 3_600_000);
+    expect(events).toHaveLength(2);
+    expect(events.map((e) => e.kind)).toEqual(['earthset', 'sunset']);
+    expect(events[0].ms).toBe(t0 + 2 * 3_600_000);
+    expect(events[1].ms).toBe(t0 + 2 * 3_600_000);
+  });
+
+  it('handles malformed or truncated ephemeris bundle gracefully without throwing (L4 #6)', () => {
+    const t0 = Date.parse('2027-01-01T00:00:00Z');
+    const malformedBundle = {
+      horizon: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        az_step_deg: 1,
+        n: 360,
+        observer_heights_m: [2, 10],
+        masks: { '2': new Array(360).fill(0) },
+      },
+      ephem: {
+        meta: { contract_version: '1.1.1', generated_utc: '', generator: '', synthetic: true, approximate: false, inputs: [] },
+        site_id: 'test',
+        start_utc: '2027-01-01T00:00:00Z',
+        step_minutes: 60,
+        count: 10,
+        sun: { az: [0], el: [0] }, // truncated
+        earth: { az: [0], el: [0] },
+        sun_ang_radius_deg: 0.25,
+        earth_ang_radius_deg: 1.0,
+      },
+    } as unknown as Pick<SiteBundle, 'horizon' | 'ephem'>;
+
+    expect(() => listSkyEvents(malformedBundle, 2, t0, t0 + 10 * 3_600_000)).not.toThrow();
+    expect(listSkyEvents(malformedBundle, 2, t0, t0 + 10 * 3_600_000)).toEqual([]);
+
+    expect(() => longestStretches(malformedBundle, 2, t0, t0 + 10 * 3_600_000)).not.toThrow();
+    expect(longestStretches(malformedBundle, 2, t0, t0 + 10 * 3_600_000)).toEqual([]);
   });
 });

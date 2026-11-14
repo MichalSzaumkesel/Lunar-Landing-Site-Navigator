@@ -42,12 +42,16 @@ export function localSunlitGridAsync(input: LocalIllumInput): Promise<Float32Arr
 
     currentWorker = worker
 
-    worker.onmessage = (event: MessageEvent<Float32Array>) => {
+    worker.onmessage = (event: MessageEvent<Float32Array | { error: string }>) => {
       if (currentWorker === worker) {
         currentWorker = null
         currentReject = null
       }
-      resolve(event.data)
+      if ('error' in event.data) {
+        reject(new Error(event.data.error))
+      } else {
+        resolve(event.data)
+      }
       worker.terminate()
     }
 

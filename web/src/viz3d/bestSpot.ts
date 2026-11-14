@@ -114,18 +114,20 @@ export function formatResultSentence(
 ): string {
   const dist = Math.hypot(offset.eastM, offset.northM)
   const roundedDist = Math.round(dist / 10) * 10
-  const delta = hereHours - origHours
+  const roundedHere = Math.round(hereHours)
+  const roundedOrig = Math.round(origHours)
+  const delta = (roundedHere - roundedOrig) || 0
   const sign = delta >= 0 ? '+' : ''
-  const deltaStr = `${sign}${Math.round(delta)} h`
+  const deltaStr = `${sign}${delta} h`
 
   if (roundedDist === 0) {
-    return `Moved 0 m. Sun visible: ${Math.round(hereHours)} h here vs ${Math.round(origHours)} h at the original point (${deltaStr}).`
+    return `Moved 0 m. Sun visible: ${roundedHere} h here vs ${roundedOrig} h at the original point (${deltaStr}).`
   }
 
   const azDeg = (Math.atan2(offset.eastM, offset.northM) * 180) / Math.PI
   const dir = compassDirection8(azDeg)
 
-  return `Moved ${roundedDist} m to the ${dir}. Sun visible: ${Math.round(hereHours)} h here vs ${Math.round(origHours)} h at the original point (${deltaStr}).`
+  return `Moved ${roundedDist} m to the ${dir}. Sun visible: ${roundedHere} h here vs ${roundedOrig} h at the original point (${deltaStr}).`
 }
 
 /**

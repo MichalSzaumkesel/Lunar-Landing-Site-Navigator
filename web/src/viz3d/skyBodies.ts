@@ -158,8 +158,17 @@ export interface BodyPlacement {
   angRadiusDeg: number
 }
 
-function hiddenByHorizon(p: BodyPlacement): boolean {
-  return !p.dir || p.elDeg < -p.angRadiusDeg
+/**
+ * A body disc remains visible in 3D until its entire disc sinks below the terrain horizon.
+ * It vanishes only when its upper limb passes below the horizon line (clearanceDeg < -angRadiusDeg),
+ * not at its centre (clearanceDeg < 0) and not earlier.
+ */
+export function isBodyVisible(clearanceDeg: number, angRadiusDeg: number): boolean {
+  return clearanceDeg >= -angRadiusDeg
+}
+
+export function hiddenByHorizon(p: BodyPlacement): boolean {
+  return !p.dir || !isBodyVisible(p.clearanceDeg, p.angRadiusDeg)
 }
 
 // Sun
@@ -356,6 +365,8 @@ void main() {
 const ATMO_RADIUS = 1.07
 const CLOUD_RADIUS = 1.012
 const EARTH_FALLBACK = 0x2f6fb4
+const DECOR_TILT = 0.41 // axis tilt of the picture when no orientation data is available
+const orientScratch = new THREE.Matrix4()
 
 export interface EarthRig {
   root: THREE.Group
@@ -383,7 +394,7 @@ function placeholderTexture(): THREE.DataTexture {
 /**
  * Earth sphere, a separate cloud layer and an atmosphere shell, lit from the real Sun direction.
  * Textures are NASA Blue Marble images served with the app; until they load (or if they fail) the
- * planet is a plain blue sphere. Which side faces the Moon is decorative and not computed from data.
+ * planet is a plain blue sphere. The orientation is set by `orientEarth`; until then it is a decorative tilt.
  */
 export function buildEarth(opts: EarthOptions): EarthRig {
   const sunI = { value: 2.8 }
@@ -436,8 +447,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
   const root = new THREE.Group()
   root.add(planet, clouds, atmosphere)
   for (const m of [planet, clouds, atmosphere]) m.frustumCulled = false
-  // Axis tilt of the picture, decorative.
-  root.rotation.z = 0.41
+  root.rotation.z = DECOR_TILT
 
   const load = (file: string, srgb: boolean, apply: (tex: THREE.Texture) => void) => {
     new THREE.TextureLoader().load(
@@ -483,6 +493,16 @@ export function setEarthLighting(rig: EarthRig, sunDir: THREE.Vector3 | null, sp
   const u = (rig.planet.material as THREE.ShaderMaterial).uniforms
   if (sunDir) (u.uSun.value as THREE.Vector3).copy(sunDir)
   u.uSpin.value = spinTurns
+}
+
+/** Applies a row-major 3x3 rotation (scene axes) from `earthRotation`; null restores the decorative tilt. */
+export function orientEarth(rig: EarthRig, m: readonly number[] | null): void {
+  if (m) {
+    orientScratch.set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1)
+    rig.root.quaternion.setFromRotationMatrix(orientScratch)
+  } else {
+    rig.root.rotation.set(0, 0, DECOR_TILT)
+  }
 }
 
 export function placeEarth(rig: EarthRig, p: BodyPlacement): void {

@@ -1,223 +1,188 @@
 # Lunar Landing Site Navigator
 
-Lunar Landing Site Navigator is an interactive web application for comparing lunar landing sites and dates side by side to evaluate solar illumination and Earth line-of-sight visibility across candidate mission windows. Designed for mission planners, science communicators, and educators, it models terrain horizon masking, partial solar disc clipping, and Earth visibility directly in the browser without requiring a backend server.
+Lunar Landing Site Navigator is a browser tool for comparing lunar landing sites and dates side by side. It shows where the Sun and the Earth sit relative to the local terrain horizon, so mission planners, educators and the public can judge sunlight and Earth visibility for a candidate window.
 
-NASA Space Apps Challenge 2026 — Local Event Rzeszów.
+NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ## Screenshots
 
-*Screenshots will be added following final UI stabilization (placeholder list):*
-- `docs/screenshots/01-side-by-side-comparison.png` — Multi-scenario comparison card view (equatorial vs south pole)
-- `docs/screenshots/02-polar-sky-plot-and-loupe.png` — D3 polar sky plot with solar disc limb clipping in the loupe
-- `docs/screenshots/03-surface-3d-shadows.png` — Three.js 3D terrain patch with dynamic sun shadows and lander positioning
-- `docs/screenshots/04-sunniest-spot-heatmap.png` — 2D sunlight heatmap overlay and optimal landing spot search result
-- `docs/screenshots/05-window-map-matrix.png` — Multi-site mission rules window finder matrix
-- `docs/screenshots/06-simple-mode.png` — Simplified view with plain-language visibility summaries
+Screenshots will be added after the final UI pass. Planned files (not yet in the repository):
+
+- `docs/screenshots/01-compare-scenario-cards.png` - up to four scenario cards side by side
+- `docs/screenshots/02-polar-sky-plot-and-loupe.png` - polar sky plot and solar disc loupe
+- `docs/screenshots/03-surface-3d.png` - 3D terrain view with shadows and lander
+- `docs/screenshots/04-sunniest-spot.png` - sunlight heatmap and "Find sunniest spot" result
+- `docs/screenshots/05-window-map.png` - window map for the mission rules
+- `docs/screenshots/06-simple-mode.png` - Simple mode summary
 
 ## Features
 
 ### Compare
-- **Side-by-side comparison**: View up to 4 scenario cards simultaneously (`ScenarioBoard`), comparing different sites or different landing dates for the same site.
-- **One-click presets**: Instant comparison scenarios including *Apollo 11 (equator) vs Artemis candidate region (south pole)*, *14-day mission slip*, and *CLPS south-pole lander*.
-- **Direct metrics comparison**: Side-by-side readouts of Sun visible percentage, longest continuous dark period (hours), Earth in view percentage, and countdowns to next rise/set events.
-- **Observer height toggle**: Compare illumination clearance at 2 m (surface instrument) vs 10 m (lander mast).
+- Up to four scenario cards (site and date per card) in the scenario board, with a compare table.
+- Presets: *Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)*, *South pole*, and *Same site, 14 days later*.
+- Metrics per card: Sun visible, longest dark period, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
+- Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 
 ### Time
-- **Unified transport**: Global Play/Pause transport with adjustable playback speed (1 h/s, 2 h/s, 6 h/s, 12 h/s, 1 d/s, 2 d/s, 3 d/s) and interactive time scrubber.
-- **Relative time cursor**: Synchronized relative timeline offset (`cursorH` in hours from window start) keeps scenarios with differing calendar dates playing in lockstep.
-- **Mission slip slider**: Adjust launch/landing delays (-30 to +30 days) to immediately evaluate how orbital slips change illumination and shadow conditions.
-- **Real-time countdowns**: Dynamic timers indicating exact duration until the next sunrise, sunset, Earth-rise, or Earth-set from current cursor time.
-- **Strict UTC standards**: All timestamps formatted in UTC ISO 8601 with trailing `Z`.
+- Play and pause with speeds of 1, 6, 12, 24, 72 and 168 hours per second.
+- Time cursor and scrubber; scenarios with different dates play in step on a relative timeline.
+- Mission slip of up to ±60 days per scenario.
+- All times are UTC, shown in ISO 8601 with a trailing `Z`.
 
 ### Sky
-- **D3 Polar Sky Plot**: Stereographic polar projection mapping the local 360° horizon profile with animated Sun and Earth paths.
-- **Panorama View**: Cylindrical 360° azimuth (-15° to +90° elevation) unwrapped projection of celestial paths against terrain.
-- **Solar Loupe**: High-magnification telescopic view computing the exact unblocked solar disc fraction (0–100%) during ridge limb clipping.
-- **Timeline Event Chips**: Visual markers along the timeline indicating exact sunrise, sunset, earthrise, and earthset transitions.
-- **Standardized status indicators**: Explicit state readouts: *Sun visible*, *Sun below horizon*, *Earth in view*, and *Earth below horizon*.
+- Polar sky plot of the local terrain horizon with the Sun and Earth paths.
+- Panorama view of the same paths against the horizon.
+- Loupe showing the visible fraction of the solar disc while a ridge clips it.
+- Elevation chart with Sun and Earth clearance over time.
+- Status labels: *Sun visible*, *Sun below horizon*, *Earth in view*, *Earth below horizon*.
 
-### 3D Surface View
-- **Three.js WebGL terrain**: High-performance local terrain patch rendering lazy-loaded on demand (`React.lazy`) to ensure light initial page weight.
-- **Dynamic real-time shadows**: Surface shadow casting updated instantaneously from the Sun's azimuth and elevation at the current time cursor.
-- **Dual camera modes**: First-person surface observer perspective and orbital birds-eye perspective.
-- **Quick camera orientation**: Snap view directly toward the Sun or Earth with a single click.
-- **Movable lander simulation**: Interactively reposition the lander across the terrain patch with real-time recalculated local horizon and illumination differences.
-- **Sunlight Heatmap**: 2D illumination grid overlay displaying cumulative sunlight percentage across the entire mission window.
-- **"Find sunniest spot"**: Worker-based background grid search locating coordinates with maximal sun exposure within a selectable search radius (500 m, 1000 m, 2000 m).
-- **Textured Earth disc**: NASA Blue Marble Earth disc oriented according to ephemeris coordinates.
+### 3D
+- Terrain view loaded on demand (`React.lazy`), so the first screen does not load three.js.
+- Shadows updated from the Sun position at the time cursor.
+- Two camera modes: surface observer and orbital overview; quick views toward the Sun or Earth.
+- Movable lander (arrow keys, Shift for larger steps) with the local horizon recalculated.
+- Sunlight heatmap over the patch and "Find sunniest spot" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
+- Earth disc textured with NASA Blue Marble imagery and placed from the ephemeris.
 
 ### Planning
-- **Configurable Mission Rules**: Set requirements for mission duration (e.g. 72 h, 168 h, 240 h, 336 h), minimum sunlit percentage, maximum dark period, Earth line-of-sight, and landing sun elevation.
-- **Timeline Mission Bar**: Visual indicator showing whether candidate landing times meet all mission rules (green) or fail (red), with failing criteria identified.
-- **Window Map**: 2D site-by-date matrix computed in a Web Worker, scanning valid mission landing windows across the entire ephemeris coverage.
-- **Moon Map**: Interactive orthographic lunar globe displaying site markers, subsolar point, and day/night terminator.
-- **Site Library**: Catalog of lunar landing sites with status, coordinates, and provenance notes.
-- **Custom Site Coordinates**: Input custom lunar latitude and longitude with client-side ephemeris rotation.
+- Mission rules: stay length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 168 h, 240 h and 336 h stays.
+- Mission bar on the timeline: green when the candidate landing meets all rules, red with the failing rule named when it does not.
+- Window map: a site-by-date matrix of landing windows, computed in a Web Worker.
+- Moon map: orthographic view of the Moon with site markers, the subsolar point and the day/night terminator.
+- Site library with status, coordinates and provenance.
+- Custom site coordinates (latitude and longitude). See Data below for how these are labelled.
 
-### Sharing and Export
-- **Deep-link state sharing**: Entire workspace state (scenarios, sites, dates, slip, observer height, active view) encoded directly into URL query parameters.
-- **CSV export**: Download hourly time series (UTC time, Sun/Earth azimuth, elevation, and visibility) for external analysis.
-- **Built-in 30 s Video Recorder**: Automated capture and download of a 30-second WebM demonstration video directly from the browser tab (`Record video` button).
+### Sharing and export
+- Share link: the workspace state (scenarios, dates, slip, observer height, view) is kept in the URL.
+- CSV export of the hourly time series (UTC time, Sun and Earth azimuth and elevation, visibility).
+- Dossier export for printing.
+- "Record video" in the demo narration, which saves a WebM file of the browser tab.
 
 ### Accessibility
-- **Full keyboard navigation**: Complete control via keyboard (Tab, Arrow keys for timelines/sliders, Space for Play/Pause, Home/End for tab switching).
-- **Visible focus styling**: High-contrast outline focus rings across all interactive controls.
-- **Non-color reliance**: Color is never the sole carrier of status; paired with text labels, distinct badges, and iconography.
-- **Reduced motion**: Adheres to `prefers-reduced-motion`; demo mode and playback require explicit user interaction to start.
-- **Ergonomic targets and typography**: Minimum 40 px touch targets; minimum 14 px body text and 12 px SVG typography.
-- **Accessible semantics**: Rigorous ARIA roles (`role="tablist"`, `role="tabpanel"`, `role="region"`, `role="group"`, `aria-live="polite"`).
-- **Simple Mode**: Dedicated high-accessibility view with a single sky plot and plain-language summaries for education and public demonstrations.
-- **Guided Tutorial**: Built-in interactive step-by-step walkthrough (`(?) Tutorial`).
+- Keyboard operation for all controls; visible focus outlines; controls have accessible names.
+- Colour is never the only carrier of status: text labels and shapes are used as well.
+- `prefers-reduced-motion` is respected; demo mode and playback start only on a user action.
+- Simple mode: one sky plot and plain-language summaries for teaching and public demonstrations.
+- Guided tour (`Tour` button) and a demo narration (`Demo` button).
 
 ### Sound
-- **Synthesized audio cues**: Web Audio API oscillator synthesis for celestial events (sunrise, sunset, earthrise, earthset) and ambient illumination sonification (no external audio assets).
-- **Volume and mute controls**: Sound is off by default with accessible controls in the toolbar.
+- Off by default. Ambient and event-cue modes are available from the tools bar.
+- Web Audio synthesis only; no audio files are loaded.
 
 ## Quick Start
 
-### Prerequisites
-- Node.js 20+ (Node.js 24 recommended)
-- npm
-
-### Installation and Development
+Requirements: Node.js 20 or newer (24 recommended) and npm.
 
 ```bash
-# Navigate to web application directory
 cd web
-
-# Install exact dependencies
-npm ci
-
-# Start local development server
-npm run dev
+npm ci            # install exact dependencies
+npm run dev       # local dev server, http://localhost:5173
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-### Build and Test Scripts
-
-Run these scripts from the `web/` directory:
+Other scripts, run from `web/`:
 
 ```bash
-# Typecheck TypeScript codebase
-npm run typecheck
-
-# Run test suite with Vitest
-npm test
-
-# Build production bundle to dist/
-npm run build
-
-# Preview production build locally
-npm run preview
-
-# Lint codebase with Oxlint
-npm run lint
-
-# Regenerate synthetic mock datasets
-npm run gen:mocks
+npm run typecheck  # TypeScript check
+npm test           # Vitest unit tests
+npm run build      # production build into web/dist
+npm run preview    # serve the production build locally
+npm run lint       # Oxlint
+npm run gen:mocks  # regenerate the synthetic mock datasets
 ```
 
-## Data Architecture and Contract
+## Data
 
-- **Contract Specification**: All data structures and file conventions follow the [Data Contract](docs/contract.md) (version 1.1.1).
-- **Mock vs. Real Data**:
-  - The application currently operates on synthetic mock datasets (`web/public/data/mock/`) generated via analytic models (`web/scripts/gen-mocks.mjs`).
-  - Real data will be produced offline by Scope A from NASA LOLA (Lunar Orbiter Laser Altimeter) digital elevation models and JPL Horizons ephemerides.
-- **Loader Switching**: The site bundle loader (`web/src/lib/loader.ts`) checks for real datasets in `web/public/data/<site_id>/` and automatically falls back to `web/public/data/mock/<site_id>/` per site.
-- **Data Labelling**:
-  - Datasets with `synthetic: true` display a visible `Synthetic data` badge.
-  - Approximate datasets or derived custom site coordinates carry an `Approximate` badge.
-  - Derived attributes (such as Earth phase, solar limb clipping, and local terrain horizon) are explicitly labelled as derived approximations.
+- **Contract**: data files follow [docs/contract.md](docs/contract.md) (contract version 1.1.1). Times are UTC, angles in degrees, longitude east-positive, azimuth measured from north clockwise.
+- **Real and mock data**: the app reads real datasets from `web/public/data/` (`sites.json`, `ephem/`, `horizon/`, `terrain/`). The loader (`web/src/lib/loader.ts`) falls back to synthetic datasets in `web/public/data/mock/` for each site whose real files are missing, and `VITE_USE_MOCK=1` forces mock data everywhere.
+- **Labels**:
+  - Synthetic data is marked with a `Synthetic data` badge.
+  - Approximate values, including custom coordinates computed without the optional service, carry an `Approximate` badge.
+  - Derived values (Earth phase, solar limb clipping, local terrain horizon) are labelled as derived.
+- **Sources**: each real site lists its source URL in `sites.json`; the pipeline records its inputs in each file's `meta`.
 
 ## Environment Variables
 
-The web application supports configuration through environment variables (e.g. in `.env` or during build):
+Set them in `web/.env` or in the build environment. A template is in [web/.env.example](web/.env.example).
 
 | Variable | Default | Description |
 |---|---|---|
-| `VITE_BASE` | `/` | Base URL path for assets. Set to `/<repository-name>/` for GitHub Pages deployment. |
-| `VITE_USE_MOCK` | `0` (unset) | Set to `1` to force the loader to use synthetic mock data even when real data is present. |
-| `VITE_API_URL` | `null` (unset) | Optional URL of an external custom-site calculation backend service (`${VITE_API_URL}/api/custom-site`). Automatically injected into the CSP `connect-src` during build. |
+| `VITE_BASE` | `/` | Base path for assets. Use `/<repository-name>/` for GitHub Pages. |
+| `VITE_USE_MOCK` | `0` | Set to `1` to use synthetic mock data for every site. |
+| `VITE_API_URL` | unset | Optional custom-site service. Its origin is added to the CSP `connect-src` at build time. If it is unreachable, the app uses the client-side approximation. |
 
 ## Deployment
 
-### GitHub Pages (Automated Workflow)
-A GitHub Actions workflow is provided at [.github/workflows/deploy-web.yml](.github/workflows/deploy-web.yml).
-1. The repository owner must enable GitHub Pages: navigate to **Settings > Pages**, set **Source** to **GitHub Actions**. *(Note: GitHub Pages on private repositories requires a paid GitHub plan).*
-2. On every push to `main` touching `web/**` or the workflow file, the workflow runs `npm ci`, `npm run typecheck`, `npm test`, and `npm run build` (with `VITE_BASE: /${{ github.event.repository.name }}/`), then deploys the resulting `web/dist` directory to GitHub Pages.
+### GitHub Pages
+The workflow [.github/workflows/deploy-web.yml](.github/workflows/deploy-web.yml) runs on pushes to `main` that touch `web/**` or the workflow file. It runs `npm ci`, `npm run typecheck`, `npm test` and `npm run build` with `VITE_BASE=/<repository-name>/`, then deploys `web/dist`. In the repository settings, Pages must be set to **GitHub Actions**. GitHub Pages on a private repository needs a plan that supports it.
 
-### Vercel (Alternative Static Hosting)
-Vercel can host the static build directly from the repository:
-- **Framework Preset**: Vite
-- **Root Directory**: `web`
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-- **Environment Variables**: `VITE_BASE=/` (default)
+### Vercel (alternative)
+- Framework preset: Vite
+- Root directory: `web`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Environment: `VITE_BASE=/` (default)
 
 ## Project Structure
 
 ```
-├── CLAUDE.md                   # Shared developer instructions and physics notes
-├── CRITICAL.md                 # Cross-scope communication notices
-├── README.md                   # This file
+├── README.md                 # This file
+├── CLAUDE.md                 # Shared project instructions
+├── CRITICAL.md               # Cross-scope notices
 ├── .github/workflows/
-│   └── deploy-web.yml          # GitHub Actions deployment to GitHub Pages
+│   └── deploy-web.yml        # Deployment workflow
 ├── docs/
-│   ├── contract.md             # Data contract between Scope A (pipeline) and Scope B (web)
-│   ├── demo-script.md          # 2-minute live demo script and 30-second video storyboard
-│   ├── scope-A-data.md         # Scope A (science, elevation, Horizons pipeline) brief
-│   ├── scope-B-web.md          # Scope B (web application and visualization) brief
-│   └── status-B.md             # Development status and architecture notes
-└── web/                        # Static Vite + React + TypeScript web application
+│   ├── contract.md           # Data contract between the data and web scopes
+│   ├── demo-script.md        # Live demo script and 30-second video storyboard
+│   ├── scope-A-data.md       # Data and science scope brief
+│   ├── scope-B-web.md        # Web app scope brief
+│   ├── status-B.md           # Web app status notes
+│   └── status-A.md           # Data scope status notes
+└── web/
     ├── public/
-    │   ├── data/mock/          # Synthetic mock datasets (sites, horizons, ephemeris)
-    │   └── textures/earth/     # NASA Blue Marble Earth texture and credits
-    ├── scripts/
-    │   └── gen-mocks.mjs       # Mock data generator script
+    │   ├── data/             # Real datasets (sites, ephemerides, horizons, terrain)
+    │   │   └── mock/         # Synthetic mock datasets
+    │   ├── brand/            # Logo, icons and brand notes
+    │   └── textures/earth/   # Earth textures and credits
+    ├── scripts/gen-mocks.mjs # Mock data generator
     ├── src/
-    │   ├── app/                # App shell, TopBar, Transport, Panels, Tools
-    │   ├── components/         # Feature components (sky, scenario, finder, demo, help, sound)
-    │   ├── config/             # Preset configurations and data ranges
-    │   ├── lib/                # Pure computation modules (horizon, ephem, metrics, finder, loader)
-    │   ├── state/              # Zustand global store, selectors, playback loop, URL sync
-    │   └── viz3d/              # Three.js 3D surface view, sunlight heatmap, best spot search
-    ├── package.json            # Dependencies and scripts
-    ├── tsconfig.json           # TypeScript configuration
-    └── vite.config.ts          # Vite build, CSP header generation, and Vitest configuration
+    │   ├── app/              # App shell, top bar, panels, tools
+    │   ├── components/       # Feature components (sky, scenario, finder, map, demo, help, sound, ...)
+    │   ├── config/           # Presets and data ranges
+    │   ├── lib/              # Pure logic: horizon, ephemeris, metrics, finder, loader, export
+    │   ├── state/            # Store, selectors, URL sync
+    │   └── viz3d/            # 3D surface view, heatmap, sunniest-spot search
+    ├── package.json
+    └── vite.config.ts
 ```
 
 ## Credits and Licences
 
-### Earth Imagery
-- **NASA Blue Marble**: Earth disc textures (`land_ocean_ice_2048.jpg`, `cloud_combined_2048.jpg`) located in `web/public/textures/earth/`.
-  - **Credit**: NASA Goddard Space Flight Center. Land surface, shallow water and cloud images by Reto Stockli; ocean colour, compositing and enhancements by Robert Simmon.
-  - **Source**: [NASA Earth Observatory Blue Marble](https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution) (Public Domain / NASA Open Data policy). Full notice in [web/public/textures/earth/CREDITS.txt](web/public/textures/earth/CREDITS.txt).
+### Earth imagery
+- **NASA Blue Marble** textures (`land_ocean_ice_2048.jpg`, `cloud_combined_2048.jpg`) in `web/public/textures/earth/`.
+- Credit: NASA Goddard Space Flight Center. Land surface, shallow water and cloud images by Reto Stockli; ocean colour, compositing and enhancements by Robert Simmon.
+- Source: [NASA Earth Observatory, Blue Marble](https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution). Full notice: [web/public/textures/earth/CREDITS.txt](web/public/textures/earth/CREDITS.txt).
 
-### Typography
-- The application uses the system native font stack (`system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`). No custom font files or Inter assets are bundled or loaded.
+### Typography and logo
+- The interface uses the system font stack; no font files are loaded at runtime.
+- The logo wordmark is derived from the [Inter](https://github.com/rsms/inter) typeface by Rasmus Andersson and contributors, licensed under the SIL Open Font License 1.1. See [web/public/brand/FONT-LICENSE.txt](web/public/brand/FONT-LICENSE.txt) and [web/public/brand/README.md](web/public/brand/README.md).
 
-### Open Source Libraries
-This project relies on open source software (see [web/package.json](web/package.json)):
-- **React 19** & **React DOM** — MIT Licence (Meta Platforms, Inc.)
-- **Three.js** — MIT Licence (Ricardo Cabello / mrdoob)
-- **D3** — ISC Licence (Mike Bostock)
-- **Zustand** — MIT Licence (Paul Henschel / Daishi Kato)
-- **Vite** — MIT Licence (Evan You / Vite Contributors)
-- **Vitest** — MIT Licence (Vitest Contributors)
-- **TypeScript** — Apache 2.0 Licence (Microsoft Corporation)
-- **Oxlint** — MIT Licence (The JavaScript Oxidizer Project)
+### Open source libraries
+Listed in [web/package.json](web/package.json):
+- React and React DOM (MIT)
+- Three.js (MIT)
+- D3 (ISC)
+- Zustand (MIT)
+- Vite and Vitest (MIT)
+- TypeScript (Apache 2.0)
+- Oxlint (MIT)
 
-## Honest Limitations
+## Limitations
 
-- **Mock Data Pending Scope A Delivery**: The web application currently runs on synthetic mock datasets ([web/public/data/mock/sites.json](web/public/data/mock/sites.json)). True lunar terrain masks and ephemerides will be populated once Scope A delivers offline pipeline outputs.
-- **Approximate Custom Sites**: When entering arbitrary custom coordinates without an active backend API, ephemeris values are derived by rotating the nearest loaded site's ephemeris in the Moon-fixed frame. Earth parallax (up to ~0.26°) is neglected, and the result is labelled `Approximate`.
-- **Local Terrain Patch in 3D**: The 3D surface visualization renders a 20.48 km × 20.48 km local elevation patch around the site. It models local horizon obscuration and surface shadows within the patch, not global Moon-wide raytracing.
-- **Not a Flight-Planning Tool**: This application provides geometric line-of-sight analysis only. It does not calculate orbital transfer trajectories, descent fuel burns, landing navigation hazards, surface trafficability, or spacecraft dynamics.
-- **No Power or Communication Guarantees**: The application reports "Sun visible", "Sun below horizon", and "Earth in view". It makes no guarantees regarding solar array power generation, thermal survival, battery state-of-charge, or radio frequency communication link margin.
+- **Approximate custom sites**: custom coordinates use the optional custom-site service when it is reachable. Otherwise they use a client-side approximation that rotates the nearest loaded site's ephemeris, labelled `Approximate`.
+- **Local terrain only in 3D**: the 3D view shows a local terrain patch and the shadows within it. It does not do Moon-wide ray tracing.
+- **Not a flight-planning tool**: the app gives geometric line-of-sight results. It does not compute transfer trajectories, descent burns, landing hazards or surface trafficability.
+- **No power or link guarantees**: the app reports *Sun visible*, *Sun below horizon*, *Earth in view* and *Earth below horizon*. It says nothing about solar array output, thermal survival, battery state or radio link margin.
 
 ## How This Was Built
 
-This project was built for the NASA Space Apps Challenge 2026 (Rzeszów local event) using a two-person scope split: Scope A focused on scientific data processing (LOLA digital elevation models, JPL Horizons ephemerides, and pipeline validation), while Scope B developed the interactive web application, UI/UX, and 3D visualization.
-
-Development was AI-assisted: architecture, review, and integration were guided by the scope lead with Claude (Opus), delegating well-specified pure functions, test cases, and boilerplate to Gemini 3.8 Flash (agy) and Sonnet teammates for visual iteration. Preparation and design planning occurred locally prior to the official event start, followed by live repository implementation starting at 09:03 CET on 2026-11-14.
+The project was built for the NASA Space Apps Challenge 2026 (Rzeszów local event) by two people with a split of scope: the data scope covered elevation models, ephemerides and validation, and the web scope covered the interactive app and visualisation. Development was AI-assisted, with coding agents used for well-specified functions, tests and boilerplate, and the human leads reviewing the integration. Preparation was done locally before the official start; work in this repository began at 09:03 on 2026-11-14.

@@ -7,7 +7,16 @@ import {
   parseTierOverride,
   TIERS,
   tierForFrameMs,
+  tierForIntervalMs,
 } from './quality'
+
+describe('frame interval tier', () => {
+  it('keeps high for vsync intervals and lowers the tier for slow intervals', () => {
+    expect(tierForIntervalMs(16.7)).toBe('high')
+    expect(tierForIntervalMs(25)).toBe('medium')
+    expect(tierForIntervalMs(40)).toBe('low')
+  })
+})
 
 describe('tier choice', () => {
   it('maps frame time to a tier', () => {

@@ -37,7 +37,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <h1 className="brand">Lunar Landing Site Navigator</h1>
-      {mode === 'advanced' && <PresetBar />}
+      <PresetBar />
       <span className="topbar__spacer" />
       <button
         type="button"
@@ -69,16 +69,26 @@ export function TopBar() {
           </button>
         ))}
       </div>
-      {mode === 'advanced' && (
-        <div className="group" role="group" aria-label="Observer height" data-tour="observer-height">
-          <span className="group__label">Observer height</span>
-          {HEIGHTS.map((h) => (
-            <button key={h} aria-pressed={observerHeightM === h} onClick={() => setObserverHeight(h)}>
-              {h} m
-            </button>
-          ))}
-        </div>
-      )}
+      <div
+        className={`group ${mode === 'simple' ? 'toolbar-hidden' : ''}`}
+        role="group"
+        aria-label="Observer height"
+        data-tour="observer-height"
+        aria-hidden={mode === 'simple' ? 'true' : undefined}
+      >
+        <span className="group__label">Observer height</span>
+        {HEIGHTS.map((h) => (
+          <button
+            key={h}
+            aria-pressed={observerHeightM === h}
+            onClick={() => setObserverHeight(h)}
+            tabIndex={mode === 'simple' ? -1 : undefined}
+            disabled={mode === 'simple'}
+          >
+            {h} m
+          </button>
+        ))}
+      </div>
     </header>
   )
 }

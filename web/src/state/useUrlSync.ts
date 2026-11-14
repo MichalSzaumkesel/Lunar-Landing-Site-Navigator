@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { MAX_SCENARIOS } from '../config/dataRange'
 import type { AppState, Scenario } from './types'
-import { useAppStore } from './store'
+import { useAppStore, generateScenarioId } from './store'
 import { decodeState, encodeState, type UrlState } from './urlState'
 
 function serializeShareable(
@@ -38,26 +38,28 @@ function applyHashToStore(): void {
 
   if (Array.isArray(decoded.scenarios) && decoded.scenarios.length > 0) {
     const safeScenarios = decoded.scenarios.slice(0, MAX_SCENARIOS)
-    const existingIds = new Set(
-      useAppStore.getState().scenarios.map((s) => s.id),
-    )
-    let counter = 1
-    const freshScenarios: Scenario[] = safeScenarios.map((sc) => {
-      while (existingIds.has(`sc${counter}`)) {
-        counter++
-      }
-      const id = `sc${counter}`
-      existingIds.add(id)
-      return {
+    const currentScenarios = useAppStore.getState().scenarios
+    const currentActiveId = useAppStore.getState().activeScenarioId
+
+    // Preserve existing scenario IDs if the list count matches
+    const freshScenarios: Scenario[] = []
+    for (let i = 0; i < safeScenarios.length; i++) {
+      const sc = safeScenarios[i]
+      const existingId = i < currentScenarios.length ? currentScenarios[i].id : undefined
+      const id = existingId ?? generateScenarioId(freshScenarios)
+      freshScenarios.push({
         id,
         siteId: sc.siteId,
         startUtc: sc.startUtc,
         durationH: sc.durationH,
         slipDays: sc.slipDays,
-      }
-    })
+      })
+    }
+
     patch.scenarios = freshScenarios
-    patch.activeScenarioId = freshScenarios[0].id
+    patch.activeScenarioId = freshScenarios.some((s) => s.id === currentActiveId)
+      ? currentActiveId
+      : freshScenarios[0].id
   }
 
   if (Object.keys(patch).length > 0) {

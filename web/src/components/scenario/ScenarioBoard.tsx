@@ -19,8 +19,10 @@ import { Timeline } from '../timeline/Timeline'
 import { Countdowns } from './Countdowns'
 import { MetricsPanel } from './MetricsPanel'
 import { ScenarioControls } from './ScenarioControls'
+import { SiteSelect } from './SiteSelect'
 import { SkyViews } from './SkyViews'
-import { defaultCardDetailsOpen, formatSlip, formatWindow, siteSubtitle } from './cardLogic'
+import { formatSlip, formatWindow, siteSubtitle } from './cardLogic'
+import { CompareTable } from '../compare'
 import './scenario.css'
 
 function headingText(status: SiteBundleStatus, bundle: SiteBundle | null): { title: string; sub: string } {
@@ -32,8 +34,6 @@ function headingText(status: SiteBundleStatus, bundle: SiteBundle | null): { tit
 function CardBody({ scenario }: { scenario: Scenario }) {
   const active = useAppStore((s) => s.activeScenarioId === scenario.id)
   const canRemove = useAppStore((s) => s.scenarios.length > 1)
-  const scenarioCount = useAppStore((s) => s.scenarios.length)
-  const isMulti = scenarioCount > 1
   const tourOpen = useTourStore((s) => s.isOpen)
   const setActive = useAppStore((s) => s.setActiveScenario)
   const removeScenario = useAppStore((s) => s.removeScenario)
@@ -44,13 +44,8 @@ function CardBody({ scenario }: { scenario: Scenario }) {
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
   const { title, sub } = headingText(status, bundle)
 
-  const [userOpen, setUserOpen] = useState(() => defaultCardDetailsOpen(scenarioCount))
-  const [prevMulti, setPrevMulti] = useState(isMulti)
-
-  if (prevMulti !== isMulti) {
-    setPrevMulti(isMulti)
-    setUserOpen(!isMulti)
-  }
+  // Open by default at any card count: dates, slip and metrics are what a comparison needs.
+  const [userOpen, setUserOpen] = useState(true)
 
   const tourDomOpen = typeof document !== 'undefined' && Boolean(document.querySelector('[data-tour-open]'))
   const isDetailsOpen = tourOpen || tourDomOpen || userOpen
@@ -76,6 +71,7 @@ function CardBody({ scenario }: { scenario: Scenario }) {
         <div className="card__heading">
           <h2 className="card__title">{title}</h2>
           <p className="card__sub">{sub}</p>
+          <SiteSelect scenarioId={scenario.id} siteId={scenario.siteId} />
           <p className="card__dates">
             {formatWindow(startMs, endMs)}
             {scenario.slipDays !== 0 && ` · ${formatSlip(scenario.slipDays)}`}
@@ -136,6 +132,7 @@ export function ScenarioCard({ scenarioId }: { scenarioId: string }) {
 }
 
 export function ScenarioBoard() {
+  const [compareOpen, setCompareOpen] = useState(false)
   const scenarios = useAppStore((s) => s.scenarios)
   const activeId = useAppStore((s) => s.activeScenarioId)
   const addScenario = useAppStore((s) => s.addScenario)
@@ -150,16 +147,27 @@ export function ScenarioBoard() {
 
   return (
     <div className="board-wrap">
-      {!full && (
-        <div className="board__toolbar">
-          <span className="board__count">
-            {scenarios.length} of {MAX_SCENARIOS} scenarios
-          </span>
+      <div className="board__toolbar">
+        <span className="board__count">
+          {scenarios.length} of {MAX_SCENARIOS} scenarios
+        </span>
+        <button
+          type="button"
+          className={compareOpen ? 'secondary compare-toggle-btn active' : 'secondary compare-toggle-btn'}
+          onClick={() => setCompareOpen((v) => !v)}
+          aria-pressed={compareOpen}
+          aria-expanded={compareOpen}
+          aria-controls="scenario-compare-table"
+        >
+          Compare table
+        </button>
+        {!full && (
           <button type="button" onClick={onAdd}>
             Add scenario
           </button>
-        </div>
-      )}
+        )}
+      </div>
+      {compareOpen && <CompareTable onClose={() => setCompareOpen(false)} />}
       <div className={`board board--${scenarios.length}`}>
         {scenarios.map((s) => (
           <ScenarioCard key={s.id} scenarioId={s.id} />

@@ -23,3 +23,7 @@ Write the files first, then test (see `_common.md`; follow `RULES-quality.md`). 
 ## Acceptance
 
 `npm run typecheck`, `npm run lint`, `npm test`, `npm run build` exit 0 (failures in other workers' files caused by their in-progress edits: say so and run only your paths). Report per item: done or why not, test counts, and OPEN items outside your paths.
+
+## Note (rerun)
+A previous run stalled; inspect what already changed (git diff, tests) and continue; do not redo finished items. Do NOT edit `src/lib/loader.ts`, `src/lib/loader.test.ts` or anything in `src/viz3d/**` (another worker is changing them for real data): list those items in OPEN instead. Real data from scope A is now on disk in `web/public/data/`; the mocks still exist. Run shell commands in steps under 60 seconds.
+Note (rerun): a previous run stalled; inspect git diff and existing files, continue, do not redo finished items. Run shell commands in steps under 60 s.

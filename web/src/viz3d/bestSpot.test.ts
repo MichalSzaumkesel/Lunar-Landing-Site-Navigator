@@ -184,6 +184,14 @@ describe('formatResultSentence', () => {
       'Moved 0 m. Sun visible: 350 h here vs 350 h at the original point (+0 h).',
     )
   })
+
+  it('keeps delta consistent with rounded endpoints and avoids -0 h', () => {
+    const offset = { eastM: 100, northM: 0 }
+    // 351.4 and 350.6 both round to 351, delta must be 0 (+0 h), not +1 h
+    expect(formatResultSentence(offset, 351.4, 350.6)).toContain('351 h here vs 351 h at the original point (+0 h).')
+    // 350.4 and 350.6 round to 350 and 351, delta must be -1 h, not -0 h
+    expect(formatResultSentence(offset, 350.4, 350.6)).toContain('350 h here vs 351 h at the original point (-1 h).')
+  })
 })
 
 describe('argmaxBestSpot', () => {

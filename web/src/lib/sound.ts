@@ -40,7 +40,10 @@ export interface SoundEngine {
   getVolume(): number
   setVolume(volume: number): void
   cue(kind: SkyEventKind): void
-  updateAmbient(params: AmbientParams): void
+  updateAmbient(params: AmbientParams, isPlaying?: boolean): void
+  setPlaying(playing: boolean): void
+  triggerScrubSwell(): void
+  isPlaying(): boolean
   addListener(listener: (mode: SoundMode) => void): () => void
   dispose(): void
 }
@@ -134,11 +137,12 @@ export function elevationToFilterCutoff(elevationDeg: number): number {
 
 /**
  * Maps Earth lit fraction [0, 1] to low-pass filter cutoff frequency in Hz.
- * A dark crescent is darker (250 Hz), full Earth is fuller (900 Hz); the Earth voice is deliberately LOW and the Sun voice HIGH so the two are easy to tell apart.
+ * Filter cutoff range about 900 to 3000 Hz: dark crescent (900 Hz), full Earth (3000 Hz).
+ * The Earth voice is kept lower than the Sun voice (Sun oscillators 880/1319/1760 Hz).
  */
 export function earthLitFractionToBrightness(litFraction: number): number {
-  const minCutoff = 250
-  const maxCutoff = 900
+  const minCutoff = 900
+  const maxCutoff = 3000
   const clamped = Math.max(0, Math.min(1, litFraction))
   return minCutoff + clamped * (maxCutoff - minCutoff)
 }
@@ -279,6 +283,8 @@ interface AmbientNodes {
   sunPanner: StereoPannerNode | GainNode
   earthOsc1: OscillatorNode
   earthOsc2: OscillatorNode
+  earthOsc3: OscillatorNode
+  earthPartialGain: GainNode
   noiseSource: AudioBufferSourceNode
   noiseFilter: BiquadFilterNode
   noiseGain: GainNode
@@ -302,6 +308,9 @@ export function createSoundEngine(): SoundEngine {
 
   let ambientNodes: AmbientNodes | null = null
   let fadeTimeout: ReturnType<typeof setTimeout> | null = null
+  let scrubTimeout: ReturnType<typeof setTimeout> | null = null
+  let isPlayingState = false
+  let isScrubbing = false
   let lastCueTime = -Infinity
   let lastAmbientUpdateMs = -Infinity
   let latestAmbientParams: AmbientParams | null = null
@@ -364,20 +373,20 @@ export function createSoundEngine(): SoundEngine {
     ensureMasterGraph(c)
     const t = c.currentTime
 
-    // Sun voice: 3 detuned oscillators (high register: A4=440, E5=659.25, A5=880)
+    // Sun voice: 3 detuned oscillators (high register shifted up an octave: 880 Hz, 1319 Hz, 1760 Hz)
     const sunOsc1 = c.createOscillator()
     sunOsc1.type = 'sine'
-    sunOsc1.frequency.setValueAtTime(440, t)
+    sunOsc1.frequency.setValueAtTime(880, t)
     if (sunOsc1.detune) sunOsc1.detune.setValueAtTime(-4, t)
 
     const sunOsc2 = c.createOscillator()
     sunOsc2.type = 'triangle'
-    sunOsc2.frequency.setValueAtTime(659.25, t)
+    sunOsc2.frequency.setValueAtTime(1319, t)
     if (sunOsc2.detune) sunOsc2.detune.setValueAtTime(3, t)
 
     const sunOsc3 = c.createOscillator()
     sunOsc3.type = 'sine'
-    sunOsc3.frequency.setValueAtTime(880, t)
+    sunOsc3.frequency.setValueAtTime(1760, t)
     if (sunOsc3.detune) sunOsc3.detune.setValueAtTime(5, t)
 
     // Sun low-pass filter (brighter when higher)
@@ -400,7 +409,7 @@ export function createSoundEngine(): SoundEngine {
     sunLfoGain.connect(sunTremolo.gain)
 
     const sunGain = c.createGain()
-    sunGain.gain.setValueAtTime(0.0001, t)
+    sunGain.gain.setValueAtTime(0, t)
 
     const sunPanner = createPanner(c)
 
@@ -412,16 +421,23 @@ export function createSoundEngine(): SoundEngine {
     sunGain.connect(sunPanner)
     sunPanner.connect(masterGain!)
 
-    // Earth voice, low register: A2 (110 Hz), E3 (~164.81 Hz), plus band-passed noise breath
+    // Earth voice: audible register (~330 Hz and ~494 Hz base, plus soft octave partial near 660 Hz)
     const earthOsc1 = c.createOscillator()
     earthOsc1.type = 'sine'
-    earthOsc1.frequency.setValueAtTime(110, t)
+    earthOsc1.frequency.setValueAtTime(330, t)
 
     const earthOsc2 = c.createOscillator()
     earthOsc2.type = 'sine'
-    earthOsc2.frequency.setValueAtTime(164.81, t)
+    earthOsc2.frequency.setValueAtTime(494, t)
 
-    // Noise breath
+    const earthOsc3 = c.createOscillator()
+    earthOsc3.type = 'sine'
+    earthOsc3.frequency.setValueAtTime(660, t)
+
+    const earthPartialGain = c.createGain()
+    earthPartialGain.gain.setValueAtTime(0.25, t)
+
+    // Noise breath centred near 1200 Hz
     const bufferSize = Math.max(1, Math.floor(c.sampleRate * 2))
     const noiseBuffer = c.createBuffer(1, bufferSize, c.sampleRate)
     const channelData = noiseBuffer.getChannelData(0)
@@ -434,27 +450,29 @@ export function createSoundEngine(): SoundEngine {
 
     const noiseFilter = c.createBiquadFilter()
     noiseFilter.type = 'bandpass'
-    noiseFilter.frequency.setValueAtTime(300, t)
+    noiseFilter.frequency.setValueAtTime(1200, t)
     noiseFilter.Q.setValueAtTime(2.0, t)
 
     const noiseGain = c.createGain()
-    noiseGain.gain.setValueAtTime(0.03, t)
+    noiseGain.gain.setValueAtTime(0, t)
 
     noiseSource.connect(noiseFilter)
     noiseFilter.connect(noiseGain)
 
     const earthGain = c.createGain()
-    earthGain.gain.setValueAtTime(0.0001, t)
+    earthGain.gain.setValueAtTime(0, t)
 
     const earthFilter = c.createBiquadFilter()
     earthFilter.type = 'lowpass'
-    earthFilter.frequency.setValueAtTime(500, t)
+    earthFilter.frequency.setValueAtTime(900, t)
     earthFilter.Q.setValueAtTime(1.0, t)
 
     const earthPanner = createPanner(c)
 
     earthOsc1.connect(earthGain)
     earthOsc2.connect(earthGain)
+    earthOsc3.connect(earthPartialGain)
+    earthPartialGain.connect(earthGain)
     noiseGain.connect(earthGain)
     earthGain.connect(earthFilter)
     earthFilter.connect(earthPanner)
@@ -467,6 +485,7 @@ export function createSoundEngine(): SoundEngine {
     sunLfo.start(t)
     earthOsc1.start(t)
     earthOsc2.start(t)
+    earthOsc3.start(t)
     noiseSource.start(t)
 
     return {
@@ -481,6 +500,8 @@ export function createSoundEngine(): SoundEngine {
       sunPanner,
       earthOsc1,
       earthOsc2,
+      earthOsc3,
+      earthPartialGain,
       noiseSource,
       noiseFilter,
       noiseGain,
@@ -491,6 +512,12 @@ export function createSoundEngine(): SoundEngine {
   }
 
   function teardownAmbientGraph(immediate = false): void {
+    if (scrubTimeout) {
+      clearTimeout(scrubTimeout)
+      scrubTimeout = null
+    }
+    isScrubbing = false
+
     if (!ambientNodes) return
     const nodes = ambientNodes
     ambientNodes = null
@@ -498,8 +525,9 @@ export function createSoundEngine(): SoundEngine {
     if (ctx && !immediate) {
       try {
         const t = ctx.currentTime
-        nodes.sunGain.gain.setTargetAtTime(0.0001, t, 0.15)
-        nodes.earthGain.gain.setTargetAtTime(0.0001, t, 0.15)
+        nodes.sunGain.gain.setTargetAtTime(0, t, 0.15)
+        nodes.earthGain.gain.setTargetAtTime(0, t, 0.15)
+        nodes.noiseGain.gain.setTargetAtTime(0, t, 0.15)
       } catch {
         // Ignore
       }
@@ -512,6 +540,7 @@ export function createSoundEngine(): SoundEngine {
       try { nodes.sunLfo.stop() } catch {}
       try { nodes.earthOsc1.stop() } catch {}
       try { nodes.earthOsc2.stop() } catch {}
+      try { nodes.earthOsc3.stop() } catch {}
       try { nodes.noiseSource.stop() } catch {}
 
       try { nodes.sunOsc1.disconnect() } catch {}
@@ -526,6 +555,8 @@ export function createSoundEngine(): SoundEngine {
 
       try { nodes.earthOsc1.disconnect() } catch {}
       try { nodes.earthOsc2.disconnect() } catch {}
+      try { nodes.earthOsc3.disconnect() } catch {}
+      try { nodes.earthPartialGain.disconnect() } catch {}
       try { nodes.noiseSource.disconnect() } catch {}
       try { nodes.noiseFilter.disconnect() } catch {}
       try { nodes.noiseGain.disconnect() } catch {}
@@ -541,32 +572,82 @@ export function createSoundEngine(): SoundEngine {
     }
   }
 
-  function applyAmbientUpdate(params: AmbientParams): void {
+  function applyAmbientUpdate(
+    params?: AmbientParams,
+    customTimeConstant?: number,
+  ): void {
     if (!ambientNodes || !ctx) return
+    const p = params ?? latestAmbientParams
+    if (!p) return
+
+    const isAudible = isPlayingState || isScrubbing
+    const timeConstant = customTimeConstant ?? (isAudible ? 0.35 : 0.6)
     const t = ctx.currentTime
 
-    // Sun voice
-    const sunGainTarget = 0.35 * fractionToGain(params.sun.fraction)
-    const sunFilterTarget = elevationToFilterCutoff(params.sun.el)
-    const sunPanTarget = azimuthToPan(params.sun.az)
+    // Sun voice: silent when fraction <= 0 or when not playing/scrubbing
+    const sunGainTarget = isAudible ? 0.35 * fractionToGain(p.sun.fraction) : 0
+    const sunFilterTarget = elevationToFilterCutoff(p.sun.el)
+    const sunPanTarget = azimuthToPan(p.sun.az)
     const tremoloDepth =
-      params.sun.fraction > 0 && params.sun.fraction < 1
-        ? (1 - params.sun.fraction) * 0.4
+      isAudible && p.sun.fraction > 0 && p.sun.fraction < 1
+        ? (1 - p.sun.fraction) * 0.4
         : 0
 
-    ambientNodes.sunGain.gain.setTargetAtTime(sunGainTarget, t, 0.35)
+    ambientNodes.sunGain.gain.setTargetAtTime(sunGainTarget, t, timeConstant)
     ambientNodes.sunFilter.frequency.setTargetAtTime(sunFilterTarget, t, 0.35)
     setPan(ambientNodes.sunPanner, sunPanTarget, t)
-    ambientNodes.sunLfoGain.gain.setTargetAtTime(tremoloDepth, t, 0.35)
+    ambientNodes.sunLfoGain.gain.setTargetAtTime(tremoloDepth, t, timeConstant)
 
-    // Earth voice: silent when fraction <= 0 (not in view)
-    const earthGainTarget = 0.3 * fractionToGain(params.earth.fraction)
-    const earthFilterTarget = earthLitFractionToBrightness(params.earth.litFraction)
-    const earthPanTarget = azimuthToPan(params.earth.az)
+    // Earth voice: silent when fraction <= 0 or when not playing/scrubbing
+    const earthGainTarget = isAudible ? 0.3 * fractionToGain(p.earth.fraction) : 0
+    const noiseGainTarget = isAudible ? 0.03 * fractionToGain(p.earth.fraction) : 0
+    const earthFilterTarget = earthLitFractionToBrightness(p.earth.litFraction)
+    const earthPanTarget = azimuthToPan(p.earth.az)
 
-    ambientNodes.earthGain.gain.setTargetAtTime(earthGainTarget, t, 0.35)
+    ambientNodes.earthGain.gain.setTargetAtTime(earthGainTarget, t, timeConstant)
+    ambientNodes.noiseGain.gain.setTargetAtTime(noiseGainTarget, t, timeConstant)
     ambientNodes.earthFilter.frequency.setTargetAtTime(earthFilterTarget, t, 0.35)
     setPan(ambientNodes.earthPanner, earthPanTarget, t)
+  }
+
+  function setPlaying(playing: boolean): void {
+    if (isPlayingState === playing) return
+    isPlayingState = playing
+    if (scrubTimeout) {
+      clearTimeout(scrubTimeout)
+      scrubTimeout = null
+    }
+    isScrubbing = false
+    applyAmbientUpdate(latestAmbientParams ?? undefined, playing ? 0.35 : 0.6)
+  }
+
+  function triggerScrubSwell(): void {
+    if (isPlayingState) return
+    if (mode !== 'ambient') return
+
+    if (scrubTimeout) {
+      clearTimeout(scrubTimeout)
+      scrubTimeout = null
+    }
+
+    const wasScrubbing = isScrubbing
+    isScrubbing = true
+
+    if (!wasScrubbing) {
+      applyAmbientUpdate(latestAmbientParams ?? undefined, 0.35)
+    }
+
+    scrubTimeout = setTimeout(() => {
+      isScrubbing = false
+      scrubTimeout = null
+      if (!isPlayingState) {
+        applyAmbientUpdate(latestAmbientParams ?? undefined, 0.6)
+      }
+    }, 1000)
+  }
+
+  function isPlaying(): boolean {
+    return isPlayingState
   }
 
   function setMode(newMode: SoundMode): void {
@@ -574,6 +655,11 @@ export function createSoundEngine(): SoundEngine {
       clearTimeout(fadeTimeout)
       fadeTimeout = null
     }
+    if (scrubTimeout) {
+      clearTimeout(scrubTimeout)
+      scrubTimeout = null
+    }
+    isScrubbing = false
 
     const prevMode = mode
     mode = newMode
@@ -606,7 +692,7 @@ export function createSoundEngine(): SoundEngine {
     if (newMode === 'off') {
       if (ctx && masterGain) {
         const t = ctx.currentTime
-        masterGain.gain.setTargetAtTime(0.0001, t, 0.15)
+        masterGain.gain.setTargetAtTime(0, t, 0.15)
       }
       fadeTimeout = setTimeout(() => {
         if (mode === 'off' && ctx && ctx.state === 'running') {
@@ -645,8 +731,11 @@ export function createSoundEngine(): SoundEngine {
     return volume
   }
 
-  function updateAmbient(params: AmbientParams): void {
+  function updateAmbient(params: AmbientParams, playState?: boolean): void {
     latestAmbientParams = params
+    if (playState !== undefined && playState !== isPlayingState) {
+      setPlaying(playState)
+    }
     if (mode !== 'ambient') return
 
     const now =
@@ -734,6 +823,12 @@ export function createSoundEngine(): SoundEngine {
       clearTimeout(fadeTimeout)
       fadeTimeout = null
     }
+    if (scrubTimeout) {
+      clearTimeout(scrubTimeout)
+      scrubTimeout = null
+    }
+    isScrubbing = false
+    isPlayingState = false
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', handleVisibility)
     }
@@ -764,6 +859,9 @@ export function createSoundEngine(): SoundEngine {
     setVolume,
     cue,
     updateAmbient,
+    setPlaying,
+    triggerScrubSwell,
+    isPlaying,
     addListener,
     dispose,
   }

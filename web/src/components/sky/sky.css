@@ -366,3 +366,9 @@
     animation: none;
   }
 }
+
+/* Rise and set flips only; colour changes never move with the playback cursor */
+.sky__dot {
+  transition: background-color var(--motion-duration-normal, 180ms) ease,
+              border-color var(--motion-duration-normal, 180ms) ease;
+}

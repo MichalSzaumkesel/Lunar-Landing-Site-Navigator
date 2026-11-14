@@ -1,10 +1,10 @@
 import react from '@vitejs/plugin-react'
 import type { Plugin } from 'vite'
+import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-function getContentSecurityPolicy(): string {
+function getContentSecurityPolicy(apiUrl?: string): string {
   let connectSrc = "'self'"
-  const apiUrl = process.env.VITE_API_URL
   if (apiUrl) {
     try {
       const origin = new URL(apiUrl).origin
@@ -30,7 +30,7 @@ function getContentSecurityPolicy(): string {
   ].join('; ')
 }
 
-function cspPlugin(): Plugin {
+function cspPlugin(apiUrl?: string): Plugin {
   return {
     name: 'csp-meta',
     apply: 'build',
@@ -40,7 +40,7 @@ function cspPlugin(): Plugin {
           tag: 'meta',
           attrs: {
             'http-equiv': 'Content-Security-Policy',
-            content: getContentSecurityPolicy(),
+            content: getContentSecurityPolicy(apiUrl),
           },
           injectTo: 'head-prepend',
         },
@@ -50,11 +50,17 @@ function cspPlugin(): Plugin {
 }
 
 // VITE_BASE lets the same build run at "/" (Vercel, local) and at "/<repo>/" (GitHub Pages).
-export default defineConfig({
-  base: process.env.VITE_BASE ?? '/',
-  plugins: [react(), cspPlugin()],
-  test: {
-    environment: 'node',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiUrl = env.VITE_API_URL || process.env.VITE_API_URL
+  const base = env.VITE_BASE || process.env.VITE_BASE || '/'
+
+  return {
+    base,
+    plugins: [react(), cspPlugin(apiUrl)],
+    test: {
+      environment: 'node',
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    },
+  }
 })

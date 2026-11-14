@@ -59,6 +59,18 @@ export function isValidHorizon(h: unknown): h is HorizonFile {
   return true
 }
 
+export function isValidTerrain(t: unknown): t is TerrainFile {
+  if (!t || typeof t !== 'object') return false
+  const terrain = t as TerrainFile
+  if (!Number.isInteger(terrain.size_px) || terrain.size_px < 2 || terrain.size_px > 4096) return false
+  for (const v of [terrain.spacing_m, terrain.height_min_m, terrain.height_max_m, terrain.site_height_m]) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) return false
+  }
+  if (terrain.spacing_m <= 0 || terrain.height_max_m < terrain.height_min_m) return false
+  if (terrain.frame !== 'local_tangent_enu' || terrain.encoding !== 'uint16-le') return false
+  return typeof terrain.bin === 'string' && terrain.bin.length > 0 && Boolean(terrain.meta)
+}
+
 export function isValidEphem(e: unknown): e is EphemFile {
   if (!e || typeof e !== 'object') return false
   const ephem = e as EphemFile
@@ -280,12 +292,14 @@ export function createDataSource(opts?: LoaderOptions): SiteDataSource {
           fetchImpl,
           resolveUrl(baseUrl, `data/terrain/${siteId}.json`),
         )
+        if (!isValidTerrain(terrain)) terrain = null
       }
       if (!terrain) {
         terrain = await fetchJson<TerrainFile>(
           fetchImpl,
           resolveUrl(baseUrl, `data/mock/terrain/${siteId}.json`),
         )
+        if (!isValidTerrain(terrain)) terrain = null
       }
 
       const files = terrain ? [horizon, ephem, terrain] : [horizon, ephem]

@@ -69,16 +69,29 @@ export function useEventSounds(customEngine?: SoundEngine): void {
     observerHeightRef.current = observerHeightM
   }, [observerHeightM])
 
-  const prevCursorMsRef = useRef<number | null>(null)
+  const prevCursorMsRef = useRef<number | null>(
+    activeScenario
+      ? scenarioCursorMs(activeScenario, useAppStore.getState().cursorH)
+      : null,
+  )
 
-  // Reset cursor history when the active scenario changes
+  // Sync cursor position when the active scenario changes
   useEffect(() => {
-    prevCursorMsRef.current = null
-  }, [activeScenario?.id])
+    if (activeScenario) {
+      prevCursorMsRef.current = scenarioCursorMs(
+        activeScenario,
+        useAppStore.getState().cursorH,
+      )
+    } else {
+      prevCursorMsRef.current = null
+    }
+  }, [activeScenario])
 
   useEffect(() => {
     const engine = customEngine ?? getSoundEngine()
     let lastAmbientUpdateMs = -Infinity
+    let prevPlaying = useAppStore.getState().playing
+    engine.setPlaying(prevPlaying)
 
     const pushAmbientUpdate = (cursorMs: number): void => {
       if (engine.getMode() !== 'ambient') return
@@ -93,6 +106,7 @@ export function useEventSounds(customEngine?: SoundEngine): void {
     // When mode switches to ambient, immediately push current state
     const unsubMode = engine.addListener((mode) => {
       if (mode === 'ambient') {
+        engine.setPlaying(useAppStore.getState().playing)
         const scenario = activeScenarioRef.current
         if (scenario) {
           const currMs = scenarioCursorMs(
@@ -110,15 +124,33 @@ export function useEventSounds(customEngine?: SoundEngine): void {
 
       const currMs = scenarioCursorMs(scenario, state.cursorH)
       const prevMs = prevCursorMsRef.current
+      const cursorChanged = prevMs !== null && prevMs !== currMs
       prevCursorMsRef.current = currMs
+
+      if (state.playing !== prevPlaying) {
+        prevPlaying = state.playing
+        engine.setPlaying(state.playing)
+      }
 
       // 1. Ambient mode: continuous sound updated on cursor move (play or scrub)
       if (engine.getMode() === 'ambient') {
-        const now =
-          typeof performance !== 'undefined' ? performance.now() : Date.now()
-        if (shouldUpdateAmbient(now, lastAmbientUpdateMs)) {
-          lastAmbientUpdateMs = now
-          pushAmbientUpdate(currMs)
+        if (state.playing) {
+          const now =
+            typeof performance !== 'undefined' ? performance.now() : Date.now()
+          if (shouldUpdateAmbient(now, lastAmbientUpdateMs)) {
+            lastAmbientUpdateMs = now
+            pushAmbientUpdate(currMs)
+          }
+        } else if (cursorChanged) {
+          // Scrubbing the timeline manually: short swell while cursor moves,
+          // then fade out about 1 s after the last change.
+          const now =
+            typeof performance !== 'undefined' ? performance.now() : Date.now()
+          if (shouldUpdateAmbient(now, lastAmbientUpdateMs)) {
+            lastAmbientUpdateMs = now
+            pushAmbientUpdate(currMs)
+          }
+          engine.triggerScrubSwell()
         }
       }
 
@@ -145,6 +177,7 @@ export function useEventSounds(customEngine?: SoundEngine): void {
 
     // If already ambient on mount, push initial state
     if (engine.getMode() === 'ambient' && activeScenarioRef.current) {
+      engine.setPlaying(useAppStore.getState().playing)
       const currMs = scenarioCursorMs(
         activeScenarioRef.current,
         useAppStore.getState().cursorH,
@@ -162,6 +195,7 @@ export function useEventSounds(customEngine?: SoundEngine): void {
   useEffect(() => {
     const engine = customEngine ?? getSoundEngine()
     if (engine.getMode() === 'ambient' && activeScenarioRef.current && bundle) {
+      engine.setPlaying(useAppStore.getState().playing)
       const currMs = scenarioCursorMs(
         activeScenarioRef.current,
         useAppStore.getState().cursorH,

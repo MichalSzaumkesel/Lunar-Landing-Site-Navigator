@@ -1,6 +1,7 @@
 import type { ObserverHeightM } from '../lib/types'
 import type { Mode } from './types'
 import { MAX_SCENARIOS, MAX_SLIP_DAYS } from '../config/dataRange'
+import { SPEEDS_H_PER_SEC } from '../config/presets'
 
 export interface UrlState {
   mode: Mode
@@ -101,11 +102,11 @@ export function decodeState(hash: string): Partial<UrlState> {
       }
     }
 
-    // speed: positive number
+    // speed: supported preset speed
     const vStr = params.get('v')
     if (vStr !== null && vStr !== '') {
       const v = Number(vStr)
-      if (Number.isFinite(v) && v > 0) {
+      if (Number.isFinite(v) && (SPEEDS_H_PER_SEC as readonly number[]).includes(v)) {
         result.speedHPerSec = v
       }
     }

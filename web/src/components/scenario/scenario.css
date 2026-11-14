@@ -85,6 +85,9 @@
 .views__tab {
   min-height: 2.5rem;
   font-weight: 600;
+  transition: background-color var(--motion-duration-fast, 120ms) ease,
+              border-color var(--motion-duration-fast, 120ms) ease,
+              color var(--motion-duration-fast, 120ms) ease;
 }
 
 .views__tab[aria-selected='true'] {
@@ -97,6 +100,16 @@
 
 .views__panel {
   container-type: inline-size;
+  animation: tab-content-fade var(--motion-duration-fast, 120ms) ease-out;
+}
+
+@keyframes tab-content-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .views__message {
@@ -136,6 +149,21 @@
   gap: var(--space-2);
   width: 100%;
   max-width: 16rem;
+}
+
+.views__loupe > div:last-child {
+  animation: loupe-pop var(--motion-duration-fast, 120ms) var(--motion-ease-out, ease-out);
+}
+
+@keyframes loupe-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .views__loupe-toggle {
@@ -319,6 +347,12 @@
   padding-top: var(--space-2);
 }
 
+.card__more::details-content {
+  transition: opacity var(--motion-duration-normal, 180ms) ease,
+              block-size var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
+  overflow: clip;
+}
+
 .card__more[open] {
   display: flex;
   flex-direction: column;
@@ -333,6 +367,7 @@
   font-weight: 600;
   color: var(--muted);
   user-select: none;
+  transition: color var(--motion-duration-fast, 120ms) ease;
 }
 
 .card__more-summary:hover,
@@ -349,4 +384,31 @@
 .board--4 .sky__pano {
   max-width: min(100%, 360px);
   margin-inline: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .views__tab {
+    transition: none !important;
+  }
+  .views__panel,
+  .views__loupe > div:last-child {
+    animation: none !important;
+  }
+  .card__more::details-content,
+  .card__more-summary {
+    transition: none !important;
+  }
+}
+
+.site-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.site-select select {
+  min-height: 40px;
+  max-width: 100%;
 }

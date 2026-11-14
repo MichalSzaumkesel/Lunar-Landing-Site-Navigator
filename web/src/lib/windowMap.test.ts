@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { EphemFile, HorizonFile, MissionRules, SiteBundle } from './types'
 import { findWindows } from './finder'
-import { computeWindowMap, type WindowMapInput } from './windowMap'
+import { computeWindowMap, windowsFromRow, type WindowMapInput, type WindowMapRow } from './windowMap'
 
 function makeTinyBundle(opts: {
   sunEl: number[]
@@ -491,5 +491,31 @@ describe('computeWindowMap performance and edge cases', () => {
   it('cancelWindowMap terminates active worker safely without throwing', async () => {
     const { cancelWindowMap } = await import('./windowMapClient')
     expect(() => cancelWindowMap()).not.toThrow()
+  })
+})
+
+describe('windowsFromRow', () => {
+  const row = (valid: number[]): WindowMapRow => ({
+    siteId: 's',
+    startMs: Date.parse('2027-01-01T00:00:00Z'),
+    stepMs: 3_600_000,
+    count: valid.length,
+    pctSunlit: new Float32Array(valid.length),
+    pctEarth: new Float32Array(valid.length),
+    longestDarkH: new Float32Array(valid.length),
+    valid: Uint8Array.from(valid),
+  })
+
+  it('turns runs of valid columns into windows from the first to the last valid landing hour', () => {
+    expect(windowsFromRow(row([0, 1, 1, 1, 0, 255, 1, 0, 1]))).toEqual([
+      { start_utc: '2027-01-01T01:00:00Z', end_utc: '2027-01-01T03:00:00Z' },
+      { start_utc: '2027-01-01T06:00:00Z', end_utc: '2027-01-01T06:00:00Z' },
+      { start_utc: '2027-01-01T08:00:00Z', end_utc: '2027-01-01T08:00:00Z' },
+    ])
+  })
+
+  it('returns nothing for an empty or fully invalid row', () => {
+    expect(windowsFromRow(row([]))).toEqual([])
+    expect(windowsFromRow(row([0, 255, 0]))).toEqual([])
   })
 })

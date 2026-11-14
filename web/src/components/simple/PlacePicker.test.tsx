@@ -27,7 +27,7 @@ describe('PlacePicker component', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders 3 buttons with demo site labels from dataSource', async () => {
+  it('renders quick buttons and a grouped list of all sites from dataSource', async () => {
     const mockSites = [
       {
         id: 'apollo_11',
@@ -91,8 +91,8 @@ describe('PlacePicker component', () => {
       sites: mockSites,
     })
 
-    const applySpy = vi.fn()
-    useAppStore.setState({ applyPreset: applySpy })
+    const updateSpy = vi.fn()
+    useAppStore.setState({ activeScenarioId: 'sc1', updateScenario: updateSpy })
 
     await act(async () => {
       root.render(createElement(PlacePicker, { activeSiteId: 'southpole_landed' }))
@@ -107,27 +107,27 @@ describe('PlacePicker component', () => {
 
     // Leading "[MOCK] " should be stripped
     expect(buttons[0].querySelector('.simple-place-btn__title')?.textContent).toBe('Apollo 11')
-    expect(buttons[0].querySelector('.simple-place-btn__caption')?.textContent).toBe('Apollo landing site')
+    expect(buttons[0].querySelector('.simple-place-btn__caption')?.textContent).toBe('Near the equator')
     expect(buttons[0].getAttribute('aria-pressed')).toBe('false')
 
     expect(buttons[1].querySelector('.simple-place-btn__title')?.textContent).toBe('South Pole Site')
     expect(buttons[1].getAttribute('aria-pressed')).toBe('true')
 
     expect(buttons[2].querySelector('.simple-place-btn__title')?.textContent).toBe('Connecting Ridge')
-    expect(buttons[2].querySelector('.simple-place-btn__caption')?.textContent).toBe('Artemis candidate region')
+    expect(buttons[2].querySelector('.simple-place-btn__caption')?.textContent).toBe('Near the south pole')
 
-    // Click on first button applies preset
+    // The dropdown lists every site, grouped without acronyms
+    const groups = Array.from(container.querySelectorAll('optgroup')).map((g) => g.label)
+    expect(groups).toEqual(['Apollo landings', 'Other landers', 'Possible future landing zones'])
+    expect(container.querySelectorAll('option')).toHaveLength(3)
+    expect(container.textContent).not.toContain('CLPS')
+
+    // Click on first button updates active scenario
     await act(async () => {
       buttons[0].click()
     })
 
-    expect(applySpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'apollo_11',
-        label: 'Apollo 11',
-        scenarios: [{ siteId: 'apollo_11' }],
-      }),
-    )
+    expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'apollo_11' })
   })
 
   it('shows plain error with role="alert" and "Try again" button that reloads the site list when load fails', async () => {
@@ -142,7 +142,7 @@ describe('PlacePicker component', () => {
 
     const alert = container.querySelector('[role="alert"]')
     expect(alert).not.toBeNull()
-    expect(alert?.textContent).toContain('Could not load this place. Try another place.')
+    expect(alert?.textContent).toContain('Could not load the list of places')
 
     const retryBtn = alert?.querySelector<HTMLButtonElement>('button')
     expect(retryBtn?.textContent).toBe('Try again')

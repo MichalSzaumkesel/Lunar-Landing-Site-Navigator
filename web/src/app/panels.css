@@ -6,6 +6,25 @@
   padding: var(--space-2, 8px) var(--space-5, 24px) var(--space-4, 16px);
 }
 
+.shell > * {
+  animation: shell-fade-in var(--motion-duration-fast, 120ms) ease;
+}
+
+.shell > .tools {
+  animation: none;
+}
+
+@keyframes shell-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .shell > .board-wrap,
 .shell > .board {
   padding: 0;
@@ -35,6 +54,12 @@
   gap: var(--space-2, 8px);
 }
 
+.panels__tabs [role='tab'] {
+  transition: background-color var(--motion-duration-fast, 120ms) ease,
+              border-color var(--motion-duration-fast, 120ms) ease,
+              color var(--motion-duration-fast, 120ms) ease;
+}
+
 .panels__tabs [role='tab'][aria-selected='true'] {
   background: var(--earth);
   border-color: var(--earth);
@@ -44,10 +69,30 @@
 
 .panels__body {
   min-width: 0;
+  animation: panel-fade-in var(--motion-duration-fast, 120ms) ease-out;
+}
+
+@keyframes panel-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .panel-stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell > *,
+  .panels__body {
+    animation: none !important;
+  }
+  .panels__tabs [role='tab'] {
+    transition: none !important;
+  }
 }

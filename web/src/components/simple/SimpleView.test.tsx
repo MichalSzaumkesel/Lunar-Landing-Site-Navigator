@@ -132,6 +132,8 @@ describe('SimpleView component', () => {
     const summary = container.querySelector('.simple-summary')
     expect(summary).not.toBeNull()
     expect(summary?.textContent).toContain('This date is outside the data we have.')
+    expect(summary?.textContent).toContain('We only have data from')
+    expect(summary?.querySelector('.simple-reset')).not.toBeNull()
 
     // Date input remains present and usable
     const dateInput = container.querySelector<HTMLInputElement>('#simple-start-date')
@@ -175,6 +177,12 @@ describe('SimpleView component', () => {
     expect(badges).not.toBeNull()
     expect(container.querySelector('.badge--synthetic')?.textContent).toBe('Synthetic data')
     expect(container.querySelector('.badge--approximate')?.textContent).toBe('Approximate')
+
+    // Headline, two chips and three window rows replace the old paragraph
+    expect(container.querySelector('.simple-headline')?.textContent).toMatch(/^(Sunlit|Dark)$/)
+    expect(container.querySelectorAll('.simple-chip')).toHaveLength(2)
+    expect(container.querySelectorAll('.simple-row')).toHaveLength(3)
+    expect(container.textContent).not.toMatch(/CLPS|disc/)
   })
 
   it('renders plain error with role="alert" and Try again button when bundle load fails', async () => {

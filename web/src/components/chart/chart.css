@@ -1,0 +1,330 @@
+/* Elevation over time chart and accessible table styles */
+
+.elevation-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  margin-top: var(--space-3, 12px);
+  padding: var(--space-3, 12px);
+  background: var(--panel-2, #161d2e);
+  border: 1px solid var(--line, #2a3550);
+  border-radius: var(--radius, 10px);
+}
+
+.elevation-section__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+}
+
+.elevation-section__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text, #f2f5fb);
+}
+
+.elevation-section__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.elevation-section__btn-group {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--control-border, #566b93);
+}
+
+.elevation-section__btn {
+  background: var(--panel, #0f1420);
+  border: none;
+  border-right: 1px solid var(--control-border, #566b93);
+  border-radius: 0;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.85rem;
+  color: var(--muted, #a3afc7);
+  min-height: 2rem;
+  min-width: 2.2rem;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast, 120ms) ease,
+              color var(--motion-duration-fast, 120ms) ease;
+}
+
+.elevation-section__btn:last-child {
+  border-right: none;
+}
+
+.elevation-section__btn:hover {
+  color: var(--text, #f2f5fb);
+  background: var(--panel-2, #161d2e);
+}
+
+.elevation-section__btn[aria-pressed='true'] {
+  color: var(--text, #f2f5fb);
+  background: var(--line, #2a3550);
+  font-weight: 600;
+}
+
+.elevation-section__btn:focus-visible {
+  outline: 2px solid var(--focus, #ffffff);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.elevation-section__toggle-btn {
+  background: var(--panel, #0f1420);
+  border: 1px solid var(--control-border, #566b93);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted, #a3afc7);
+  min-height: 2rem;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast, 120ms) ease,
+              color var(--motion-duration-fast, 120ms) ease;
+}
+
+.elevation-section__toggle-btn:hover {
+  color: var(--text, #f2f5fb);
+}
+
+.elevation-section__toggle-btn[aria-pressed='true'] {
+  color: var(--text, #f2f5fb);
+  background: var(--line, #2a3550);
+  font-weight: 600;
+}
+
+.elevation-section__readouts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  background: var(--panel, #0f1420);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.elevation-section__readout-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+.elevation-section__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.elevation-section__swatch--sun {
+  background: var(--sun, #ffc233);
+}
+
+.elevation-section__swatch--earth {
+  background: var(--earth, #4aa8ff);
+}
+
+.elevation-section__swatch--horizon {
+  background: transparent;
+  border-top: 2px dashed var(--muted, #a3afc7);
+  height: 2px;
+  width: 14px;
+}
+
+/* SVG Chart styles */
+.elevation-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  overflow: visible;
+  user-select: none;
+  touch-action: none;
+}
+
+.chart__grid-line {
+  stroke: var(--line, #2a3550);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.chart__axis-line {
+  stroke: var(--line, #2a3550);
+  stroke-width: 1;
+}
+
+.chart__axis-text {
+  fill: var(--muted, #a3afc7);
+  font-size: 11px;
+  font-family: var(--font, system-ui);
+}
+
+.chart__zero-line {
+  stroke: var(--muted, #a3afc7);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.chart__zero-label {
+  fill: var(--muted, #a3afc7);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font, system-ui);
+}
+
+.chart__line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* During play or interaction, zero transition lag */
+  transition: none !important;
+}
+
+.chart__line--sun {
+  stroke: var(--sun, #ffc233);
+  stroke-width: 2.2;
+}
+
+.chart__line--earth {
+  stroke: var(--earth, #4aa8ff);
+  stroke-width: 2.2;
+}
+
+.chart__cursor-line {
+  stroke: var(--text, #f2f5fb);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+  transition: none !important;
+}
+
+.chart__cursor-point {
+  stroke: var(--panel, #0f1420);
+  stroke-width: 2;
+  pointer-events: none;
+  transition: none !important;
+}
+
+.chart__cursor-point--sun {
+  fill: var(--sun, #ffc233);
+}
+
+.chart__cursor-point--earth {
+  fill: var(--earth, #4aa8ff);
+}
+
+.chart__overlay-interactive {
+  cursor: crosshair;
+}
+
+/* Table styles */
+.elevation-table-container {
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--line, #2a3550);
+  border-radius: 6px;
+  background: var(--panel, #0f1420);
+}
+
+.elevation-table-container:focus-visible {
+  outline: 2px solid var(--focus, #ffffff);
+  outline-offset: -1px;
+}
+
+.elevation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.elevation-table caption {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.elevation-table th,
+.elevation-table td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid var(--line, #2a3550);
+  white-space: nowrap;
+}
+
+.elevation-table th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-2, #161d2e);
+  color: var(--text, #f2f5fb);
+  font-weight: 600;
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+.elevation-table tbody tr {
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast, 120ms) ease;
+}
+
+.elevation-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.elevation-table tbody tr.is-cursor {
+  background: rgba(255, 194, 51, 0.12);
+  font-weight: 600;
+}
+
+.elevation-table tbody tr:focus-visible {
+  outline: 2px solid var(--focus, #ffffff);
+  outline-offset: -2px;
+}
+
+.elevation-table__mono {
+  font-family: var(--mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.elevation-table__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.elevation-table__status--visible {
+  color: var(--both, #5ee6a8);
+}
+
+.elevation-table__status--hidden {
+  color: var(--muted, #a3afc7);
+}
+
+.elevation-table__caption-note {
+  padding: var(--space-2, 8px);
+  font-size: 0.75rem;
+  color: var(--muted, #a3afc7);
+  text-align: right;
+  border-top: 1px solid var(--line, #2a3550);
+}
+
+/* States */
+.elevation-section--loading,
+.elevation-section--empty {
+  padding: var(--space-4, 16px);
+  text-align: center;
+  color: var(--muted, #a3afc7);
+  font-size: 0.9rem;
+}

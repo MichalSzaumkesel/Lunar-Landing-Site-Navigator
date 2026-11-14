@@ -8,7 +8,7 @@ describe('urlState encode / decode', () => {
       mode: 'advanced',
       observerHeightM: 10,
       cursorH: 24.5,
-      speedHPerSec: 2,
+      speedHPerSec: 6,
       scenarios: [
         {
           siteId: 'southpole_landed',

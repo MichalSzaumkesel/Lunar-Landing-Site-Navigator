@@ -1,6 +1,7 @@
-import type { ObserverHeightM, SiteBundle } from './types.ts';
-import { horizonAt } from './horizon.ts';
-import { ephemCoverage } from './ephem.ts';
+import type { ObserverHeightM, SiteBundle } from './types';
+import { horizonAt } from './horizon';
+import { ephemCoverage } from './ephem';
+import { pickMaskFor } from './metrics';
 
 export type SkyEventKind = 'sunset' | 'sunrise' | 'earthset' | 'earthrise';
 
@@ -37,19 +38,29 @@ export function listSkyEvents(
   endMs: number,
 ): SkyEvent[] {
   const { ephem, horizon } = bundle;
-  if (ephem.count < 2 || startMs >= endMs) {
+  if (!ephem || !horizon || ephem.count < 2 || startMs >= endMs) {
+    return [];
+  }
+
+  if (
+    !ephem.sun ||
+    !ephem.earth ||
+    ephem.sun.az.length < ephem.count ||
+    ephem.sun.el.length < ephem.count ||
+    ephem.earth.az.length < ephem.count ||
+    ephem.earth.el.length < ephem.count
+  ) {
     return [];
   }
 
   const { startMs: startMsCov } = ephemCoverage(ephem);
   const stepMs = ephem.step_minutes * 60_000;
-  if (stepMs <= 0) {
+  if (stepMs <= 0 || !Number.isFinite(startMsCov)) {
     return [];
   }
 
-  const maskKey = String(observerHeightM);
-  const mask = horizon.masks[maskKey] ?? horizon.masks['2'] ?? [];
-  const azStepDeg = horizon.az_step_deg;
+  const mask = pickMaskFor(horizon, observerHeightM);
+  const azStepDeg = horizon?.az_step_deg ?? 0;
 
   let kStart = Math.max(0, Math.floor((startMs - startMsCov) / stepMs) - 1);
   if (kStart >= ephem.count - 1) {
@@ -93,6 +104,19 @@ export function listSkyEvents(
       }
     }
 
+    // Terminal sample sunset: reaches 0 at the final coverage sample
+    if (k === ephem.count - 2 && prevClearSun > 0 && nextClearSun === 0) {
+      const t = tk + stepMs;
+      if (t >= startMs && t < endMs) {
+        rawEvents.push({
+          kind: 'sunset',
+          t,
+          ms: Math.round(t),
+          utc: formatIsoUtc(t),
+        });
+      }
+    }
+
     // Sunrise: false -> true
     if (prevClearSun < 0 && nextClearSun >= 0) {
       const frac = prevClearSun / (prevClearSun - nextClearSun);
@@ -121,6 +145,19 @@ export function listSkyEvents(
       }
     }
 
+    // Terminal sample Earthset: reaches 0 at the final coverage sample
+    if (k === ephem.count - 2 && prevClearEarth > 0 && nextClearEarth === 0) {
+      const t = tk + stepMs;
+      if (t >= startMs && t < endMs) {
+        rawEvents.push({
+          kind: 'earthset',
+          t,
+          ms: Math.round(t),
+          utc: formatIsoUtc(t),
+        });
+      }
+    }
+
     // Earthrise: false -> true
     if (prevClearEarth < 0 && nextClearEarth >= 0) {
       const frac = prevClearEarth / (prevClearEarth - nextClearEarth);
@@ -139,9 +176,21 @@ export function listSkyEvents(
     prevClearEarth = nextClearEarth;
   }
 
-  rawEvents.sort((a, b) => a.t - b.t || a.kind.localeCompare(b.kind));
+  // Filter out phantom grazing pairs at identical millisecond (L4 #1)
+  const filteredEvents: RawSkyEvent[] = [];
+  const eventKeys = new Set(rawEvents.map((e) => `${e.kind}:${e.ms}`));
 
-  return rawEvents.map(({ kind, ms, utc }) => ({ kind, ms, utc }));
+  for (const ev of rawEvents) {
+    if (ev.kind === 'sunrise' && eventKeys.has(`sunset:${ev.ms}`)) continue;
+    if (ev.kind === 'sunset' && eventKeys.has(`sunrise:${ev.ms}`)) continue;
+    if (ev.kind === 'earthrise' && eventKeys.has(`earthset:${ev.ms}`)) continue;
+    if (ev.kind === 'earthset' && eventKeys.has(`earthrise:${ev.ms}`)) continue;
+    filteredEvents.push(ev);
+  }
+
+  filteredEvents.sort((a, b) => a.t - b.t || a.kind.localeCompare(b.kind));
+
+  return filteredEvents.map(({ kind, ms, utc }) => ({ kind, ms, utc }));
 }
 
 /**
@@ -155,13 +204,24 @@ export function longestStretches(
   endMs: number,
 ): SkyStretch[] {
   const { ephem, horizon } = bundle;
-  if (ephem.count <= 0 || startMs >= endMs) {
+  if (!ephem || !horizon || ephem.count <= 0 || startMs >= endMs) {
+    return [];
+  }
+
+  if (
+    !ephem.sun ||
+    !ephem.earth ||
+    ephem.sun.az.length < ephem.count ||
+    ephem.sun.el.length < ephem.count ||
+    ephem.earth.az.length < ephem.count ||
+    ephem.earth.el.length < ephem.count
+  ) {
     return [];
   }
 
   const { startMs: startMsCov } = ephemCoverage(ephem);
   const stepMs = ephem.step_minutes * 60_000;
-  if (stepMs <= 0) {
+  if (stepMs <= 0 || !Number.isFinite(startMsCov)) {
     return [];
   }
 
@@ -183,9 +243,8 @@ export function longestStretches(
     return [];
   }
 
-  const maskKey = String(observerHeightM);
-  const mask = horizon.masks[maskKey] ?? horizon.masks['2'] ?? [];
-  const azStepDeg = horizon.az_step_deg;
+  const mask = pickMaskFor(horizon, observerHeightM);
+  const azStepDeg = horizon?.az_step_deg ?? 0;
 
   let maxDarkLen = 0;
   let maxDarkStartK = -1;

@@ -196,11 +196,16 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
     }
   }
 
+  // At the scenario limit a custom point replaces the active scenario's site instead of failing.
+  const addCustomScenario = (siteId: string) => {
+    if (scenarios.length >= MAX_SCENARIOS && activeScenario) updateScenario(activeScenario.id, { siteId })
+    else addScenario({ siteId })
+  }
+
   // Pick point: click on map in pickMode adds a custom site scenario
   const handlePickPoint = (lat: number, lon: number) => {
-    if (scenarios.length >= MAX_SCENARIOS) return
     const id = customSiteId(lat, lon)
-    addScenario({ siteId: id })
+    addCustomScenario(id)
     setPickMode(false)
   }
 
@@ -215,13 +220,7 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
       return
     }
 
-    if (scenarios.length >= MAX_SCENARIOS) {
-      setFormError(`Maximum limit of ${MAX_SCENARIOS} scenarios reached.`)
-      return
-    }
-
-    const id = customSiteId(result.lat!, result.lon!)
-    addScenario({ siteId: id })
+    addCustomScenario(customSiteId(result.lat!, result.lon!))
     setLatInput('')
     setLonInput('')
   }

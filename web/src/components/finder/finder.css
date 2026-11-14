@@ -511,3 +511,30 @@
   border-width: 0;
 }
 
+
+/* Only opacity animates: the tooltip follows the pointer, so top and left stay instant */
+.finder__tooltip {
+  animation: finder-tooltip-in var(--motion-duration-fast, 120ms) ease-out;
+}
+
+@keyframes finder-tooltip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.finder__grid-container {
+  animation: map-canvas-reveal var(--motion-duration-normal, 180ms) ease-out;
+}
+
+@keyframes map-canvas-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
