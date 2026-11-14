@@ -1,0 +1,7 @@
+{
+  "id": "metrics_ts_fixtures",
+  "kind": "metrics_crosscheck",
+  "n_samples": 11,
+  "pass": true,
+  "notes": "web/src/lib/metrics.ts (last changed in commit 1faa21f; main at 4c6ad9c) vs validation/fixtures/metrics_cases.json: 11/11 cases pass, max numeric error 4.7e-12, tolerance 1e-6 (fixture tolerance_abs). Run with Node 24 --experimental-strip-types: validation/check_metrics_ts_fixtures.mts."
+}

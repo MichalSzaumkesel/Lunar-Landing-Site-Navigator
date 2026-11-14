@@ -1,0 +1,7 @@
+{
+  "id": "metrics_py_vs_ts_real",
+  "kind": "metrics_crosscheck",
+  "n_samples": 180,
+  "pass": true,
+  "notes": "pipeline/metrics.py vs web/src/lib/metrics.ts (last changed in commit 1faa21f; main at 4c6ad9c) on real horizon+ephem files: apollo_11, southpole_landed, artemis_region_1 x observer 2/10 m x two windows (full 2026-12..2028-12; 2027-03-01..03-15 with t_ref 2027-03-07T13:30Z between samples) = 12 runs, 180 values, max abs difference 5.7e-14, 0 mismatches (tolerance 1e-6). validation/check_metrics_py_vs_ts.py."
+}
