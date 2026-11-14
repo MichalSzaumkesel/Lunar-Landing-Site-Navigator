@@ -26,12 +26,10 @@ export function ExportButton({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const scenarios = useAppStore((s) => s.scenarios)
-  const observerHeightM = useAppStore((s) => s.observerHeightM)
-  const cursorH = useAppStore((s) => s.cursorH)
-
   const handleExport = async (): Promise<void> => {
     if (loading) return
+    // Read on click: a subscription would re-render this button on every Play tick.
+    const { scenarios, observerHeightM, cursorH } = useAppStore.getState()
     if (!scenarios || scenarios.length === 0) {
       setError('No scenarios to export.')
       return
