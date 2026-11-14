@@ -201,6 +201,39 @@ describe('useEventSounds', () => {
     expect(lastCall?.earth).toBeDefined()
   })
 
+  it('syncs playing state with engine and triggers scrub swell when cursor moves while paused', async () => {
+    const engine = createSoundEngine()
+    engine.setMode('ambient')
+    const setPlayingSpy = vi.spyOn(engine, 'setPlaying')
+    const scrubSwellSpy = vi.spyOn(engine, 'triggerScrubSwell')
+
+    await act(async () => {
+      root.render(createElement(SoundTestComponent, { engine }))
+    })
+
+    // Initial mount syncs playing (false)
+    expect(setPlayingSpy).toHaveBeenCalledWith(false)
+    expect(scrubSwellSpy).not.toHaveBeenCalled()
+
+    // Scrub cursor while paused -> triggers scrub swell
+    act(() => {
+      useAppStore.setState({ cursorH: 0.5 })
+    })
+    expect(scrubSwellSpy).toHaveBeenCalledTimes(1)
+
+    // Start playing -> calls setPlaying(true)
+    act(() => {
+      useAppStore.setState({ playing: true })
+    })
+    expect(setPlayingSpy).toHaveBeenCalledWith(true)
+
+    // Stop playing -> calls setPlaying(false)
+    act(() => {
+      useAppStore.setState({ playing: false })
+    })
+    expect(setPlayingSpy).toHaveBeenCalledWith(false)
+  })
+
   it('skips cues when playback speed exceeds 72 h/s', async () => {
     const engine = createSoundEngine()
     engine.setMode('cues')
