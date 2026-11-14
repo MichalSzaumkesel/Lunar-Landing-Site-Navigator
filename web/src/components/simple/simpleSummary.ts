@@ -133,13 +133,13 @@ export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
       {
         id: 'sun',
         on: input.sunVisible,
-        headline: input.sunVisible ? 'Sun visible' : 'Sun below the horizon',
+        headline: input.sunVisible ? 'Sun visible' : 'Sun below horizon',
         detail: nextChange(input.sunVisible, input.nextSunEvent, input.cursorMs, input.sunVisible ? 'No sunset' : 'No sunrise'),
       },
       {
         id: 'earth',
         on: input.earthVisible,
-        headline: input.earthVisible ? 'Earth in view' : 'Earth below the horizon',
+        headline: input.earthVisible ? 'Earth in view' : 'Earth below horizon',
         detail: nextChange(input.earthVisible, input.nextEarthEvent, input.cursorMs, input.earthVisible ? 'No Earthset' : 'No Earthrise'),
       },
     ],

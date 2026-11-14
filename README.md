@@ -23,7 +23,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 ### Compare
 - Up to four scenario cards (site and date per card) in the scenario board, with a compare table.
 - Presets: *Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)*, *South pole*, and *Same site, 14 days later*.
-- Metrics per card: Sun visible, longest dark period, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
+- Metrics per card: Sun visible, longest dark stretch, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
 - Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 
 ### Time
@@ -48,7 +48,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Earth disc textured with NASA Blue Marble imagery, placed from the ephemeris and oriented from `earth_orientation.json` when it is present (otherwise the orientation is labelled illustrative).
 
 ### Planning
-- Mission rules: stay length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 168 h, 240 h and 336 h stays.
+- Mission rules: window length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 168 h, 240 h and 336 h stays.
 - Mission bar on the timeline: green when the candidate landing meets all rules, red with the failing rule named when it does not.
 - Window map: a site-by-date matrix of landing windows, computed in a Web Worker.
 - Moon map: orthographic view of the Moon with site markers, the subsolar point and the day/night terminator.

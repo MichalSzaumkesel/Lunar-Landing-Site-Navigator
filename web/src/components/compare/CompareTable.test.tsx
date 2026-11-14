@@ -152,7 +152,7 @@ describe('CompareTable', () => {
     expect(container.textContent).toContain('Shackleton')
     expect(container.textContent).toContain('Connecting Ridge')
     expect(container.textContent).toContain('Sun visible (% of window)')
-    expect(container.textContent).toContain('Longest continuous Sun gap')
+    expect(container.textContent).toContain('Longest dark stretch')
     expect(container.textContent).toContain('Highest terrain horizon elevation')
     expect(container.textContent).toContain('Minimum Sun clearance')
   })

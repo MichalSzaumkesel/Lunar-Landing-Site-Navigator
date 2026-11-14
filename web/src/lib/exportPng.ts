@@ -56,7 +56,7 @@ export function extractKeyMetricRows(metrics: ScenarioMetrics | null): MetricTab
       { label: 'Mean visible Sun disc', value: '—' },
       { label: 'Longest dark stretch', value: '—' },
       { label: 'Earth in view', value: '—' },
-      { label: 'Longest no-Earth stretch', value: '—' },
+      { label: 'Longest without Earth', value: '—' },
       { label: 'Sun and Earth together', value: '—' },
     ]
   }
@@ -70,7 +70,7 @@ export function extractKeyMetricRows(metrics: ScenarioMetrics | null): MetricTab
     },
     { label: 'Earth in view', value: `${fmtNum(metrics.pct_earth, 1)} %` },
     {
-      label: 'Longest no-Earth stretch',
+      label: 'Longest without Earth',
       value: `${fmtNum(metrics.longest_no_earth_h, Number.isInteger(metrics.longest_no_earth_h) ? 0 : 1)} h`,
     },
     { label: 'Sun and Earth together', value: `${fmtNum(metrics.pct_both, 1)} %` },

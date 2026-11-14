@@ -46,11 +46,11 @@ export function ScenarioControls({
   return (
     <div className="controls" data-tour="scenario-controls">
       <div className="controls__field">
-        <label htmlFor={`${id}-start`}>Window start (UTC)</label>
+        <label htmlFor={`${id}-start`}>Start date (UTC)</label>
         <input
           id={`${id}-start`}
           type="date"
-          aria-label={siteName ? `Window start (UTC), ${siteName}` : 'Window start (UTC)'}
+          aria-label={siteName ? `Start date (UTC), ${siteName}` : 'Start date (UTC)'}
           value={scenario.startUtc.slice(0, 10)}
           min={min}
           max={max}

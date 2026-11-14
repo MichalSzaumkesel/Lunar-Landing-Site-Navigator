@@ -125,7 +125,7 @@ export function getPrintMetricRows(
     },
     {
       key: 'longest_no_earth_h',
-      label: 'Longest no-Earth stretch',
+      label: 'Longest without Earth',
       value: metrics
         ? formatUnitValue(
             metrics.longest_no_earth_h,

@@ -119,14 +119,14 @@ export const advancedSteps: TourStep[] = [
     id: 'chips',
     target: '[data-tour="chips"]',
     title: 'Event chips',
-    text: 'Jump straight to a sunset, sunrise, Earth set or Earth rise.',
+    text: 'Jump straight to a sunset, sunrise, Earthset or Earthrise.',
     placement: 'top',
   },
   {
     id: 'countdowns-metrics',
     target: '[data-tour="countdowns-metrics"]',
     title: 'Countdowns and metrics',
-    text: 'Time to the next sunset and Earth set, and the share of time with the Sun visible and Earth in view over the window.',
+    text: 'Time to the next sunset and Earthset, and the share of time with the Sun visible and Earth in view over the window.',
     placement: 'top',
   },
   {

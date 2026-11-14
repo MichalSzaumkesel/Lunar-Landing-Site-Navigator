@@ -162,8 +162,8 @@ export function bodyCountdown(
 export const EVENT_LABEL: Record<SkyEventKind, string> = {
   sunset: 'Sunset',
   sunrise: 'Sunrise',
-  earthset: 'Earth set',
-  earthrise: 'Earth rise',
+  earthset: 'Earthset',
+  earthrise: 'Earthrise',
 }
 
 export const EVENT_DEFINITION: Record<SkyEventKind, string> = {
@@ -172,9 +172,9 @@ export const EVENT_DEFINITION: Record<SkyEventKind, string> = {
   sunrise:
     'Sunrise: the Sun centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
   earthset:
-    'Earth set: the Earth centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Earthset: the Earth centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
   earthrise:
-    'Earth rise: the Earth centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Earthrise: the Earth centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
 }
 
 // --- Metric rows ---
@@ -236,7 +236,7 @@ export function windowMetricRows(m: ScenarioMetrics): MetricRow[] {
     },
     {
       key: 'longest_no_earth_h',
-      label: 'Longest no-Earth stretch',
+      label: 'Longest without Earth',
       value: hours(m.longest_no_earth_h),
       tip: 'longest_no_earth_h: longest run of consecutive samples with the Earth below the terrain horizon, times the sample step.',
     },

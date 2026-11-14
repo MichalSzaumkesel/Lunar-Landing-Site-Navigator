@@ -4,8 +4,8 @@ const KEY = 'simple.diagramView'
 const VIEWS: DiagramView[] = ['sky', 'horizon', '3d']
 
 export const VIEW_OPTIONS: { key: DiagramView; label: string }[] = [
-  { key: 'sky', label: 'Sky' },
-  { key: 'horizon', label: 'Horizon' },
+  { key: 'sky', label: 'Polar' },
+  { key: 'horizon', label: 'Panorama' },
   { key: '3d', label: '3D' },
 ]
 
