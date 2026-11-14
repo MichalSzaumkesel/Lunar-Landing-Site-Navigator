@@ -32,6 +32,7 @@
 
 /* Map viewport & layers */
 .moon-map-viewport {
+  animation: map-reveal var(--motion-duration-normal) var(--motion-ease-out);
   position: relative;
   width: 100%;
   aspect-ratio: 720 / 360;
@@ -40,6 +41,15 @@
   border-radius: var(--radius);
   overflow: hidden;
   user-select: none;
+}
+
+@keyframes map-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .moon-map-viewport--picking {

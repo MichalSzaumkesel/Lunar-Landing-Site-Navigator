@@ -95,10 +95,20 @@
 }
 
 .sky__horizon {
+  animation: horizon-fade var(--motion-duration-fast) ease;
   fill: none;
   stroke: var(--terrain-edge);
   stroke-width: 1.5;
   stroke-linejoin: round;
+}
+
+@keyframes horizon-fade {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sky__rim {

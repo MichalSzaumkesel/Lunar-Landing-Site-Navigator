@@ -58,7 +58,7 @@ const PanoTop = memo(function PanoTop({ model }: { model: PanoramaModel }) {
   return (
     <g>
       <path className="sky__terrain" d={model.terrainPath} />
-      <path className="sky__horizon" d={model.horizonPath} />
+      <path key={model.horizonPath} className="sky__horizon" d={model.horizonPath} />
       <rect className="sky__frame-line" width={PANO_W} height={PANO_H} />
       {model.ticks.map((t) => (
         <text key={t.el} className="sky__pano-label sky__pano-label--y" x={-6} y={t.y}>
