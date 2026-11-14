@@ -189,23 +189,22 @@ describe('SimpleView component', () => {
     expect(container.querySelector('.badge--synthetic')?.textContent).toBe('Synthetic data')
     expect(container.querySelector('.badge--approximate')?.textContent).toBe('Approximate')
 
-    // Two matching blocks and four window rows replace the old headline and chips
+    // Two matching blocks, then a Sun tree and an Earth tree with plain definitions
     const blocks = container.querySelectorAll('.simple-block')
     expect(blocks).toHaveLength(2)
     expect(blocks[0].querySelector('.simple-block__headline')?.textContent).toMatch(/^Sun (visible|below horizon)$/)
     expect(blocks[1].querySelector('.simple-block__headline')?.textContent).toMatch(/^Earth (in view|below horizon)$/)
     expect(container.querySelectorAll('.simple-chip')).toHaveLength(0)
-    const window = container.querySelector('[aria-label="Over the whole window"]')
-    expect(window?.querySelectorAll('.simple-row')).toHaveLength(4)
-    expect(window?.querySelectorAll('.simple-row--child')).toHaveLength(2)
-
-    // Extra details: grouped under Sun, Earth and Site, each row with a plain definition
-    expect([...container.querySelectorAll('.simple-detail__title')].map((e) => e.textContent)).toEqual(['Sun', 'Earth', 'Site'])
-    const detailRows = container.querySelectorAll('.simple-detail .simple-row')
-    expect(detailRows.length).toBeGreaterThanOrEqual(5)
-    detailRows.forEach((r) => expect(r.getAttribute('title')).toBeTruthy())
+    const groups = container.querySelectorAll('.simple-group')
+    expect(groups).toHaveLength(2)
+    expect(groups[0].querySelectorAll('.simple-row:not(.simple-row--child)')).toHaveLength(1)
+    expect(groups[1].querySelectorAll('.simple-row:not(.simple-row--child)')).toHaveLength(1)
+    expect(groups[1].querySelectorAll('.simple-row--child')).toHaveLength(2)
+    container.querySelectorAll('.simple-group .simple-row').forEach((r) => expect(r.getAttribute('title')).toBeTruthy())
+    expect(groups[0].textContent).toContain('Highest hill on the horizon')
     expect(container.textContent).toContain('Highest Sun above the horizon')
-    expect(container.textContent).toContain('Highest hill on the horizon')
+    expect(container.textContent).not.toContain('partly hidden')
+    expect(container.textContent).not.toContain('Earth lit')
     expect(container.textContent).not.toMatch(/CLPS|disc/)
   })
 

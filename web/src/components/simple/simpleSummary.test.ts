@@ -64,7 +64,7 @@ describe('simpleStatus', () => {
       { id: 'sun', on: true, headline: 'Sun visible', detail: 'It sets in 31 hours.' },
       { id: 'earth', on: true, headline: 'Earth in view', detail: 'It sets in 31 hours.' },
     ])
-    expect(s.rows.map((r) => r.value)).toEqual(['49% of 30 days', '15 days', '36% of 30 days', '6 days'])
+    expect(s.groups.flatMap((g) => g.rows).filter((r) => ['sun', 'dark', 'earth', 'noEarth'].includes(r.id)).map((r) => r.value)).toEqual(['49% of 30 days', '15 days', '36% of 30 days', '6 days'])
     expect(s.note).toBeNull()
   })
 
@@ -99,13 +99,13 @@ describe('simpleStatus', () => {
       durationH: 6,
       metrics: { pct_sunlit: 100, longest_dark_h: 1, pct_earth: 0, longest_no_earth_h: 0 },
     })
-    expect(s.rows.map((r) => r.value)).toEqual([
+    expect(s.groups.flatMap((g) => g.rows).map((r) => r.value).filter((v) => !v.startsWith('Not') && !v.endsWith('°'))).toEqual([
       '100% of the next few hours',
       '1 hour',
       '0% of the next few hours',
       'None in this window',
     ])
-    expect(simpleStatus({ ...baseInput, durationH: 24 }).rows[0].value).toBe('49% of 1 day')
+    expect(simpleStatus({ ...baseInput, durationH: 24 }).groups[0].rows[0].value).toBe('49% of 1 day')
   })
 
   it('adds the demo data note for synthetic data', () => {
@@ -115,7 +115,7 @@ describe('simpleStatus', () => {
   it('never claims power, energy, signal, link or radio contact', () => {
     const texts = [true, false].flatMap((v) => {
       const s = simpleStatus({ ...baseInput, sunVisible: v, earthVisible: v })
-      return [...s.blocks.flatMap((b) => [b.headline, b.detail]), ...s.rows.map((r) => `${r.label} ${r.value}`)]
+      return [...s.blocks.flatMap((b) => [b.headline, b.detail]), ...s.groups.flatMap((g) => g.rows).map((r) => `${r.label} ${r.value}`)]
     })
     expect(texts.join(' ')).not.toMatch(/power|energy|signal|link|radio|CLPS|UTC/i)
   })

@@ -381,6 +381,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1, 4px);
+  padding-top: var(--space-3, 12px);
+  border-top: 1px solid var(--line);
 }
 
 .simple-date__label {
@@ -470,40 +472,63 @@
   color: var(--muted);
 }
 
-.simple-rows {
+.simple-groups {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2, 8px);
-  margin: 0;
+  gap: var(--space-3, 12px);
+}
+
+/* One tree per body: accent bar in the body colour, parent row, then children. */
+.simple-group {
+  --body-color: var(--sun);
   padding-top: var(--space-3, 12px);
   border-top: 1px solid var(--line);
+}
+
+.simple-group--earth {
+  --body-color: var(--earth);
+}
+
+.simple-tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  margin: 0;
+  padding-left: var(--space-3, 12px);
+  border-left: 3px solid var(--body-color);
+  border-radius: 1px;
 }
 
 .simple-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-3, 12px);
+  min-height: 2.25rem;
   font-size: 0.9375rem;
 }
 
 .simple-row dt {
   color: var(--muted);
+  min-width: 0;
 }
 
 .simple-row dd {
   margin: 0;
+  flex: none;
+  text-align: right;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text);
 }
 
-.simple-row--child {
-  padding-left: 20px;
-  font-size: 0.9em;
+.simple-row:not(.simple-row--child) dt {
+  color: var(--text);
+  font-weight: 600;
 }
 
-.simple-row--child dd {
-  font-weight: 500;
-  color: var(--muted);
+.simple-row--child {
+  padding-left: var(--space-3, 12px);
 }
 
 /* Corner arrow drawn with borders, no glyph that could render as tofu */
@@ -720,26 +745,4 @@
   flex: none;
   align-self: stretch;
   margin: var(--space-3, 12px) calc(-1 * var(--space-3, 12px)) calc(-1 * var(--space-3, 12px));
-}
-
-/* Extra window values under the summary rows */
-.simple-detail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1, 4px);
-}
-
-.simple-detail__title {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.simple-rows--detail {
-  padding-top: 0;
-  border-top: 0;
-  gap: var(--space-1, 4px);
 }

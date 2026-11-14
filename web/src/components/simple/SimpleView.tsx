@@ -191,37 +191,27 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                   </section>
                 ))}
               </div>
-              <dl className="simple-rows" aria-label="Over the whole window">
-                {readout.rows.map((row) => (
-                  <div key={row.id} className={row.child ? 'simple-row simple-row--child' : 'simple-row'}>
-                    <dt>
-                      {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
-                      {row.label}
-                    </dt>
-                    <dd>{row.value}</dd>
-                  </div>
+              <div className="simple-groups">
+                {readout.groups.map((group) => (
+                  <section
+                    key={group.id}
+                    className={`simple-group simple-group--${group.id}`}
+                    aria-label={`${group.title} over the whole window`}
+                  >
+                    <dl className="simple-tree">
+                      {group.rows.map((row) => (
+                        <div key={row.id} className={row.child ? 'simple-row simple-row--child' : 'simple-row'} title={row.hint}>
+                          <dt>
+                            {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
+                            {row.label}
+                          </dt>
+                          <dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
                 ))}
-              </dl>
-              {readout.details.map((group) => (
-                <section key={group.title} className="simple-detail" aria-label={`${group.title} details`}>
-                  <h3 className="simple-detail__title">{group.title}</h3>
-                  <dl className="simple-rows simple-rows--detail">
-                    {group.rows.map((row) => (
-                      <div
-                        key={row.id}
-                        className={row.child ? 'simple-row simple-row--child' : 'simple-row'}
-                        title={row.hint}
-                      >
-                        <dt>
-                          {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
-                          {row.label}
-                        </dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              ))}
+              </div>
               {readout.note && <p className="simple-summary__note">{readout.note}</p>}
             </div>
           )}

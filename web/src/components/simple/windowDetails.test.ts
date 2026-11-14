@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detailGroups, formatDegrees, formatMastGain, formatPercent } from './simpleSummary'
+import { windowGroups, formatDegrees, formatMastGain, formatPercent } from './simpleSummary'
 import { computeWindowDetails } from './windowDetails'
 import type { SiteBundle } from '../../lib/types'
 
@@ -21,9 +21,11 @@ describe('detail formatters', () => {
   })
 })
 
-describe('detailGroups', () => {
-  it('lists Sun, Earth and Site rows and hides the mast row without both heights', () => {
-    const groups = detailGroups({
+const metrics = { pct_sunlit: 51, longest_dark_h: 100, pct_earth: 100, longest_no_earth_h: 0 }
+
+describe('windowGroups', () => {
+  it('builds Sun and Earth trees and hides the mast row without both heights', () => {
+    const groups = windowGroups(metrics, 720, {
       maxSunElDeg: 5.4,
       sunPartlyHiddenPct: 20,
       mastGainH: null,
@@ -31,14 +33,15 @@ describe('detailGroups', () => {
       earthLitPct: 55,
       maxHillDeg: 3,
     })
-    expect(groups.map((g) => g.title)).toEqual(['Sun', 'Earth', 'Site'])
-    const ids = groups.flatMap((g) => g.rows.map((r) => r.id))
-    expect(ids).toEqual(['maxSun', 'partSun', 'maxEarth', 'earthLit', 'maxHill'])
-    expect(groups[0].rows[0].value).toBe('5°')
+    expect(groups.map((g) => g.title)).toEqual(['Sun', 'Earth'])
+    expect(groups[0].rows.map((r) => r.id)).toEqual(['sun', 'dark', 'maxSun', 'maxHill'])
+    expect(groups[1].rows.map((r) => r.id)).toEqual(['earth', 'noEarth', 'maxEarth'])
+    expect(groups[0].rows[0].value).toBe('51% of 30 days')
+    expect(groups[0].rows[2].value).toBe('5°')
   })
 
-  it('shows the mast row when available and Not available for missing data', () => {
-    const groups = detailGroups({
+  it('shows the mast row last when available and Not available for missing data', () => {
+    const groups = windowGroups(metrics, 720, {
       maxSunElDeg: null,
       sunPartlyHiddenPct: null,
       mastGainH: 30,
@@ -47,8 +50,8 @@ describe('detailGroups', () => {
       maxHillDeg: null,
     })
     expect(groups[0].rows.at(-1)?.value).toBe('+30 hours')
-    expect(groups[0].rows[0].value).toBe('Not available')
-    expect(groups[2].rows[0].value).toBe('Not available')
+    expect(groups[0].rows[2].value).toBe('Not available')
+    expect(groups[1].rows[2].value).toBe('Not available')
   })
 })
 
