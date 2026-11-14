@@ -32,6 +32,18 @@ export function faceTarget(azDeg: number, elDeg: number, horizonEl = 0): FaceTar
   }
 }
 
+/** Orbit target for the overview camera: look towards the body azimuth, a little lower than before. */
+export const OVERVIEW_FACE_MAX_EL_DEG = 25
+export const OVERVIEW_FACE_MIN_EL_DEG = 10
+export const OVERVIEW_FACE_MS = 600
+
+export function overviewFaceTarget(azDeg: number, currentElDeg: number): { azimuthDeg: number; elevationDeg: number } {
+  return {
+    azimuthDeg: ((azDeg % 360) + 360) % 360,
+    elevationDeg: Math.max(OVERVIEW_FACE_MIN_EL_DEG, Math.min(OVERVIEW_FACE_MAX_EL_DEG, currentElDeg)),
+  }
+}
+
 export function belowHorizonText(body: 'Sun' | 'Earth', belowDeg: number): string {
   const digits = belowDeg < 0.1 ? 2 : 1
   return `${body} is ${belowDeg.toFixed(digits)} deg below the horizon`

@@ -8,6 +8,7 @@ import {
   earthLitFraction,
   faceTarget,
   horizonGlowStrength,
+  overviewFaceTarget,
   sizeLabel,
   sizeValueText,
 } from './viewMath'
@@ -113,5 +114,16 @@ describe('horizonGlowStrength', () => {
     expect(near).toBeLessThanOrEqual(1)
     expect(far).toBeGreaterThan(0)
     expect(horizonGlowStrength(-20, 0.27)).toBe(0)
+  })
+})
+
+describe('overviewFaceTarget', () => {
+  it('normalises the azimuth and lowers a high camera to the cap', () => {
+    expect(overviewFaceTarget(-90, 37)).toEqual({ azimuthDeg: 270, elevationDeg: 25 })
+    expect(overviewFaceTarget(725, 37).azimuthDeg).toBe(5)
+  })
+  it('keeps an already low elevation within the floor', () => {
+    expect(overviewFaceTarget(10, 18).elevationDeg).toBe(18)
+    expect(overviewFaceTarget(10, 2).elevationDeg).toBe(10)
   })
 })

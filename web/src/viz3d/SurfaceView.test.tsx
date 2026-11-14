@@ -36,6 +36,13 @@ vi.mock('./scene', () => {
   return {
     SurfaceScene: class {
       lookAtAzimuth = vi.fn()
+      cameraTo = vi.fn().mockResolvedValue(undefined)
+      faceBody = vi.fn().mockResolvedValue(undefined)
+      overviewElevationDeg = vi.fn().mockReturnValue(37)
+      static last: unknown
+      constructor() {
+        ;(this.constructor as unknown as { last: unknown }).last = this
+      }
       setSize = vi.fn()
       dispose = vi.fn()
       setHorizon = vi.fn()
@@ -190,6 +197,28 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(control?.getAttribute('aria-roledescription')).toBe('position control')
     expect(control?.getAttribute('aria-label')).toContain('Lander position')
     expect(control?.getAttribute('aria-label')).toContain('Arrow keys nudge')
+  })
+
+  it('Face the Sun orbits the camera in Overview instead of being disabled', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const overview = buttons.find((b) => b.textContent === 'Overview') as HTMLButtonElement
+    await act(async () => {
+      overview.click()
+    })
+    const face = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent === 'Face the Sun',
+    ) as HTMLButtonElement
+    expect(face.disabled).toBe(false)
+    await act(async () => {
+      face.click()
+    })
+    const { SurfaceScene } = await import('./scene')
+    const scene = (SurfaceScene as unknown as { last: { cameraTo: ReturnType<typeof vi.fn>; faceBody: ReturnType<typeof vi.fn> } }).last
+    expect(scene.faceBody).not.toHaveBeenCalled()
+    expect(scene.cameraTo).toHaveBeenCalledWith({ azimuthDeg: 0, elevationDeg: 25, durationMs: 600 })
   })
 
   it('renders badges in lander box (Approximate and Synthetic)', async () => {

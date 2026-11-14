@@ -428,6 +428,7 @@ export class SurfaceScene {
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    if (this.mode === 'overview') return this.orbitTo(target, Boolean(prefersReducedMotion))
 
     const targetYaw = (((target.azimuthDeg % 360) + 360) % 360)
     const targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, target.elevationDeg))
@@ -472,6 +473,64 @@ export class SurfaceScene {
 
       this.cameraAnimationRaf = requestAnimationFrame(step)
     })
+  }
+
+  /**
+   * Overview: orbit around the controls target so that the camera looks towards `azimuthDeg`
+   * (the viewer stands on the opposite side). Keeps target and distance.
+   */
+  private orbitTo(
+    target: { azimuthDeg: number; elevationDeg: number; durationMs: number },
+    instant: boolean,
+  ): Promise<void> {
+    const t = this.controls.target
+    const off = this.camera.position.clone().sub(t)
+    const dist = off.length()
+    const horiz = Math.hypot(off.x, off.z)
+    // Look azimuth: direction from camera to target, clockwise from north (north is -z).
+    const startAz = (Math.atan2(-off.x, off.z) * 180) / Math.PI
+    const startEl = (Math.atan2(off.y, horiz) * 180) / Math.PI
+    const toAz = ((target.azimuthDeg % 360) + 360) % 360
+    const toEl = Math.max(1, Math.min(85, target.elevationDeg))
+    const dAz = ((((toAz - startAz) % 360) + 540) % 360) - 180
+    const place = (k: number) => {
+      const az = ((startAz + dAz * k) * Math.PI) / 180
+      const el = ((startEl + (toEl - startEl) * k) * Math.PI) / 180
+      this.camera.position.set(
+        t.x - Math.sin(az) * Math.cos(el) * dist,
+        t.y + Math.sin(el) * dist,
+        t.z + Math.cos(az) * Math.cos(el) * dist,
+      )
+      this.camera.lookAt(t)
+      this.controls.update()
+      this.invalidate()
+    }
+    if (instant || target.durationMs <= 0 || dist === 0) {
+      place(1)
+      return Promise.resolve()
+    }
+    return new Promise<void>((resolve) => {
+      this.cameraAnimationCancel = () => resolve()
+      const startTime = performance.now()
+      const step = (now: number) => {
+        const raw = Math.min(1, (now - startTime) / target.durationMs)
+        place(cameraEase(raw))
+        if (raw < 1 && !this.disposed) {
+          this.cameraAnimationRaf = requestAnimationFrame(step)
+        } else {
+          this.cameraAnimationRaf = 0
+          this.cameraAnimationCancel = null
+          resolve()
+        }
+      }
+      this.cameraAnimationRaf = requestAnimationFrame(step)
+    })
+  }
+
+  /** Current overview camera elevation above the horizon, degrees. */
+  overviewElevationDeg(): number {
+    const off = this.camera.position.clone().sub(this.controls.target)
+    return (Math.atan2(off.y, Math.hypot(off.x, off.z)) * 180) / Math.PI
   }
 
   cancelCameraAnimation(): void {
