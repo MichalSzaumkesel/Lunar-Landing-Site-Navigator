@@ -1,6 +1,6 @@
 # Status A (Data & Science)
 
-Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A10 done; tonight A11 (basemaps, slope) done, A12 (map UI, C-005) in progress.
+Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A12 done. A12 map UI is PR #60 (needs scope B review; merge a/basemap first).
 
 ## Tasks
 
@@ -18,7 +18,7 @@ Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A10 done; tonight 
 | A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
 | A10 | (stretch) `illum/<id>.json` | done (southpole_landed, artemis_region_1) | 21×21, 200 m, ~36 s per site. vs PGDA: r 0.98 at both, median |Δ| 0.9 pp. meta.approximate = true. |
 | A11 | `basemap/` + `slope_deg` | done (a/basemap) | southpole.png 2048², ±304 km, LDEM_80S_40M hillshade, 1.77 MB; global.jpg 2048×1024 SVS CGI Moon Kit colour × hillshade, 0.66 MB (layout verified vs LOLA, r ≥ 0.98). slope_deg for 21 sites (Horn 3×3, horizon DEM). check_contract 0 errors (now checks basemaps), 43 tests pass. Contract PR #59 (1.3.0, not merged). |
-| A12 | Map UI (web/src/components/map/, C-005, until Sun 08:00) | in progress (a/ui-map) | teammate map-ui; PR to main for scope B review, not merged by A. |
+| A12 | Map UI (web/src/components/map/, C-005, until Sun 08:00) | done, PR #60 (open, not merged) | Only components/map/ touched. Global: SVS basemap, smooth night/Earth overlays, terminator, credits. South-pole view (default for lat ≤ −80°): LDEM hillshade, pan/zoom, scale bar, north arrow, lat circles, pick-a-point via inverse projection. Illum heatmap toggle (C-004 orientation, approximate badge). build ok, 1063 web tests pass, screenshots checked by lead. Limits: no live night overlay on the pole view; heatmaps only 4 km wide. Requests to B: none. Merge order: a/basemap → PR #60. |
 
 How to run:
 
