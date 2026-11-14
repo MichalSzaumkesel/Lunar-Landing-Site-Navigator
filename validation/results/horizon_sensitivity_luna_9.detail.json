@@ -1,0 +1,51 @@
+{
+ "cases": {
+  "baseline": {
+   "rms_deg": 0.0,
+   "max_abs_deg": 0.0,
+   "d_pct_sunlit": 0.0,
+   "d_pct_earth": 0.0
+  },
+  "dem_x2": {
+   "rms_deg": 0.26136403358115345,
+   "max_abs_deg": 0.9845058776785738,
+   "d_pct_sunlit": 0.1531058617672798,
+   "d_pct_earth": 0.0
+  },
+  "dem_x4": {
+   "rms_deg": 0.48056136299745467,
+   "max_abs_deg": 1.6560506861803808,
+   "d_pct_sunlit": 0.24606299212598515,
+   "d_pct_earth": 0.0
+  },
+  "shift_N": {
+   "rms_deg": 0.4036841159636583,
+   "max_abs_deg": 1.3614806599305087,
+   "d_pct_sunlit": 0.1367016622922108,
+   "d_pct_earth": 0.0
+  },
+  "shift_S": {
+   "rms_deg": 0.8310267807206322,
+   "max_abs_deg": 2.4748014651205477,
+   "d_pct_sunlit": -0.07655293088363635,
+   "d_pct_earth": 0.0
+  },
+  "shift_E": {
+   "rms_deg": 0.5247764980288441,
+   "max_abs_deg": 1.0305881876048644,
+   "d_pct_sunlit": -0.24059492563429785,
+   "d_pct_earth": 0.0
+  },
+  "shift_W": {
+   "rms_deg": 0.49558184363967267,
+   "max_abs_deg": 1.3640389923334633,
+   "d_pct_sunlit": 0.3007436570428723,
+   "d_pct_earth": 0.0
+  }
+ },
+ "base_pct": [
+  48.81342957130359,
+  100.0
+ ],
+ "sanity_vs_file_deg": 0.0004997029328359659
+}

@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_change_5",
+  "kind": "horizon_sensitivity",
+  "site_id": "change_5",
+  "max_abs_error_deg": 0.374,
+  "rms_worst_deg": 0.1146,
+  "recommended_uncertainty_deg": 0.15,
+  "n_samples": 720,
+  "pass": true,
+  "threshold_deg": 0.25,
+  "notes": "2 m mask, DEM LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0) (118.451 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 49.7%). dem_x2: rms 0.033 max 0.160 deg, d_pct_sunlit -0.01 pp; dem_x4: rms 0.025 max 0.175 deg, d_pct_sunlit +0.02 pp; shift_N: rms 0.019 max 0.079 deg, d_pct_sunlit -0.01 pp; shift_S: rms 0.115 max 0.374 deg, d_pct_sunlit -0.03 pp; shift_E: rms 0.058 max 0.222 deg, d_pct_sunlit -0.02 pp; shift_W: rms 0.027 max 0.151 deg, d_pct_sunlit +0.01 pp. File uncertainty_deg 0.25; worst RMS (x2 and +-1 px shifts) 0.115 deg -> recommended uncertainty_deg 0.15. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}

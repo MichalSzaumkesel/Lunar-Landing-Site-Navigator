@@ -58,8 +58,12 @@ def make_dems(hz, npy: Path, lat: float, lon: float, range_km: float, factors=(1
         rc, cc = n / 2 - 0.5 - y[0] / res, x[0] / res + n / 2 - 0.5     # full-grid pixel of the site
         half = int((range_km + 3) * 1000 / res)
         S = (2 * half // 4) * 4
+        S = min(S, (min(full.shape) // 4) * 4 - 4)            # never larger than the cached window (4-px alignment slack)
         r0 = int(math.floor((rc - S / 2) / 4)) * 4
         c0 = int(math.floor((cc - S / 2) / 4)) * 4
+        # clamp into the cached window, keeping 4-px alignment in full-grid coordinates
+        r0 = min(max(r0, -(-side["row0"] // 4) * 4), ((side["row0"] + full.shape[0] - S) // 4) * 4)
+        c0 = min(max(c0, -(-side["col0"] // 4) * 4), ((side["col0"] + full.shape[1] - S) // 4) * 4)
         r0l, c0l = r0 - side["row0"], c0 - side["col0"]
         if r0l < 0 or c0l < 0 or r0l + S > full.shape[0] or c0l + S > full.shape[1]:
             raise SystemExit("cached DEM window too small for the crop")
