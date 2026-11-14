@@ -89,4 +89,31 @@ describe('prefetchDemoSites', () => {
       }
     }
   })
+
+  it('prefetches binary terrain heightmaps when terrain is present in the bundle (L5 #6)', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(new Response())
+    const origFetch = globalThis.fetch
+    globalThis.fetch = fetchSpy
+
+    const mockBundleWithTerrain = {
+      site: { id: 'test_site' },
+      terrain: {
+        bin: 'terrain/test_site.bin',
+        meta: { synthetic: true },
+      },
+    } as unknown as SiteBundle
+
+    const mockSource: SiteDataSource = {
+      loadSites: vi.fn(),
+      loadSite: vi.fn(() => Promise.resolve(mockBundleWithTerrain)),
+      loadCustomSite: vi.fn(),
+    }
+
+    try {
+      await prefetchDemoSites(['test_site'], mockSource)
+      expect(fetchSpy).toHaveBeenCalledWith('/data/mock/terrain/test_site.bin')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
 })

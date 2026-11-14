@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { MissionRules, SiteBundle } from './types';
-import { findWindows } from './finder';
+import { evaluateMissionRulesAt, findWindows } from './finder';
+import { computeWindowMap, windowsFromRow } from './windowMap';
+import { evaluateMissionRulesAt as missionBarEvaluate } from '../components/timeline/missionBar';
 
 function makeBundle(opts: {
   sunEl: number[];
@@ -461,5 +463,104 @@ describe('findWindows', () => {
     expect(Array.isArray(windows)).toBe(true);
     expect(windows.length).toBeGreaterThan(0);
     expect(durationMs).toBeLessThan(500);
+  });
+
+  it('finder, window map, and mission bar agree for candidate starts, including where raw elevation passes but clearance fails (L2 #1)', () => {
+    // Horizon mask is +5.0 deg everywhere.
+    // k=0: Sun raw el = +2.0 deg (passes raw > 1.0 deg, but clearance = 2 - 5 = -3.0 deg < 1.0 deg -> FAILS)
+    // k=1: Sun raw el = +8.0 deg (clearance = 8 - 5 = +3.0 deg >= 1.0 deg -> PASSES)
+    // k=2..10: Sun raw el = +8.0 deg (clearance = +3.0 deg)
+    const count = 10;
+    const sunEl = [2, 8, 8, 8, 8, 8, 8, 8, 8, 8];
+    const earthEl = new Array(count).fill(15);
+    const startUtc = '2027-01-01T00:00:00Z';
+    const t0 = Date.parse(startUtc);
+
+    const bundle = makeBundle({
+      sunEl,
+      earthEl,
+      masks: {
+        '2': new Array(360).fill(5),
+        '10': new Array(360).fill(5),
+      },
+      startUtc,
+    });
+
+    const fullBundle: SiteBundle = {
+      site: {
+        id: 'test_site',
+        name: 'Test Site',
+        category: 'custom',
+        mission: null,
+        agency: null,
+        country: null,
+        lat_deg: -89.9,
+        lon_deg: 0,
+        elevation_m: null,
+        landing_date_utc: null,
+        status: 'planned',
+        region_radius_km: null,
+        source: { title: 'Test', url: 'https://example.com' },
+        notes: '',
+      },
+      horizon: bundle.horizon,
+      ephem: bundle.ephem,
+      terrain: null,
+      provenance: 'mock',
+      synthetic: true,
+      approximate: false,
+    };
+
+    const rules: MissionRules = {
+      observerHeightM: 2,
+      missionDurationH: 3,
+      minPctSunlit: 50,
+      maxLongestDarkH: 12,
+      earthAtLandingRequired: true,
+      minPctEarth: 50,
+      minSunElAtLandingDeg: 1.0,
+    };
+
+    // 1. Evaluate start k=0 (t0):
+    // Raw elevation is +2.0 deg >= 1.0 deg, but clearance is -3.0 deg < 1.0 deg.
+    const finderRes0 = evaluateMissionRulesAt(bundle, rules, t0);
+    const missionBarRes0 = missionBarEvaluate(bundle, rules, t0);
+    expect(finderRes0.valid).toBe(false);
+    expect(finderRes0.failingRule).toBe('Sun elevation at landing');
+    expect(missionBarRes0.valid).toBe(false);
+    expect(missionBarRes0.failingRule).toBe('Sun elevation at landing');
+
+    // 2. Evaluate start k=1 (t0 + 1h):
+    // Raw elevation is +8.0 deg, clearance is +3.0 deg >= 1.0 deg. All 3 hours are sunlit.
+    const t1 = t0 + 3_600_000;
+    const finderRes1 = evaluateMissionRulesAt(bundle, rules, t1);
+    const missionBarRes1 = missionBarEvaluate(bundle, rules, t1);
+    expect(finderRes1.valid).toBe(true);
+    expect(finderRes1.failingRule).toBeNull();
+    expect(missionBarRes1.valid).toBe(true);
+    expect(missionBarRes1.failingRule).toBeNull();
+
+    // 3. Evaluate computeWindowMap with 1-hour column step:
+    const rows = computeWindowMap(
+      [{ siteId: 'test_site', bundle: fullBundle }],
+      rules,
+      { dayStepH: 1 },
+    );
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    // Cell 0 (k=0) must be 0 (invalid due to clearance failing)
+    expect(row.valid[0]).toBe(0);
+    // Cell 1 (k=1) must be 1 (valid)
+    expect(row.valid[1]).toBe(1);
+
+    // 4. Evaluate findWindows:
+    const windows = findWindows(bundle, rules);
+    // Start at k=0 must NOT be in any window; window must start at k=1 (2027-01-01T01:00:00Z)
+    expect(windows.length).toBeGreaterThan(0);
+    expect(windows[0].start_utc).toBe('2027-01-01T01:00:00Z');
+
+    // 5. windowsFromRow must produce the exact same windows as findWindows
+    const mapWindows = windowsFromRow(row);
+    expect(mapWindows).toEqual(windows);
   });
 });

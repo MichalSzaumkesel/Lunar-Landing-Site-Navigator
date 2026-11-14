@@ -133,4 +133,10 @@ describe('useSiteBundle', () => {
     expect(last()).toMatchObject({ status: 'ready' })
     expect(loadSite).toHaveBeenCalledTimes(1)
   })
+
+  it('returns loading and never invokes loadSite when siteId is empty (L5 #9)', async () => {
+    await render('')
+    expect(last()).toEqual({ status: 'loading', bundle: null, error: null })
+    expect(loadSite).not.toHaveBeenCalled()
+  })
 })

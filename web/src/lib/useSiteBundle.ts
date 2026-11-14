@@ -27,7 +27,7 @@ export function useSiteBundle(siteId: string): SiteBundleState {
   const [settled, setSettled] = useState<Settled | null>(null)
 
   useEffect(() => {
-    if (resolved.has(siteId)) return
+    if (!siteId || resolved.has(siteId)) return
     let cancelled = false
     dataSource.loadSite(siteId).then(
       (bundle) => {
@@ -45,6 +45,7 @@ export function useSiteBundle(siteId: string): SiteBundleState {
     }
   }, [siteId])
 
+  if (!siteId) return LOADING
   const cached = resolved.get(siteId)
   if (cached) return { status: 'ready', bundle: cached, error: null }
   if (settled && settled.siteId === siteId) {

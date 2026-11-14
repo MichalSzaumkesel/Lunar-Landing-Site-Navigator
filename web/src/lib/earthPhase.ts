@@ -1,4 +1,4 @@
-import type { SkyPosition } from './ephem.ts';
+import type { SkyPosition } from './ephem';
 
 export type EarthPhaseName = 'new' | 'crescent' | 'half' | 'gibbous' | 'full';
 
@@ -21,20 +21,34 @@ function dotProduct(
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
+function crossProduct(
+  a: readonly [number, number, number],
+  b: readonly [number, number, number],
+): [number, number, number] {
+  return [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+}
+
 /**
  * Angular separation between two sky positions in degrees.
- * Clamps the dot product of local frame unit vectors into [-1, 1].
+ * Uses atan2(cross, dot) for numerical precision across small separations (L2 #10).
  */
 export function angularSeparationDeg(a: SkyPosition, b: SkyPosition): number {
   const u = toUnitVector(a);
   const v = toUnitVector(b);
   const dot = Math.max(-1, Math.min(1, dotProduct(u, v)));
-  return (Math.acos(dot) * 180) / Math.PI;
+  const cross = crossProduct(u, v);
+  const crossNorm = Math.hypot(cross[0], cross[1], cross[2]);
+  return (Math.atan2(crossNorm, dot) * 180) / Math.PI;
 }
 
 /**
  * Lit fraction of Earth as seen from the Moon (0..1).
  * Phase angle is 180 deg minus Sun-Earth separation e, lit fraction = (1 - cos e) / 2.
+ * Note: Uses topocentric angular separation (derived approximation; max error ~0.13% at quarter phase).
  */
 export function earthIlluminatedFraction(
   sun: SkyPosition,

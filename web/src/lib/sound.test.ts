@@ -168,18 +168,18 @@ describe('elevationToFilterCutoff (Sun voice brightness)', () => {
 })
 
 describe('earthLitFractionToBrightness (Earth voice brightness)', () => {
-  it('returns 250 Hz for completely dark crescent (litFraction 0)', () => {
-    expect(earthLitFractionToBrightness(0)).toBe(250)
-    expect(earthLitFractionToBrightness(-0.1)).toBe(250)
+  it('returns 900 Hz for completely dark crescent (litFraction 0)', () => {
+    expect(earthLitFractionToBrightness(0)).toBe(900)
+    expect(earthLitFractionToBrightness(-0.1)).toBe(900)
   })
 
-  it('returns 900 Hz for full Earth (litFraction 1)', () => {
-    expect(earthLitFractionToBrightness(1)).toBe(900)
-    expect(earthLitFractionToBrightness(1.2)).toBe(900)
+  it('returns 3000 Hz for full Earth (litFraction 1)', () => {
+    expect(earthLitFractionToBrightness(1)).toBe(3000)
+    expect(earthLitFractionToBrightness(1.2)).toBe(3000)
   })
 
   it('returns intermediate cutoff for quarter / half Earth', () => {
-    expect(earthLitFractionToBrightness(0.5)).toBe(575)
+    expect(earthLitFractionToBrightness(0.5)).toBe(1950)
   })
 })
 
@@ -589,29 +589,83 @@ describe('createSoundEngine with mocked Web Audio graph', () => {
       10,
     )
 
-    // Verify oscillators created (Sun: 3 osc + 1 LFO; Earth: 2 osc)
-    expect(oscInstances.length).toBeGreaterThanOrEqual(6)
+    // Verify oscillators created (Sun: 3 osc + 1 LFO; Earth: 3 osc)
+    expect(oscInstances.length).toBeGreaterThanOrEqual(7)
     for (const osc of oscInstances) {
       expect(osc.start).toHaveBeenCalled()
     }
 
-    // 2. Continuous update: parameters ramp smoothly (setTargetAtTime)
+    // Verify Sun and Earth oscillator frequencies
+    const frequencies = oscInstances
+      .flatMap((o) => o.frequency.setValueAtTime.mock.calls)
+      .map((call) => call[0])
+    expect(frequencies).toContain(880) // Sun osc 1
+    expect(frequencies).toContain(1319) // Sun osc 2
+    expect(frequencies).toContain(1760) // Sun osc 3
+    expect(frequencies).toContain(330) // Earth osc 1
+    expect(frequencies).toContain(494) // Earth osc 2
+    expect(frequencies).toContain(660) // Earth osc 3 (octave partial)
+
+    // Verify noise filter is bandpass centered near 1200 Hz
+    const noiseFilterInstance = filterInstances.find((f) => f.type === 'bandpass')
+    expect(noiseFilterInstance).toBeDefined()
+    expect(noiseFilterInstance!.frequency.setValueAtTime).toHaveBeenCalledWith(1200, 10)
+
+    // Clear calls from graph setup (e.g. masterGain volume ramp)
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+
+    // 2. Ambient update when not playing: gain target is 0 (silence)
     engine.updateAmbient({
       sun: { fraction: 0.8, el: 25, az: 90 },
       earth: { fraction: 1.0, litFraction: 0.5, el: 15, az: 270 },
     })
 
-    // Verify that parameter updates use setTargetAtTime (smoothing) rather than setValueAtTime
-    const targetAtTimeCalls = gainInstances.flatMap(
+    const targetAtTimeCallsNotPlaying = gainInstances.flatMap(
       (g) => g.gain.setTargetAtTime.mock.calls,
     )
-    expect(targetAtTimeCalls.length).toBeGreaterThan(0)
-    // Verify time constant ~0.35 s
-    const sunVoiceCall = targetAtTimeCalls.find(
+    expect(targetAtTimeCallsNotPlaying.length).toBeGreaterThan(0)
+    // All voice gain targets must be 0 when not playing, with fade time constant ~0.6 s
+    for (const call of targetAtTimeCallsNotPlaying) {
+      expect(call[0]).toBe(0)
+      expect(call[2]).toBe(0.6)
+    }
+
+    // Reset recorded calls to isolate play state test
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+
+    // 3. Play starts: voices fade in smoothly with time constant ~0.35 s
+    engine.setPlaying(true)
+    expect(engine.isPlaying()).toBe(true)
+
+    const targetAtTimeCallsPlaying = gainInstances.flatMap(
+      (g) => g.gain.setTargetAtTime.mock.calls,
+    )
+    expect(targetAtTimeCallsPlaying.length).toBeGreaterThan(0)
+
+    // Verify Sun voice ramp to non-zero target with time constant 0.35 s
+    const sunVoiceCall = targetAtTimeCallsPlaying.find(
       (call) => Math.abs(call[0] - 0.35 * fractionToGain(0.8)) < 0.001,
     )
     expect(sunVoiceCall).toBeDefined()
     expect(sunVoiceCall![2]).toBe(0.35)
+
+    // Verify Earth voice ramp to non-zero target with time constant 0.35 s
+    const earthVoiceCall = targetAtTimeCallsPlaying.find(
+      (call) => Math.abs(call[0] - 0.3 * fractionToGain(1.0)) < 0.001,
+    )
+    expect(earthVoiceCall).toBeDefined()
+    expect(earthVoiceCall![2]).toBe(0.35)
+
+    // Verify Earth noise breath ramp to non-zero target with time constant 0.35 s
+    const noiseBreathCall = targetAtTimeCallsPlaying.find(
+      (call) => Math.abs(call[0] - 0.03 * fractionToGain(1.0)) < 0.001,
+    )
+    expect(noiseBreathCall).toBeDefined()
+    expect(noiseBreathCall![2]).toBe(0.35)
 
     // Verify filter frequency ramps smoothly
     const filterRampCalls = filterInstances.flatMap(
@@ -625,7 +679,69 @@ describe('createSoundEngine with mocked Web Audio graph', () => {
     )
     expect(panRampCalls.length).toBeGreaterThan(0)
 
-    // 3. Disable / Dispose -> teardown all nodes
+    // 4. Residual check at fraction 0: bodies below horizon have 0 gain even while playing
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+    engine.updateAmbient({
+      sun: { fraction: 0, el: -10, az: 0 },
+      earth: { fraction: 0, litFraction: 0, el: -10, az: 0 },
+    })
+    const callsAtFractionZero = gainInstances.flatMap(
+      (g) => g.gain.setTargetAtTime.mock.calls,
+    )
+    for (const call of callsAtFractionZero) {
+      expect(call[0]).toBe(0)
+    }
+
+    // 5. Play stops: voices fade to true silence (target 0, time constant ~0.6 s)
+    engine.updateAmbient({
+      sun: { fraction: 1.0, el: 25, az: 90 },
+      earth: { fraction: 1.0, litFraction: 0.5, el: 15, az: 270 },
+    })
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+    engine.setPlaying(false)
+    expect(engine.isPlaying()).toBe(false)
+    const callsOnPause = gainInstances.flatMap(
+      (g) => g.gain.setTargetAtTime.mock.calls,
+    )
+    for (const call of callsOnPause) {
+      expect(call[0]).toBe(0)
+      expect(call[2]).toBe(0.6)
+    }
+
+    // 6. Manual scrub swell: plays a short swell while scrubbing, then fades out after ~1s
+    vi.useFakeTimers()
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+    engine.triggerScrubSwell()
+    const callsOnScrub = gainInstances.flatMap(
+      (g) => g.gain.setTargetAtTime.mock.calls,
+    )
+    const sunScrubCall = callsOnScrub.find(
+      (call) => Math.abs(call[0] - 0.35 * fractionToGain(1.0)) < 0.001,
+    )
+    expect(sunScrubCall).toBeDefined()
+    expect(sunScrubCall![2]).toBe(0.35)
+
+    // Advance 1s after last change -> fades to 0 over 0.6 s
+    for (const g of gainInstances) {
+      g.gain.setTargetAtTime.mockClear()
+    }
+    vi.advanceTimersByTime(1000)
+    const callsAfterScrubTimeout = gainInstances.flatMap(
+      (g) => g.gain.setTargetAtTime.mock.calls,
+    )
+    for (const call of callsAfterScrubTimeout) {
+      expect(call[0]).toBe(0)
+      expect(call[2]).toBe(0.6)
+    }
+    vi.useRealTimers()
+
+    // 7. Disable / Dispose -> teardown all nodes
     engine.dispose()
     expect(engine.getMode()).toBe('off')
 
