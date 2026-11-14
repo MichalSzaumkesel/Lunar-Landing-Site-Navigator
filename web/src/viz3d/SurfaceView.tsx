@@ -7,6 +7,7 @@ import { earthOrientationAt, loadEarthOrientation } from '../lib/earthOrientatio
 import type { EarthOrientationFile } from '../lib/earthOrientation'
 import { horizonAt } from '../lib/horizon'
 import type { SiteBundle, TerrainFile } from '../lib/types'
+import { useScenarioMetrics } from '../lib/useScenarioMetrics'
 import { useSiteBundle } from '../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../state/selectors'
 import { useAppStore } from '../state/store'
@@ -118,6 +119,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   const cursorMs = scenarioCursorMs(scenario, cursorH)
   const sample = useMemo(() => sampleAt(bundle.ephem, cursorMs), [bundle.ephem, cursorMs])
   const { startMs, endMs } = scenarioWindowMs(scenario)
+  const cardMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, endMs)
+  const cardSunHours = cardMetrics ? (cardMetrics.pct_sunlit / 100) * ((endMs - startMs) / 3_600_000) : null
 
   // Clear cached heatmap and best spot search when scenario dates or observer height change
   const prevParamsRef = useRef({ startMs, endMs, observerHeightM })
@@ -791,7 +794,14 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
           <span className="surface__hours-stat">
             <b>{movedSunHours !== null ? `${movedSunHours.toFixed(1)} h` : '—'}</b>
-            <span className="surface__hours-site"> (site: {origSunHours !== null ? `${origSunHours.toFixed(1)} h` : '—'})</span>
+            <span
+              className="surface__hours-site"
+              title="The patch-only horizon covers the terrain patch around the site. The card metrics use the full LOLA horizon mask, so the two totals differ."
+            >
+              {' '}
+              (patch-only site estimate: {origSunHours !== null ? `${origSunHours.toFixed(1)} h` : '—'}
+              {cardSunHours !== null ? `; card, full horizon: ${cardSunHours.toFixed(1)} h` : ''})
+            </span>
             <b className="surface__hours-delta"> {formatDeltaHours(deltaHours)}</b>
           </span>
         </div>

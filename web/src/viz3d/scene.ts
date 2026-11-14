@@ -107,6 +107,9 @@ const DAY_MS = 86_400_000
 const DECOR_DEBOUNCE_MS = 140
 const REGOLITH_COLOR = 0x8d8c89
 const HEATMAP_FADE_MS = 180
+// Lit part of the sunlight map keeps the relief; the emissive part keeps it readable at night.
+const HEATMAP_COLOR = 0x808080
+const HEATMAP_EMISSIVE = 0.55
 const HAZE_MAX = 0.7
 const HAZE_DISPLAY = new THREE.Vector3(0.085, 0.088, 0.1)
 
@@ -679,8 +682,8 @@ export class SurfaceScene {
       if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
         this.terrainMat.map.dispose()
       }
-      this.terrainMat.map = texture
-      this.terrainMat.color.set(texture ? 0xffffff : REGOLITH_COLOR)
+      this.setMapTexture(texture)
+      this.terrainMat.color.set(texture ? HEATMAP_COLOR : REGOLITH_COLOR)
       this.terrainMat.needsUpdate = true
       this.invalidate()
     }
@@ -691,9 +694,9 @@ export class SurfaceScene {
       apply()
       return
     }
-    const from = new THREE.Color(wasOn ? 0xffffff : REGOLITH_COLOR)
+    const from = new THREE.Color(wasOn ? HEATMAP_COLOR : REGOLITH_COLOR)
     const dark = new THREE.Color(0x1a1a1a)
-    const to = new THREE.Color(texture ? 0xffffff : REGOLITH_COLOR)
+    const to = new THREE.Color(texture ? HEATMAP_COLOR : REGOLITH_COLOR)
     const half = HEATMAP_FADE_MS / 2
     const t0 = performance.now()
     let swapped = false
@@ -711,7 +714,7 @@ export class SurfaceScene {
           if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
             this.terrainMat.map.dispose()
           }
-          this.terrainMat.map = texture
+          this.setMapTexture(texture)
           this.terrainMat.needsUpdate = true
         }
         this.terrainMat.color.copy(dark).lerp(to, Math.min(1, (t - half) / half))
@@ -720,6 +723,13 @@ export class SurfaceScene {
       this.heatmapRaf = t < HEATMAP_FADE_MS ? requestAnimationFrame(step) : 0
     }
     this.heatmapRaf = requestAnimationFrame(step)
+  }
+
+  private setMapTexture(texture: THREE.Texture | null): void {
+    this.terrainMat.map = texture
+    this.terrainMat.emissiveMap = texture
+    this.terrainMat.emissive.set(texture ? 0xffffff : 0x000000)
+    this.terrainMat.emissiveIntensity = texture ? HEATMAP_EMISSIVE : 1
   }
 
   raycastTerrain(

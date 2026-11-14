@@ -320,6 +320,11 @@ export function fmtNum(v: number, digits: number, signed = false): string {
   return signed && !zero ? '+' + s : s
 }
 
+/** Hours with one decimal and a unit, the single format for durations in hours ("374.0 h"). */
+export function fmtHours(v: number): string {
+  return `${fmtNum(Object.is(v, -0) ? 0 : v, 1)} h`
+}
+
 export function fmtUtc(ms: number): string {
   return new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
 }

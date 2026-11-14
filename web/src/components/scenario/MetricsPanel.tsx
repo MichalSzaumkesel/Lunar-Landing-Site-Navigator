@@ -7,10 +7,10 @@ import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
-import { describeBody, pickMask } from '../sky/geometry'
+import { describeBody, fmtHours, pickMask } from '../sky/geometry'
 import { ElevationChart } from '../chart/ElevationChart'
-import { cursorMetricRows, windowMetricRows } from './cardLogic'
-import type { MetricRow } from './cardLogic'
+import { cursorMetricRows, formatChange, windowMetricRows } from './cardLogic'
+import type { MetricRow, SlipChange } from './cardLogic'
 import './scenario.css'
 
 function Item({ row }: { row: MetricRow }) {
@@ -51,10 +51,11 @@ const WindowRows = memo(function WindowRows({ rows }: { rows: MetricRow[] }) {
   )
 })
 
-export function MetricsPanel({ scenario, bundle, heightM }: {
+export function MetricsPanel({ scenario, bundle, heightM, change = null }: {
   scenario: Scenario
   bundle: SiteBundle | null
   heightM: ObserverHeightM
+  change?: SlipChange | null
 }) {
   const activeScenarioId = useAppStore((s) => s.activeScenarioId)
   const isActive = scenario.id === activeScenarioId
@@ -81,7 +82,7 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
 
   const mastGainText = delta
     ? delta.gainH > 0.05
-      ? `+${Number.isInteger(delta.gainH) ? delta.gainH : delta.gainH.toFixed(1)} h Sun visible`
+      ? `+${fmtHours(delta.gainH)} Sun visible`
       : 'no difference'
     : null
 
@@ -103,6 +104,12 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
       <p className="metrics__note">
         Sun visible matters for solar power and heat. Earth in view is needed for direct-to-Earth radio. This tool shows geometry only, not power or link guarantees.
       </p>
+      {change && (
+        <p className="metrics__note" title="The same metrics computed for the window without the slip.">
+          Change vs original (slip 0): Sun visible {formatChange(change.sunH, change.sunPp)}; Earth in view{' '}
+          {formatChange(change.earthH, change.earthPp)}. pp = percentage points.
+        </p>
+      )}
       {partial && <p className="metrics__note">Window partly outside data range. Window values cover the available part.</p>}
       {isActive && (
         <ElevationChart scenario={scenario} bundle={bundle} heightM={heightM} />
