@@ -1,6 +1,16 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { isFullyInView, whenScrollSettled } from './scrollSettle'
 import { useTour } from './useTour'
 import './tour.css'
+
+const FADE_OUT_MS = 120
+
+function reducedMotion(): boolean {
+  return (
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
 
 export interface TourProps {
   className?: string
@@ -25,6 +35,9 @@ export function Tour({ className = '' }: TourProps) {
   const cardRef = useRef<HTMLDivElement | null>(null)
   const nextBtnRef = useRef<HTMLButtonElement | null>(null)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [readyIndex, setReadyIndex] = useState(-1)
+  const ready = isOpen && readyIndex === stepIndex
+  const settledRef = useRef(false)
   const [cardPos, setCardPos] = useState<{ top: number; left: number }>({ top: 100, left: 100 })
 
   // Measure and position the popover card and cutout
@@ -86,48 +99,54 @@ export function Tour({ className = '' }: TourProps) {
     setCardPos({ top, left })
   }, [isOpen, currentStep])
 
-  // Scroll target into view and update position
-  useLayoutEffect(() => {
+  // Step change: fade out, scroll with the overlay untouched, then place once and fade in
+  useEffect(() => {
     if (!isOpen || !currentStep) return
-    const el = document.querySelector(currentStep.target)
-    const reduce =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    el?.scrollIntoView?.({
-      block: 'center',
-      inline: 'nearest',
-      behavior: reduce ? 'auto' : 'smooth',
-    })
-    // Follow the target while the smooth scroll runs, until its rect is stable (max ~800 ms)
-    let raf = 0
-    const start = performance.now()
-    let last = ''
-    let stableFrames = 0
-    const tick = () => {
+    settledRef.current = false
+    let cancelWait = () => {}
+    const settle = () => {
       updatePosition()
-      const r = el?.getBoundingClientRect()
-      const key = r ? `${Math.round(r.top)}:${Math.round(r.left)}` : ''
-      stableFrames = key === last ? stableFrames + 1 : 0
-      last = key
-      if (stableFrames < 6 && performance.now() - start < 800) {
-        raf = requestAnimationFrame(tick)
+      settledRef.current = true
+      setReadyIndex(stepIndex)
+    }
+    const timer = window.setTimeout(() => {
+      const el = document.querySelector(currentStep.target)
+      const reduce = reducedMotion()
+      if (!el || isFullyInView(el)) {
+        settle()
+        return
       }
-    }
-    raf = requestAnimationFrame(tick)
+      el.scrollIntoView?.({
+        block: 'center',
+        inline: 'nearest',
+        behavior: reduce ? 'auto' : 'smooth',
+      })
+      if (reduce) settle()
+      else cancelWait = whenScrollSettled(el, settle)
+    }, reducedMotion() ? 0 : FADE_OUT_MS)
     return () => {
-      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+      cancelWait()
     }
-  }, [isOpen, currentStep, updatePosition])
+  }, [isOpen, currentStep, stepIndex, updatePosition])
 
+  // After the step settled, follow manual scroll and resize (throttled to one update per frame)
   useEffect(() => {
     if (!isOpen) return
-
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, { capture: true, passive: true })
-
+    let raf = 0
+    const onChange = () => {
+      if (!settledRef.current || raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        updatePosition()
+      })
+    }
+    window.addEventListener('resize', onChange)
+    window.addEventListener('scroll', onChange, { capture: true, passive: true })
     return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', onChange)
+      window.removeEventListener('scroll', onChange, true)
     }
   }, [isOpen, updatePosition])
 
@@ -179,9 +198,10 @@ export function Tour({ className = '' }: TourProps) {
 
   return (
     <>
+      <div className={`tour-backdrop${ready && targetRect ? ' tour-backdrop--off' : ''}`} aria-hidden="true" />
       {targetRect && (
         <div
-          className="tour-cutout"
+          className={`tour-cutout${ready ? ' tour-cutout--on' : ''}`}
           aria-hidden="true"
           style={{
             top: `${targetRect.top - 4}px`,
@@ -200,7 +220,7 @@ export function Tour({ className = '' }: TourProps) {
         aria-describedby="tour-dialog-text"
         tabIndex={-1}
         data-tour-open=""
-        className={`tour-card ${className}`.trim()}
+        className={`tour-card${ready ? ' tour-card--on' : ''} ${className}`.trim()}
         style={{
           top: `${cardPos.top}px`,
           left: `${cardPos.left}px`,
