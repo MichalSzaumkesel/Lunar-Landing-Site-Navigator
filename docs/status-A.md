@@ -1,6 +1,6 @@
 # Status A (Data & Science)
 
-Lead: Claude (Opus). Last update: 2026-11-14 afternoon. A0–A9 done and validated on `a/pipeline` + `a/research` (awaiting merge). A10 (illum heatmap) not started. Team: `pipeline`, `research-validator` (Sonnet).
+Lead: Claude (Opus). Last update: 2026-11-14 ~15:40 CET. Scope A work complete (A0–A10). See Handoff below.
 
 ## Tasks
 
@@ -13,10 +13,10 @@ Lead: Claude (Opus). Last update: 2026-11-14 afternoon. A0–A9 done and validat
 | A4 | `ephem/<id>.json` for the 3 demo sites | done (a/pipeline) | Horizons, 18288 hourly samples each. Re-queried at 50 random times (TLIST): max error 0.0006–0.0012° (pass, threshold 0.05°). |
 | A5 | `horizon/<id>.json` for the 3 demo sites | done (a/pipeline) | LDEM_1024 (Apollo 11, 100 km), LDEM_80S_20M (polar, 150 km). Polar orientation verified vs 3 IAU crater centres (0.3–1.7 km). PGDA illumination at both polar points within 2 pp. |
 | A6 | `terrain/<id>.json + .bin` | done (a/pipeline) | 256², 80 m. Direction consistent with horizon masks (corr 0.86–0.98). |
-| A7 | `validation.json` | done (a/research) | 37 checks, all pass: ephem vs Horizons re-query at 13 sites (≤ 0.0012°), polar DEM orientation vs 3 IAU craters, PGDA illumination at 2 polar points (≤ 2 pp), horizon sensitivity at all 21 sites (per-site uncertainty_deg). Not done: metrics.py vs metrics.ts (no Node on A's machine; B runs fixtures). |
+| A7 | `validation.json` | done | 41 checks, all pass (see Handoff). |
 | A8 | Full `sites.json` (~20) + ephem + horizon | done (a/pipeline) | 21 sites. DEMs: LDEM_1024 (Apollo 11), LDEM_256 (other non-polar), LDEM_80S_20M / 80S_40M / 75S_60M (polar). Least robust: artemis_region_2 (pct_sunlit ±7.3 pp). Terrain only for the 3 demo sites. |
 | A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
-| A10 | (stretch) `illum/<id>.json` | done for southpole_landed (a/illum) | 21×21, 200 m, 36 s runtime. 0–51.7 % sunlit over ±2 km, 21.9–51.1 % within ±1 km (PGDA 31.8–51.4 %). meta.approximate = true. |
+| A10 | (stretch) `illum/<id>.json` | done (southpole_landed, artemis_region_1) | 21×21, 200 m, ~36 s per site. vs PGDA: r 0.98 at both, median |Δ| 0.9 pp. meta.approximate = true. |
 
 How to run:
 
@@ -58,6 +58,38 @@ For the humans to decide. Agents don't edit the contract.
 -  "count": 18264,
 +  "count": 18288,
 ```
+
+## Handoff (end of scope A work, 2026-11-14)
+
+### Done (all on main after the final merge)
+- **Data** (`web/public/data/`, real, contract 1.1.1): `sites.json` (21 sourced sites), `ephem/` + `horizon/` for all 21, `terrain/` for the 3 demo sites, `illum/` for southpole_landed + artemis_region_1, `earth_orientation.json`, `validation.json`.
+- **Validation** (41/41 pass): ephem vs Horizons re-query (13 sites, ≤ 0.0012°); polar DEM orientation vs 3 IAU craters (0.3–1.7 km); PGDA illumination at 2 polar points (≤ 2 pp) and heatmaps (r 0.98, median 0.9 pp); horizon sensitivity per site (21); metrics.ts vs fixtures (11/11) and metrics.py vs metrics.ts on real data (180 values, max 5.7e-14).
+- **Docs**: `method.md`, `explore-texts.md`, `sources.md`, `pitch.md`. CRITICAL C-001..C-004 entries/ACKs on main.
+
+### Known limitations
+- Ephem check compares with Horizons itself (different query form), not an independent ephemeris model.
+- Coverage 2026-12-01..2028-12-31 only; historical Apollo dates are outside the data range.
+- Disc cut assumes a locally straight horizon; Sun/Earth angular radii constant; no refraction (none on the Moon), no lander self-shadowing, no power/thermal model ("Sun visible" ≠ power).
+- Global sites other than Apollo 11 use LDEM_256 (118 m); horizon uncertainty per site 0.05–1.2° (`uncertainty_deg`). Least robust: artemis_region_2 (pct_sunlit ±7.3 pp under DEM ×2 / ±1 px).
+- `pct_earth` uses the centre rule; PGDA's any-part rule gives higher numbers (82.0 % vs 94.2 % at southpole_landed).
+- Artemis region points are LROC mosaic centres, not surveyed region centres; `region_radius_km` null (no source). IM-2 landing time approximate (~17:30Z).
+- Heatmaps: Sun direction transported from the site; single cells can differ from PGDA by up to 36.6 pp.
+- Contract items still pending: PR #5 (1.2.0; `pole_pa_deg` wording = from the Moon's north pole) and §2.6 grid orientation. After PR #5 merges: set `pipeline/common.py` CONTRACT_VERSION and `validation/fixtures/build_metrics_cases.py` CONTRACT_VERSION to 1.2.0, rerun the generators below (cache only), rerun tests.
+
+### How to regenerate (repo root, cached data, no refetch if `data/raw/` is present)
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r pipeline/requirements.txt
+export LLSN_RAW_DIR=$PWD/data/raw           # DEM windows, Horizons + PGDA caches (git-ignored)
+.venv/bin/python pipeline/run_site.py apollo_11 southpole_landed artemis_region_1   # horizon → ephem → terrain → sites.json
+.venv/bin/python pipeline/run_site.py <site_id> ...                                  # any other site in pipeline/sites_input.json
+.venv/bin/python pipeline/illum.py southpole_landed                                  # heatmap (≈ 36 s); also artemis_region_1
+.venv/bin/python pipeline/fetch_earth_orientation.py
+.venv/bin/python validation/build_validation_json.py                                 # collects validation/results/*.json
+.venv/bin/python pipeline/check_contract.py                                          # must be 0 errors
+.venv/bin/pytest pipeline                                                            # 43 tests
+.venv/bin/python validation/fixtures/build_metrics_cases.py                          # fixtures (hand-derived)
+```
+New site: add a sourced row to `pipeline/sites_input.json` (source URL mandatory), then `run_site.py <id>`, then the validation scripts in `validation/` (`check_ephem_independent.py`, `check_horizon_sensitivity.py`), then `build_validation_json.py`. Horizons requests are sequential with ≥ 1 s spacing; never parallelise. metrics.ts cross-check needs Node ≥ 22: `node --experimental-strip-types validation/check_metrics_ts_fixtures.mts`.
 
 ## Key numbers (2-year window 2026-12..2028-12, observer 2 m, from metrics.py)
 
