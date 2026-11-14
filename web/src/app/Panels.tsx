@@ -62,7 +62,7 @@ export function Panels() {
           </button>
         ))}
       </div>
-      <div className="panels__body" role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`}>
+      <div key={active} className="panels__body" role="tabpanel" id={`panel-${active}`} aria-labelledby={`tab-${active}`}>
         <Suspense fallback={<div className="placeholder" aria-busy="true">Loading</div>}>
           {active === 'window-map' && <WindowMapPanel />}
           {active === 'moon-map' && <MapPanel />}

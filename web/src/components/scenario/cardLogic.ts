@@ -4,12 +4,7 @@ import type { SkyEvent, SkyEventKind } from '../../lib/events'
 import type { ScenarioMetrics, Site, SiteCategory } from '../../lib/types'
 import { fmtNum } from '../sky/geometry'
 
-export const DURATION_DAYS = [14, 30, 60] as const
-
-/** Default open state for progressive disclosure in scenario cards: open for 1 card, closed for 2+. */
-export function defaultCardDetailsOpen(scenarioCount: number): boolean {
-  return scenarioCount <= 1
-}
+export const DURATION_DAYS = [3, 7, 10, 14, 30, 60] as const
 
 const CATEGORY_LABEL: Record<SiteCategory, string> = {
   apollo: 'Apollo landing site',
@@ -29,6 +24,16 @@ export function formatCoords(latDeg: number, lonDeg: number): string {
   const lat = `${Math.abs(latDeg).toFixed(2)}° ${latDeg < 0 ? 'S' : 'N'}`
   const lon = `${Math.abs(lonDeg).toFixed(2)}° ${lonDeg < 0 ? 'W' : 'E'}`
   return `${lat}, ${lon}`
+}
+
+/** Groups sites by category, keeping the order of first appearance. */
+export function groupByCategory(sites: readonly Site[]): Array<{ label: string; sites: Site[] }> {
+  const groups = new Map<string, Site[]>()
+  for (const s of sites) {
+    const label = categoryLabel(s.category)
+    groups.set(label, [...(groups.get(label) ?? []), s])
+  }
+  return [...groups].map(([label, list]) => ({ label, sites: list }))
 }
 
 export function siteSubtitle(site: Pick<Site, 'category' | 'lat_deg' | 'lon_deg'>): string {

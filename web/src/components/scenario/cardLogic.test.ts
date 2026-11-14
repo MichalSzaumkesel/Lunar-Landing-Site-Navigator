@@ -6,7 +6,6 @@ import {
   clampStartUtc,
   cursorMetricRows,
   dateInputBounds,
-  defaultCardDetailsOpen,
   durationOptionsH,
   formatCoords,
   formatDuration,
@@ -57,8 +56,8 @@ describe('site and window text', () => {
 
 describe('window start and length', () => {
   it('lists the preset lengths and keeps an unusual current one', () => {
-    expect(durationOptionsH(720)).toEqual([336, 720, 1440])
-    expect(durationOptionsH(500)).toEqual([336, 500, 720, 1440])
+    expect(durationOptionsH(720)).toEqual([72, 168, 240, 336, 720, 1440])
+    expect(durationOptionsH(500)).toEqual([72, 168, 240, 336, 500, 720, 1440])
   })
   it('clamps the start to the data coverage', () => {
     expect(clampStartUtc('2027-08-30', 720)).toBe('2027-08-30T00:00:00Z')
@@ -146,11 +145,3 @@ describe('metric rows', () => {
   })
 })
 
-describe('defaultCardDetailsOpen', () => {
-  it('is open for 1 scenario and closed for 2 or more', () => {
-    expect(defaultCardDetailsOpen(1)).toBe(true)
-    expect(defaultCardDetailsOpen(0)).toBe(true)
-    expect(defaultCardDetailsOpen(2)).toBe(false)
-    expect(defaultCardDetailsOpen(3)).toBe(false)
-  })
-})

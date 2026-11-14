@@ -30,11 +30,11 @@ export default function App() {
     <div className="app">
       <TopBar />
       <main className="shell">
+        <Tools />
         {mode === 'simple' ? (
           <SimpleView />
         ) : (
           <>
-            <Tools />
             <ScenarioBoard />
             <Panels />
           </>

@@ -1,5 +1,5 @@
-import { useMemo, type ChangeEvent } from 'react'
-import { clampStartUtc, dateInputBounds, formatWindow, nextEventAfter, splitEvents } from '../scenario/cardLogic'
+import { useMemo, useState, type ChangeEvent } from 'react'
+import { clampStartUtc, dateInputBounds, nextEventAfter, splitEvents } from '../scenario/cardLogic'
 import { DataBadges } from '../badges/DataBadges'
 import { ShareButton } from '../share/ShareButton'
 import { SkyPlot } from '../sky/SkyPlot'
@@ -11,7 +11,8 @@ import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import { PlacePicker } from './PlacePicker'
-import { simpleSummary } from './simpleSummary'
+import { displayName } from './placeLabels'
+import { formatWindowPlain, outOfRangeMessage, simpleStatus } from './simpleSummary'
 import './simple.css'
 
 export interface SimpleViewProps {
@@ -19,6 +20,16 @@ export interface SimpleViewProps {
 }
 
 export function SimpleView({ className = '' }: SimpleViewProps) {
+  // Bumping the key remounts the body, which loads the site again without reloading the page.
+  const [attempt, setAttempt] = useState(0)
+  return <SimpleBody key={attempt} className={className} onRetry={() => setAttempt((n) => n + 1)} />
+}
+
+interface SimpleBodyProps extends SimpleViewProps {
+  onRetry: () => void
+}
+
+function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const scenario = useAppStore(
     (s) => s.scenarios.find((x) => x.id === s.activeScenarioId) ?? s.scenarios[0],
   )
@@ -35,26 +46,21 @@ export function SimpleView({ className = '' }: SimpleViewProps) {
   const mask = useMemo(() => (bundle ? pickMask(bundle, 2) : null), [bundle])
 
   const durationH = scenario?.durationH ?? 0
-  const summaryData = useMemo(() => {
+  const readout = useMemo(() => {
     if (!bundle) return null
     const { startMs: covStartMs, endMs: covEndMs } = ephemCoverage(bundle.ephem)
     const inCoverage = cursorMs >= covStartMs && cursorMs <= covEndMs && metrics !== null
-    if (!inCoverage || !metrics) {
-      return ['This date is outside the data we have.']
-    }
+    if (!inCoverage || !metrics) return 'outside' as const
     const sample = sampleAt(bundle.ephem, cursorMs)
     const azStep = bundle.horizon.az_step_deg
     const sunVisible = sample && mask ? describeBody(sample.sun, mask, azStep, bundle.ephem.sun_ang_radius_deg).visible : false
     const earthVisible = sample && mask ? describeBody(sample.earth, mask, azStep, bundle.ephem.earth_ang_radius_deg).visible : false
-    const nextSun = split ? nextEventAfter(split.sun, cursorMs) ?? null : null
-    const nextEarth = split ? nextEventAfter(split.earth, cursorMs) ?? null : null
 
-    return simpleSummary({
-      inCoverage: true,
+    return simpleStatus({
       sunVisible,
       earthVisible,
-      nextSunEvent: nextSun,
-      nextEarthEvent: nextEarth,
+      nextSunEvent: split ? nextEventAfter(split.sun, cursorMs) ?? null : null,
+      nextEarthEvent: split ? nextEventAfter(split.earth, cursorMs) ?? null : null,
       cursorMs,
       durationH,
       metrics,
@@ -67,16 +73,15 @@ export function SimpleView({ className = '' }: SimpleViewProps) {
   }
 
   const { min, max } = dateInputBounds(scenario.durationH)
-  const onStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const startUtc = clampStartUtc(e.target.value, scenario.durationH)
+  const setStart = (dateText: string) => {
+    const startUtc = clampStartUtc(dateText, scenario.durationH)
     if (startUtc) {
-      updateScenario(scenario.id, { startUtc })
+      updateScenario(scenario.id, { startUtc, slipDays: 0 })
     }
   }
+  const onStartDateChange = (e: ChangeEvent<HTMLInputElement>) => setStart(e.target.value)
 
-  const siteName = bundle
-    ? bundle.site.name.replace(/^\[MOCK\]\s*/i, '')
-    : scenario.siteId
+  const siteName = bundle ? displayName(bundle.site) : scenario.siteId
 
   return (
     <section className={`simple-view ${className}`.trim()} aria-label="Simple mode view">
@@ -89,7 +94,7 @@ export function SimpleView({ className = '' }: SimpleViewProps) {
           </div>
           <div className="simple-legend" aria-label="Sky plot legend">
             <p className="simple-legend__text">
-              Gold disc: the Sun. Blue disc: the Earth. Grey area: terrain that blocks the sky. Centre of the circle: straight up. Edge: the horizon.
+              Sky seen from the ground. Gold circle: the Sun. Blue circle: the Earth. Grey: hills that block the sky. Centre: straight up. Edge: the horizon.
             </p>
           </div>
         </div>
@@ -101,14 +106,71 @@ export function SimpleView({ className = '' }: SimpleViewProps) {
                 <h2 className="simple-card__title">{siteName}</h2>
                 {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} />}
               </div>
-              <p className="simple-card__window">{formatWindow(startMs, endMs)}</p>
+              <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
+                {formatWindowPlain(startMs, endMs)} · world time (UTC)
+              </p>
             </div>
             <ShareButton className="simple-card__share" />
           </header>
 
+          {status === 'error' && (
+            <div className="simple-error" role="alert">
+              <p className="simple-error__message">
+                Could not load this place. Try another place.
+              </p>
+              <button type="button" className="simple-error__retry" onClick={onRetry}>
+                Try again
+              </button>
+            </div>
+          )}
+
+          {status === 'loading' && !readout && (
+            <div className="simple-skeleton" aria-busy="true" aria-label="Loading summary" />
+          )}
+
+          {readout === 'outside' && (
+            <div className="simple-summary" data-tour="simple-summary" aria-label="Summary">
+              <p className="simple-summary__sentence">This date is outside the data we have.</p>
+              <p className="simple-summary__sentence">{outOfRangeMessage(min, max)}</p>
+              <button type="button" className="simple-reset" onClick={() => setStart(min)}>
+                Go to the first available date
+              </button>
+            </div>
+          )}
+
+          {readout && readout !== 'outside' && (
+            <div className="simple-summary" data-tour="simple-summary" aria-label="Summary">
+              <p
+                className={`simple-headline ${readout.headline === 'Sunlit' ? 'simple-headline--sun' : 'simple-headline--dark'}`}
+              >
+                {readout.headline}
+              </p>
+              <p className="simple-summary__sentence">{readout.detail}</p>
+              <ul className="simple-chips" aria-label="Sun and Earth now">
+                {readout.chips.map((chip) => (
+                  <li
+                    key={chip.id}
+                    className={`simple-chip simple-chip--${chip.id} ${chip.on ? 'simple-chip--on' : 'simple-chip--off'}`}
+                  >
+                    {chip.text}
+                  </li>
+                ))}
+              </ul>
+              <dl className="simple-rows" aria-label="Over the whole window">
+                {readout.rows.map((row) => (
+                  <div key={row.id} className="simple-row">
+                    <dt>{row.label}</dt>
+                    <dd>{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {readout.note && <p className="simple-summary__note">{readout.note}</p>}
+            </div>
+          )}
+
           <div className="simple-date">
             <label htmlFor="simple-start-date" className="simple-date__label">
-              Start date
+              Start date (UTC)
             </label>
             <input
               id="simple-start-date"
@@ -118,40 +180,8 @@ export function SimpleView({ className = '' }: SimpleViewProps) {
               max={max}
               value={scenario.startUtc.slice(0, 10)}
               onChange={onStartDateChange}
-              aria-label="Start date"
             />
           </div>
-
-          {status === 'error' && (
-            <div className="simple-error" role="alert">
-              <p className="simple-error__message">
-                Could not load this place. Try another place.
-              </p>
-              <button
-                type="button"
-                className="simple-error__retry"
-                onClick={() => {
-                  window.location.reload()
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {status === 'loading' && !summaryData && (
-            <div className="simple-skeleton" aria-busy="true" aria-label="Loading summary" />
-          )}
-
-          {summaryData && (
-            <div className="simple-summary" data-tour="simple-summary" aria-label="Summary">
-              {summaryData.map((sentence, idx) => (
-                <p key={idx} className="simple-summary__sentence">
-                  {sentence}
-                </p>
-              ))}
-            </div>
-          )}
         </article>
       </div>
     </section>

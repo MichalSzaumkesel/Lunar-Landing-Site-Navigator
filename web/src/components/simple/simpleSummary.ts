@@ -2,8 +2,7 @@ import { HOUR_MS } from '../../config/dataRange'
 import type { SkyEvent } from '../../lib/events'
 import type { ScenarioMetrics } from '../../lib/types'
 
-export interface SimpleSummaryInput {
-  inCoverage: boolean
+export interface SimpleStatusInput {
   sunVisible: boolean
   earthVisible: boolean
   nextSunEvent?: SkyEvent | null
@@ -12,6 +11,53 @@ export interface SimpleSummaryInput {
   durationH: number
   metrics: Pick<ScenarioMetrics, 'pct_sunlit' | 'longest_dark_h' | 'pct_earth'>
   synthetic?: boolean
+}
+
+export interface SimpleChip {
+  id: 'sun' | 'earth'
+  /** True when the body is above the local horizon. */
+  on: boolean
+  text: string
+}
+
+export interface SimpleRow {
+  id: 'sun' | 'dark' | 'earth'
+  label: string
+  value: string
+}
+
+export interface SimpleStatus {
+  headline: 'Sunlit' | 'Dark'
+  detail: string
+  chips: SimpleChip[]
+  rows: SimpleRow[]
+  note: string | null
+}
+
+/** Plain message for a date outside the data, with the valid bounds and what to do. */
+export function outOfRangeMessage(min: string, max: string): string {
+  return `We only have data from ${formatDay(min)} to ${formatDay(max)}. Pick a start date in that range.`
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "2027-10-06" as "Oct 6, 2027" (the date part is read as UTC, no time zone shifts). */
+export function formatDay(isoDay: string): string {
+  const ms = Date.parse(`${isoDay.slice(0, 10)}T00:00:00Z`)
+  if (!Number.isFinite(ms)) return isoDay
+  const d = new Date(ms)
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`
+}
+
+/** Window as "Oct 6 – Nov 5, 2027" (same year) or with both years. */
+export function formatWindowPlain(startMs: number, endMs: number): string {
+  const a = new Date(startMs)
+  const b = new Date(endMs)
+  const left = `${MONTHS[a.getUTCMonth()]} ${a.getUTCDate()}`
+  const right = `${MONTHS[b.getUTCMonth()]} ${b.getUTCDate()}, ${b.getUTCFullYear()}`
+  return a.getUTCFullYear() === b.getUTCFullYear()
+    ? `${left} – ${right}`
+    : `${left}, ${a.getUTCFullYear()} – ${right}`
 }
 
 /**
@@ -43,63 +89,66 @@ export function formatCountdown(rawHours: number): string {
   return formatHoursWithDays(diffH)
 }
 
-/**
- * Generates an array of short plain sentences describing the active lunar site conditions.
- */
-export function simpleSummary(input: SimpleSummaryInput): string[] {
-  if (!input.inCoverage) {
-    return ['This date is outside the data we have.']
-  }
+/** Short span for the longest dark stretch: "6 hours" or "15 days". */
+function formatSpan(rawHours: number): string {
+  const h = Math.round(Math.max(0, rawHours))
+  if (h < 48) return h === 1 ? '1 hour' : `${h} hours`
+  const days = Math.round(h / 24)
+  return days === 1 ? '1 day' : `${days} days`
+}
 
-  // Sentence 1: Sun now
-  const s1 = input.sunVisible
+function windowPhrase(durationH: number): string {
+  if (durationH < 12) return 'the next few hours'
+  const days = Math.round(durationH / 24)
+  return days === 1 ? '1 day' : `${days} days`
+}
+
+function nextChange(
+  visible: boolean,
+  next: SkyEvent | null | undefined,
+  cursorMs: number,
+): string | null {
+  if (!next) return null
+  const diffH = Math.max(0, (next.ms - cursorMs) / HOUR_MS)
+  return `${visible ? 'sets' : 'rises'} in ${formatCountdown(diffH)}`
+}
+
+/**
+ * Builds the Simple mode readout: one headline (Sunlit or Dark), two chips and three window rows.
+ * Wording only says what is visible in the sky, never power or a communication link.
+ */
+export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
+  const sunChange = nextChange(input.sunVisible, input.nextSunEvent, input.cursorMs)
+  const earthChange = nextChange(input.earthVisible, input.nextEarthEvent, input.cursorMs)
+
+  const state = input.sunVisible
     ? 'The Sun is above the horizon.'
     : "The Sun is below the horizon: the terrain or the Moon's curve hides it."
+  const sunTail = sunChange
+    ? `It ${sunChange}.`
+    : input.sunVisible
+      ? 'It does not set in the data.'
+      : 'It does not rise in the data.'
 
-  // Sentence 2: Next change for the Sun
-  let s2: string
-  if (input.nextSunEvent) {
-    const diffH = Math.max(0, (input.nextSunEvent.ms - input.cursorMs) / HOUR_MS)
-    const verb = input.nextSunEvent.kind === 'sunset' ? 'sets' : 'rises'
-    s2 = `It ${verb} in ${formatCountdown(diffH)}.`
-  } else {
-    s2 = input.sunVisible ? 'It does not set in the data.' : 'It does not rise in the data.'
+  const earthText = input.earthVisible ? 'Earth in view' : 'Earth below horizon'
+  const span = windowPhrase(input.durationH)
+
+  return {
+    headline: input.sunVisible ? 'Sunlit' : 'Dark',
+    detail: `${state} ${sunTail}`,
+    chips: [
+      { id: 'sun', on: input.sunVisible, text: input.sunVisible ? 'Sun visible' : 'Sun below horizon' },
+      {
+        id: 'earth',
+        on: input.earthVisible,
+        text: earthChange ? `${earthText} · ${earthChange}` : earthText,
+      },
+    ],
+    rows: [
+      { id: 'sun', label: 'Sun visible', value: `${Math.round(input.metrics.pct_sunlit)}% of ${span}` },
+      { id: 'dark', label: 'Longest dark stretch', value: formatSpan(input.metrics.longest_dark_h) },
+      { id: 'earth', label: 'Earth in view', value: `${Math.round(input.metrics.pct_earth)}% of ${span}` },
+    ],
+    note: input.synthetic ? 'This is demo data, not a measurement.' : null,
   }
-
-  // Sentence 3: Earth now plus its next change
-  const earthNow = input.earthVisible ? 'Earth is in view.' : 'Earth is hidden below the horizon.'
-  let earthNext: string
-  if (input.nextEarthEvent) {
-    const diffH = Math.max(0, (input.nextEarthEvent.ms - input.cursorMs) / HOUR_MS)
-    const verb = input.nextEarthEvent.kind === 'earthset' ? 'sets' : 'rises'
-    earthNext = `It ${verb} in ${formatCountdown(diffH)}.`
-  } else {
-    earthNext = input.earthVisible ? 'It does not set in the data.' : 'It does not rise in the data.'
-  }
-  const s3 = `${earthNow} ${earthNext}`
-
-  // Sentence 4: Sun over the window
-  let windowPhrase: string
-  if (input.durationH < 12) {
-    windowPhrase = 'these few hours'
-  } else {
-    const days = Math.round(input.durationH / 24)
-    windowPhrase = days === 1 ? 'this 1 day' : `these ${days} days`
-  }
-  const pctSun = Math.round(input.metrics.pct_sunlit)
-  const s4 = `Over ${windowPhrase} the Sun is visible ${pctSun}% of the time.`
-
-  // Sentence 5: Longest dark stretch
-  const s5 = `The longest dark stretch is ${formatHoursWithDays(input.metrics.longest_dark_h)}.`
-
-  // Sentence 6: Earth over the window
-  const pctEarth = Math.round(input.metrics.pct_earth)
-  const s6 = `Earth is in view ${pctEarth}% of the time.`
-
-  const sentences = [s1, s2, s3, s4, s5, s6]
-  if (input.synthetic) {
-    sentences.push('This is demo data, not a measurement.')
-  }
-
-  return sentences
 }

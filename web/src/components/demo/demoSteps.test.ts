@@ -219,7 +219,7 @@ describe('demoSteps', () => {
         scenarios: [makeMockScenario('s1', 'apollo_11'), makeMockScenario('s2', 'artemis_region_1')],
         bundles: [
           makeMockBundle('apollo_11', 'Apollo 11 (Sea of Tranquillity)'),
-          makeMockBundle('artemis_region_1', 'Artemis III candidate region 1'),
+          makeMockBundle('artemis_region_1', 'Artemis candidate region 1'),
         ],
         metrics: [null, null],
         events: [[], []],
@@ -228,7 +228,7 @@ describe('demoSteps', () => {
 
       const caption = formatStep1Caption(ctx)
       expect(caption).toContain('Apollo 11 (Sea of Tranquillity)')
-      expect(caption).toContain('Artemis III candidate region 1')
+      expect(caption).toContain('Artemis candidate region 1')
       expect(caption).not.toMatch(FORBIDDEN_WORDS)
     })
 
@@ -251,7 +251,7 @@ describe('demoSteps', () => {
         events: [],
         isSynthetic: false,
       }
-      expect(formatStep6Caption(ctx)).toContain('Tour complete')
+      expect(formatStep6Caption(ctx)).toContain('Demo complete')
     })
 
     it('appendDemoDataNotice appends (demo data) when synthetic is true', () => {
