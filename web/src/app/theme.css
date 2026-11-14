@@ -155,7 +155,7 @@ button.ghost:disabled {
 
 /* Mode switch button stability: fixed min-width so text bolding never alters button or group width */
 [data-tour="mode-switch"] button {
-  min-width: 5.5rem;
+  min-width: 7rem;
   text-align: center;
 }
 
@@ -371,6 +371,11 @@ button[aria-pressed='true'] {
 @media (max-width: 600px) {
   .transport {
     position: static;
+  }
+
+  /* On a phone the hidden Advanced-only controls give their space back */
+  .toolbar-hidden {
+    display: none !important;
   }
 }
 
