@@ -2,6 +2,7 @@ import { memo, useId, useMemo } from 'react'
 import { sampleAt } from '../../lib/ephem'
 import type { SkySample } from '../../lib/ephem'
 import type { SiteBundle } from '../../lib/types'
+import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -127,6 +128,7 @@ function PolarDiscs({ readout, sample, bundle, zoomEl }: {
 }
 
 function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
+  const textScaleRef = useSvgTextScale()
   const clipId = 'sky-clip-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const readout = sample ? describeSky(sample, model, bundle.ephem) : null
   const utc = fmtUtc(cursorMs)
@@ -138,7 +140,8 @@ function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
     <>
     <div className="sky__frame">
       <svg
-        className="sky__svg"
+        ref={textScaleRef}
+        className="sky__svg svg-scaled"
         viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
         role="img"
         aria-label={label}

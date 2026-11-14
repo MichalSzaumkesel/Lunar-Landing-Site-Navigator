@@ -1,5 +1,12 @@
 /* Dark, high-contrast theme, readable on a projector. Tokens first, components below. */
 :root {
+  /* On-screen text sizes (CSS px) for SVG chart labels. Charts opt in with the
+     svg-scaled class plus useSvgTextScale, which keeps these sizes constant
+     however much the viewBox is stretched. */
+  --svg-fs-tick: 11px;
+  --svg-fs-label: 12px;
+  --svg-fs-title: 13px;
+  --svg-halo: 3px;
   color-scheme: dark;
   --bg: #07090f;
   --panel: #0f1420;
@@ -514,3 +521,12 @@ button[aria-pressed='true'] {
   }
 }
 
+
+/* Per-svg resolved sizes in viewBox units; --svg-px = viewBox units per CSS px,
+   set by useSvgTextScale. */
+.svg-scaled {
+  --fs-tick: calc(var(--svg-fs-tick) * var(--svg-px, 1));
+  --fs-label: calc(var(--svg-fs-label) * var(--svg-px, 1));
+  --fs-title: calc(var(--svg-fs-title) * var(--svg-px, 1));
+  --fs-halo: calc(var(--svg-halo) * var(--svg-px, 1));
+}
