@@ -172,6 +172,43 @@ def fetch_polar_south(product: str = "ldem_80s_20m", half_extent_m: float | None
     return npy
 
 
+def ensure_dem(lat: float, lon: float, range_km: float) -> Path:
+    """Return a cached DEM window (.npy) covering range_km around the site, downloading only if no cached one covers it.
+    |lat| >= 80 -> LDEM_80S_20M polar window (south only here); else LDEM_1024 cylindrical window."""
+    margin = 3.0
+    if abs(lat) >= 80.0:
+        if lat > 0:
+            raise NotImplementedError("north polar DEM not wired up yet")
+        from pyproj import Transformer
+        t = Transformer.from_crs("+proj=longlat +R=1737400 +no_defs", common.MOON_SOUTH_POLAR_STEREO, always_xy=True)
+        x, y = t.transform(lon, lat)
+        half = (range_km + margin) * 1000.0
+        for js in sorted(dem_dir().glob("ldem_80s_20m_r*.json")):
+            m = json.loads(js.read_text())
+            n, res = m["n_full"], m["resolution_m"]
+            xmin, xmax = (m["col0"] - n / 2) * res, (m["col0"] + m["ncol"] - n / 2) * res
+            ymax, ymin = (n / 2 - m["row0"]) * res, (n / 2 - m["row0"] - m["nrow"]) * res
+            # accept if the window covers the range, or reaches the file edge where no more data exists
+            if ((xmin <= x - half or m["col0"] == 0) and (xmax >= x + half or m["col0"] + m["ncol"] >= n)
+                    and (ymin <= y - half or m["row0"] + m["nrow"] >= n) and (ymax >= y + half or m["row0"] == 0)):
+                return js.with_suffix(".npy")
+        return fetch_polar_south("ldem_80s_20m", half, x, y)
+    dlat = (range_km + margin) / KM_PER_DEG
+    dlon = dlat / max(math.cos(math.radians(min(89.0, abs(lat) + dlat))), 0.05)
+    la0, la1, lo0, lo1 = lat - dlat, lat + dlat, lon - dlon, lon + dlon
+    for js in sorted(dem_dir().glob("ldem1024_*.json")):
+        m = json.loads(js.read_text())
+        top = m["row0_lat_top"]
+        bot = top - m["nrow"] / m["ppd"]
+        w = m["col0_lon_west"]
+        e = w + m["ncol"] / m["ppd"]
+        lw = (lo0 - w) % 360.0
+        if bot <= la0 and top >= la1 and lw + (lo1 - lo0) <= e - w:
+            return js.with_suffix(".npy")
+    name = f"ldem1024_lat{la0:.1f}_{la1:.1f}_lon{lo0:.1f}_{lo1:.1f}"
+    return fetch_cylindrical_window(la0, la1, lo0, lo1, name)
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 6 and sys.argv[1] == "cyl":
         _, _, la0, la1, lo0, lo1, nm = sys.argv[:7]
