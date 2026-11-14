@@ -39,7 +39,6 @@ export function Transport() {
         {playing ? 'Pause' : 'Play'}
       </button>
       <label className="group">
-        <span className="group__label">Speed</span>
         <select className="transport__speed" aria-label="Playback speed" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
           {SPEEDS_H_PER_SEC.map((v) => (
             <option key={v} value={v}>
