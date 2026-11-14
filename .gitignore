@@ -1,0 +1,26 @@
+# Raw NASA data never goes into git (CLAUDE.md rule 7)
+data/raw/
+
+# Node / build
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.log
+
+# Python
+__pycache__/
+.venv/
+.pytest_cache/
+
+# Env and editor
+.env
+.env.*
+!.env.example
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Agent worktrees
+.claude/worktrees/
