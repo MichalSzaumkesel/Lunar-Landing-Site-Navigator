@@ -233,6 +233,7 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
 
   return (
     <div className={`map-panel ${className ?? ''}`.trim()}>
+      <div className="map-panel__layout">
       <div className="map-panel__header">
         <h2 className="map-panel__title">Moon Map</h2>
         <div className="map-panel__controls">
@@ -247,6 +248,7 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
         </div>
       </div>
 
+      <div className="map-panel__map">
       {loadingSites && sites.length === 0 && (
         <div className="moon-map-skeleton" aria-busy="true">
           Loading Moon map sites…
@@ -271,7 +273,9 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
           pickMode={pickMode}
         />
       )}
+      </div>
 
+      <div className="map-panel__side">
       {/* Selected active site banner with Compare button */}
       {activeSite && (
         <div className="map-active-bar">
@@ -391,6 +395,8 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
           <span className="map-legend__swatch--terminator" />
           Terminator
         </span>
+      </div>
+      </div>
       </div>
     </div>
   )
