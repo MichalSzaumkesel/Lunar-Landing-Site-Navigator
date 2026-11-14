@@ -46,3 +46,29 @@ Accessed 2026-11-14. Coordinates per `source`; alt values in the JSON. Times mar
 Apollo 12-17 landing times: https://www.nasa.gov/wp-content/uploads/static/history/SP-4214/app5.html (EST, converted +5 h; its Apollo 11 row, 17:17:40, contradicts 20:17:40 UTC and is not used).
 Coordinates for Apollo 12-17: https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html (LRO-derived, Wagner et al. 2017), also https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_artifact_impacts.html
 Blue Ghost time: https://fireflyspace.com/news/firefly-aerospace-becomes-first-commercial-company-to-successfully-land-on-the-moon/ (2:34 a.m. CST, March 2)
+
+## Validation references
+
+Accessed 2026-11-14. Only numbers actually read on the cited page. Abstract-level only; I did not read full paper bodies or tables. No published per-site numbers were found for IM-2 / Mons Mouton, Malapert Massif or Haworth (see "Gaps").
+
+| # | Reference | Numbers (as stated) | Period | Observer height | DEM | URL |
+|---|---|---|---|---|---|---|
+| V1 | Gläser et al. 2014, Icarus 243, 79-90, doi:10.1016/j.icarus.2014.08.013 | Locations on the "Connecting Ridge" (Shackleton to de Gerlache) sunlit 92.27% of the time at 2 m and 95.65% at 10 m above ground; longest continuous darkness typically 3-5 days | 19 years (lunar precession cycle) | 2 m and 10 m (also surface level) | 20 m/px DTM from LOLA tracks | https://elib.dlr.de/94240 |
+| V1b | same paper, one-year case | Illumination assessed over a 20 x 20 km region, 2018-10-22 to 2019-10-22, at surface level and 2 m (no percentages read) | 1 year | surface, 2 m | 20 m/px | https://elib.dlr.de/94240 |
+| V2 | Gläser et al. 2018 (online 2017), Planet. Space Sci. 162, 170-178, doi:10.1016/j.pss.2017.07.006 | Three high-illumination sites at the south pole (Shackleton rim and two locations on a ridge between Shackleton and de Gerlache). Average illumination across the six polar sites 69.5% to 82.9%. For a lander with panels 2 m above ground: 77.1% to 88.0%, maximum on the Shackleton-de Gerlache ridge | hourly, 2017-01-01 to 2037-01-01 (18.6 yr) | surface and 2 m | 20 m/px, 400 x 400 km DTMs, 50 x 50 km illumination areas | https://elib.dlr.de/119091 |
+| V3 | Mazarico et al. 2011, Icarus 211, 1066-1081, doi:10.1016/j.icarus.2010.10.030 | A location near the Shackleton rim is sunlit continuously for 240 days per year; its longest continuous total darkness is about 1.5 days. PSR area about 12,866 km2 (north) and 16,055 km2 (south). Small height gains (about 10 m, symbol garbled on the page) substantially improve average illumination | several 18.6-yr cycles at 6-hour resolution (NTRS abstract) | point (height gain discussed) | 240 m/px LOLA polar DEMs to 75 deg | https://ntrs.nasa.gov/citations/20120010094 |
+| V4 | PGDA LOLA Lunar Polar Illumination products (Mazarico et al. 2011 products) | Gridded average solar illumination, average Earth visibility (Earth counts as visible if any part of its disc is unobscured), permanent shadow, sky visibility; polar stereographic, R = 1737.4 km. Use to sample a numeric reference at our sites | hourly over one nutation cycle (~18.6 yr) | not specified on the page | 240 m/px (65-90 deg), 120 m/px (75-90), 60 m/px (85-90) | https://pgda.gsfc.nasa.gov/products/69 (files: https://pgda.gsfc.nasa.gov/data/MoonIllumination/ and http://imbrium.mit.edu/EXTRAS/ILLUMINATION/) |
+| V5 | Barker et al. 2021, Planet. Space Sci. 203, doi:10.1016/j.pss.2020.105119 | 5 m/px LOLA DEMs for 4 south-pole sites (16 x 16 km); RMS height uncertainty about 0.30-0.50 m, slope uncertainty about 1.5-2.5 deg; horizon/illumination sensitivity to height errors is analysed | n/a | n/a | 5 m/px | https://ntrs.nasa.gov/citations/20205009660 |
+| V6 | PGDA high-resolution LOLA south-pole site DEMs (Barker) | 5 m/px GeoTIFF DEMs, MOON_ME frame, DE421, south polar stereographic. Sites listed include Site01 Connecting ridge, Site04 Shackleton rim, Site06 Nobile rim 1, Site11 de Gerlache rim, Site23 Malapert massif, Haworth, DM2 Nobile rim 2, SL2 de Gerlache rim (page truncated in my read; Mons Mouton not seen) | n/a | n/a | 5 m/px | https://pgda.gsfc.nasa.gov/products/78 |
+| V7 | LPSC 2026 abstract George et al. (Artemis III downselection) | Qualitative only: Earth visibility preferred for direct-to-Earth; no per-region percentages in the abstract text read | n/a | n/a | n/a | https://ntrs.nasa.gov/citations/20250011660 |
+
+### Intended use
+
+- Horizon + sun model (our `horizon.py` + ephemeris): compare the fraction of time with Sun above the local horizon (disc centre or any part) at 2 m and 10 m heights for a Connecting Ridge-like point against V1 (92.27% / 95.65%, 19 yr). Our ephemeris covers only 2026-12-01 to 2028-12-31, so a direct match is not possible: compare per-year behaviour or extend the pipeline run for validation only. Expect differences from DEM version (20 m vs ours) and the finite-disc definition.
+- Sanity checks that hold regardless of period: longest darkness at best sites a few days (V1, V3), best-site averages 69.5-88.0% (V2).
+- For IM-2 / Malapert / Haworth: sample V4 average illumination and Earth visibility rasters at the site point (primary data, not a published number) and compare against our values; the period mismatch (18.6 yr vs 2 yr) must be stated.
+
+### Gaps (not found)
+
+- Published illumination percent or horizon profile for IM-2 / Mons Mouton, Malapert Massif and Haworth: not found in the abstracts read. Full texts of V1, V2 (tables list the individual sites) and V3 were not read; they may hold per-site values. The Connecting Ridge coordinates are not given in the abstracts.
+- A slide deck found in search lists solar illumination and DTE visibility percentages for base-camp candidates (e.g. Shackleton-Slater) but it was not fetched and is a different study: NOT used.
