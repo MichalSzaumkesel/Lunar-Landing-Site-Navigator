@@ -1,6 +1,7 @@
 import { HOUR_MS } from '../../config/dataRange'
 import type { SkyEvent } from '../../lib/events'
 import type { ScenarioMetrics } from '../../lib/types'
+import type { WindowDetails } from './windowDetails'
 
 export interface SimpleStatusInput {
   sunVisible: boolean
@@ -10,6 +11,7 @@ export interface SimpleStatusInput {
   cursorMs: number
   durationH: number
   metrics: Pick<ScenarioMetrics, 'pct_sunlit' | 'longest_dark_h' | 'pct_earth' | 'longest_no_earth_h'>
+  details?: WindowDetails | null
   synthetic?: boolean
 }
 
@@ -30,9 +32,24 @@ export interface SimpleRow {
   child?: boolean
 }
 
+export interface SimpleDetailRow {
+  id: string
+  label: string
+  value: string
+  /** Plain definition for the title attribute. */
+  hint: string
+  child?: boolean
+}
+
+export interface SimpleDetailGroup {
+  title: string
+  rows: SimpleDetailRow[]
+}
+
 export interface SimpleStatus {
   blocks: [SimpleBlock, SimpleBlock]
   rows: SimpleRow[]
+  details: SimpleDetailGroup[]
   note: string | null
 }
 
@@ -121,6 +138,87 @@ function nextChange(
   return `It ${visible ? 'sets' : 'rises'} in ${formatCountdown(diffH)}.`
 }
 
+const NOT_AVAILABLE = 'Not available'
+
+/** Whole degrees ("12°"), or "Not available" for a missing value. */
+export function formatDegrees(deg: number | null | undefined): string {
+  if (deg == null || !Number.isFinite(deg)) return NOT_AVAILABLE
+  const r = Math.round(deg)
+  return `${Object.is(r, -0) ? 0 : r}°`
+}
+
+/** Whole percent ("37%"), or "Not available" for a missing value. */
+export function formatPercent(pct: number | null | undefined): string {
+  if (pct == null || !Number.isFinite(pct)) return NOT_AVAILABLE
+  return `${Math.round(Math.max(0, Math.min(100, pct)))}%`
+}
+
+/** Extra Sun-visible hours of a taller mast: "+12 hours", or "No difference". */
+export function formatMastGain(gainH: number): string {
+  const h = Math.round(Math.max(0, gainH))
+  if (h === 0) return 'No difference'
+  return `+${h} ${h === 1 ? 'hour' : 'hours'}`
+}
+
+/** The extra rows under the window summary, grouped Sun, Earth and Site; the mast row only with both heights. */
+export function detailGroups(d: WindowDetails | null | undefined): SimpleDetailGroup[] {
+  const sun: SimpleDetailRow[] = [
+    {
+      id: 'maxSun',
+      label: 'Highest Sun above the horizon',
+      value: formatDegrees(d?.maxSunElDeg),
+      hint: 'The highest the Sun centre climbs above the flat horizon line in this window.',
+    },
+    {
+      id: 'partSun',
+      label: 'Sun partly hidden by hills',
+      value: formatPercent(d?.sunPartlyHiddenPct),
+      hint: 'Share of the Sun visible time when hills cover part of the Sun disc.',
+      child: true,
+    },
+  ]
+  if (d && d.mastGainH != null && Number.isFinite(d.mastGainH)) {
+    sun.push({
+      id: 'mast',
+      label: 'Taller mast (10 m) adds',
+      value: formatMastGain(d.mastGainH),
+      hint: 'Extra hours of Sun visible when the observer stands 10 m above the ground instead of 2 m.',
+    })
+  }
+  return [
+    { title: 'Sun', rows: sun },
+    {
+      title: 'Earth',
+      rows: [
+        {
+          id: 'maxEarth',
+          label: 'Highest Earth above the horizon',
+          value: formatDegrees(d?.maxEarthElDeg),
+          hint: 'The highest the Earth centre climbs above the flat horizon line in this window.',
+        },
+        {
+          id: 'earthLit',
+          label: 'Earth lit (phase)',
+          value: formatPercent(d?.earthLitPct),
+          hint: 'Average share of the Earth disc lit by the Sun, as seen from this place. Approximate.',
+          child: true,
+        },
+      ],
+    },
+    {
+      title: 'Site',
+      rows: [
+        {
+          id: 'maxHill',
+          label: 'Highest hill on the horizon',
+          value: formatDegrees(d?.maxHillDeg),
+          hint: 'The highest point of the terrain skyline at this place, in degrees above the flat horizon.',
+        },
+      ],
+    },
+  ]
+}
+
 /**
  * Builds the Simple mode readout: a Sun block and an Earth block of the same shape, and three window rows.
  * Wording only says what is visible in the sky, never power or a communication link.
@@ -149,6 +247,7 @@ export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
       { id: 'earth', label: 'Earth in view', value: `${Math.round(input.metrics.pct_earth)}% of ${span}` },
       { id: 'noEarth', label: 'Longest without Earth', value: formatStretch(input.metrics.longest_no_earth_h), child: true },
     ],
+    details: detailGroups(input.details),
     note: input.synthetic ? 'This is demo data, not a measurement.' : null,
   }
 }
