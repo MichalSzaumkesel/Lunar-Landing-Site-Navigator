@@ -145,11 +145,20 @@
 .finder__month-tick {
   position: absolute;
   top: 3px;
+  height: 18px;
+  padding-left: 3px;
+  border-left: 1px solid var(--line);
   font-size: 0.75rem;
+  line-height: 18px;
   color: var(--muted);
   white-space: nowrap;
   pointer-events: none;
-  transform: translateX(-50%);
+}
+
+.finder__month-tick--minor {
+  top: 14px;
+  height: 7px;
+  padding: 0;
 }
 
 .finder__grid-body {
@@ -175,10 +184,17 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text);
-  white-space: nowrap;
+  line-height: 1.15;
   overflow: hidden;
-  text-overflow: ellipsis;
   border-bottom: 1px solid var(--line);
+}
+
+.finder__row-label > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .finder__row-label:last-child {
@@ -189,7 +205,7 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
+  overflow: hidden;
   cursor: crosshair;
 }
 

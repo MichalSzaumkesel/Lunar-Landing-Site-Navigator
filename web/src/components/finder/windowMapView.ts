@@ -260,35 +260,116 @@ export function formatRuleSummary(rules: MissionRules): string {
 
 export interface MonthTick {
   colIndex: number
-  label: string
-  pctX: number
+  /** Pixel offset of the month start along the axis. */
+  x: number
+  /** Null for a minor tick (mark only, no text). */
+  label: string | null
 }
 
+const LABEL_GAP_PX = 8
+const MIN_MONTH_SPACING_PX = 56
+const MONTH_STRIDES = [1, 2, 3, 6, 12] as const
+
 /**
- * Computes month tick positions for the top axis header.
+ * Month starts along a date axis, with labels thinned to fit the pixel width.
+ * Monthly labels need 56 px each; otherwise every 2, 3, 6 or 12 months (calendar-aligned).
+ * The year is printed on the first label and on each January; at 12-month stride labels are years.
+ * `charWidthPx` is a text width estimate per character (12 px system font).
  */
-export function getMonthTicks(startMs: number, stepMs: number, count: number): MonthTick[] {
-  if (count <= 0 || stepMs <= 0) {
+export function getMonthTicks(
+  startMs: number,
+  stepMs: number,
+  count: number,
+  widthPx: number,
+  charWidthPx = 7
+): MonthTick[] {
+  if (count <= 0 || stepMs <= 0 || widthPx <= 0) {
     return []
   }
 
-  const ticks: MonthTick[] = []
+  const starts: { colIndex: number; x: number; month: number; year: number }[] = []
   let lastMonth = -1
-
   for (let i = 0; i < count; i++) {
     const d = new Date(startMs + i * stepMs)
     const m = d.getUTCMonth()
     if (m !== lastMonth) {
       lastMonth = m
-      ticks.push({
-        colIndex: i,
-        label: `${UTC_MONTHS[m]} ${d.getUTCFullYear()}`,
-        pctX: (i / count) * 100,
-      })
+      starts.push({ colIndex: i, x: (i / count) * widthPx, month: m, year: d.getUTCFullYear() })
     }
   }
 
-  return ticks
+  function labelled(stride: number): MonthTick[] {
+    let first = true
+    return starts.map((t) => {
+      if (t.month % stride !== 0) return { colIndex: t.colIndex, x: t.x, label: null }
+      const withYear = first || t.month === 0
+      first = false
+      const label =
+        stride === 12 ? String(t.year) : withYear ? `${UTC_MONTHS[t.month]} ${t.year}` : UTC_MONTHS[t.month]
+      return { colIndex: t.colIndex, x: t.x, label }
+    })
+  }
+
+  function fits(ticks: MonthTick[], stride: number): boolean {
+    let prevEnd = -Infinity
+    let prevX = -Infinity
+    for (const t of ticks) {
+      if (t.label === null) continue
+      const end = t.x + t.label.length * charWidthPx
+      if (end > widthPx) return false
+      if (t.x < prevEnd + LABEL_GAP_PX) return false
+      if (stride === 1 && t.x - prevX < MIN_MONTH_SPACING_PX) return false
+      prevEnd = end
+      prevX = t.x
+    }
+    return true
+  }
+
+  for (const stride of MONTH_STRIDES) {
+    const ticks = labelled(stride)
+    if (fits(ticks, stride)) return ticks
+  }
+
+  // Too narrow even for years: keep only labels that fit, left to right.
+  let prevEnd = -Infinity
+  return labelled(12).map((t) => {
+    if (t.label === null) return t
+    const end = t.x + t.label.length * charWidthPx
+    if (end > widthPx || t.x < prevEnd + LABEL_GAP_PX) return { ...t, label: null }
+    prevEnd = end
+    return t
+  })
+}
+
+export const MIN_LABEL_COL_PX = 160
+export const MAX_LABEL_COL_PX = 280
+
+export interface GridGeometry {
+  labelWidth: number
+  canvasWidth: number
+  canvasHeight: number
+  colWidth: number
+}
+
+/**
+ * Grid layout from the container width: the label column takes about a fifth (160 to 280 px),
+ * the canvas takes the rest, so the grid always fills the container.
+ */
+export function gridGeometry(
+  containerWidth: number,
+  rowCount: number,
+  colCount: number,
+  rowHeight: number
+): GridGeometry {
+  const width = Math.max(0, containerWidth)
+  const labelWidth = Math.min(MAX_LABEL_COL_PX, Math.max(MIN_LABEL_COL_PX, Math.round(width * 0.2)))
+  const canvasWidth = Math.max(0, width - labelWidth)
+  return {
+    labelWidth,
+    canvasWidth,
+    canvasHeight: rowCount * rowHeight,
+    colWidth: colCount > 0 ? canvasWidth / colCount : 0,
+  }
 }
 
 /**
