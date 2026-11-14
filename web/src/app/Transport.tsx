@@ -20,7 +20,7 @@ function useNarrow(): boolean {
 }
 
 /** Global transport: Play/Pause, speed and a scrubber for the shared time cursor. */
-export function Transport({ tourAnchor = true }: { tourAnchor?: boolean } = {}) {
+export function Transport() {
   const playing = useAppStore((s) => s.playing)
   const togglePlaying = useAppStore((s) => s.togglePlaying)
   const speed = useAppStore((s) => s.speedHPerSec)
@@ -34,7 +34,7 @@ export function Transport({ tourAnchor = true }: { tourAnchor?: boolean } = {}) 
   const loopH = Math.min(...scenarios.map((s) => s.durationH))
 
   return (
-    <footer className="transport" data-tour={tourAnchor ? 'transport-play' : undefined}>
+    <footer className="transport" data-tour="transport-play">
       <button className="primary transport__play" onClick={togglePlaying} aria-label={playing ? 'Pause' : 'Play'}>
         {playing ? 'Pause' : 'Play'}
       </button>

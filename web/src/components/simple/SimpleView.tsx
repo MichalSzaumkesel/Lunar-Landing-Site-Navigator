@@ -127,7 +127,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               <SkyHelp centreText={centreText} view={view} />
               <FullscreenButton targetRef={wrapRef} onChange={setFullscreen} />
             </div>
-            {fullscreen && <Transport tourAnchor={false} />}
+            {fullscreen && <Transport />}
           </div>
         </div>
 
