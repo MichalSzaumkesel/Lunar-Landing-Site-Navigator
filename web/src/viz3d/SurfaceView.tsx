@@ -641,6 +641,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           <span className="group__label">Sun and Earth size</span>
           <input
             type="range"
+            aria-label="Sun and Earth size"
             min={SIZE_MIN}
             max={SIZE_MAX}
             step={SIZE_STEP}

@@ -264,6 +264,7 @@
 
 .tl__apply-btn {
   font-size: 0.8125rem;
+  min-height: 2.25rem;
 }
 
 .tl__release-check {
@@ -280,6 +281,8 @@
 
 .tl__release-check input {
   cursor: pointer;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 /* Mission bar in SVG */
