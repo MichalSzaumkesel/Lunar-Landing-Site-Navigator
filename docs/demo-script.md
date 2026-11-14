@@ -22,7 +22,7 @@ Guide for the live jury demo (2 minutes) and the 30-second video. Every number i
 | **0:15 - 0:35** | Click the preset **Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)**. Show the two scenario cards side by side. Point to the `Synthetic data` badges if they are shown. | "Jedno kliknięcie zestawia równik i biegun południowy w tym samym oknie czasowym. Odczytujemy z kart: [odczytaj na żywo wartości *Sun visible* i *Earth in view* z obu kart]." |
 | **0:35 - 0:55** | Press **Space** to play. Watch the polar card. Open the **Loupe** under the sky plot. Point to the **mission bar** on the timeline. | "Gdy grań terenu zasłania Słońce, stan zmienia się z *Sun visible* na *Sun below horizon*. Lupa pokazuje, jaka część tarczy jest odsłonięta. Pasek misji na osi czasu pokazuje na zielono spełnione reguły i na czerwono naruszoną regułę." |
 | **0:55 - 1:15** | Switch the polar card to the **3D** surface view. Click **Find sunniest spot**. | "Widok 3D pokazuje lokalny teren z cieniami liczonymi na żywo. Wyszukiwanie w tle przeszukuje wybrany promień i pokazuje punkt o największym nasłonecznieniu oraz różnicę względem pozycji wyjściowej." |
-| **1:15 - 1:30** | Click the preset **Same site, 14 days later**. Read the Sun visible difference from the cards. | "Co jeśli start się opóźni o dwa tygodnie? Przeliczamy wynik w przeglądarce, bez serwera: odczytujemy różnicę z obu kart." |
+| **1:15 - 1:30** | Click the preset **Same site, 14 days later**. Read the Sun visible values of both cards. | "Co jeśli start się opóźni o dwa tygodnie? Przeliczamy wynik w przeglądarce, bez serwera: odczytujemy *Sun visible* z obu kart." |
 | **1:30 - 1:45** | Open the **Window map** tab in the lower panel. Change one value in the **Mission rules** form, for example the stay length. | "Window map pokazuje, które lądowisko i które daty spełniają założenia misji. Zmiana reguły od razu aktualizuje matrycę." |
 | **1:45 - 2:00** | Switch to **Simple** mode. Click the share control to copy the link. End. | "Dla odbiorców nietechnicznych jest tryb Simple z podsumowaniami prostym językiem. Stan można udostępnić jako link. Dane syntetyczne są oznaczone, a aplikacja mówi *Sun visible* i *Earth in view*, bez obietnic o mocy czy łączności." |
 
@@ -30,14 +30,14 @@ Guide for the live jury demo (2 minutes) and the 30-second video. Every number i
 
 Use the **Demo** button, then the **Video 30 s** variant, and the **Record video** control in the narration bar. It saves a WebM file (`lunar-landing-navigator-demo.webm`) from the browser tab. Record in a window sized to 1920×1080.
 
-Captions are generated from the live data and end with `(demo data)` for synthetic sites.
+Captions are generated from the app's own data (the same values the cards show, in percent of the window, one decimal) and end with `(demo data)` only for synthetic sites. The narration-bar demo uses the same captions, plus a Sun visible and Earth in view comparison step. Figures in `docs/pitch.md` use a different window (2027-01, 14 days at the IM-2 site) and are not the ones shown by the default demo window (30 days from 2027-10-06); never quote one set as the other.
 
 | Time (s) | Shot / action | Caption (generated) | Voice-over |
 |---|---|---|---|
 | **0:00 - 0:06** | Apollo 11 vs South Pole preset; two cards side by side. | `Comparing <site A> and <site B> under identical dates. (demo data)` | "Dwa miejsca na Księżycu. Jedno pytanie: ile Słońca i widoczności Ziemi?" |
 | **0:06 - 0:13** | 3D surface view with the timeline running; shadows move with the Sun. | `Sun and Earth over the local horizon (demo data)` | "Teren i cienie liczone w przeglądarce, w czasie rzeczywistym." |
 | **0:13 - 0:19** | Timeline near sunset; loupe shows the clipped disc; countdown shown. | `<site>: Sun sets in <countdown>. (demo data)` | "Odliczanie do zachodu z uwzględnieniem tarczy Słońca." |
-| **0:19 - 0:25** | "Same site, 14 days later" preset; mission bar updates; Window map opened. | `Same site, 14 days later: Sun visible changes by <difference>. (demo data)` | "Przesunięcie terminu? Przeliczenie w ułamku sekundy." |
+| **0:19 - 0:25** | "Same site, 14 days later" preset; mission bar updates; Window map opened. | `Same site, 14 days later: Sun visible changes from <x> % to <y> %. (demo data)` | "Przesunięcie terminu? Przeliczenie w ułamku sekundy." |
 | **0:25 - 0:30** | Wide view of the interface and the closing card. | Closing caption from the demo end card (demo data) | "Lunar Landing Site Navigator, NASA Space Apps Challenge 2026." |
 
 ## Fallbacks

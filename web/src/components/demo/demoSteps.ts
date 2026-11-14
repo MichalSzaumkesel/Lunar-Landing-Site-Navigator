@@ -36,6 +36,11 @@ export function formatHoursWithUnit(hours: number): string {
   return Number.isInteger(norm) ? `${norm} h` : `${norm.toFixed(1)} h`
 }
 
+/** Formats a percentage taken from the app's own metrics, one decimal, e.g. "6.8 %". */
+export function formatPercent(pct: number): string {
+  return `${pct.toFixed(1)} %`
+}
+
 /** Finds cursor offset in hours from window start to the first sunset event. */
 export function findFirstSunsetH(
   scenario?: Scenario,
@@ -51,7 +56,7 @@ export function findFirstSunsetH(
 /** Step 1 caption: names both sites from the scenario data. */
 export function formatStep1Caption(ctx: DemoStepContext): string {
   const site1 = ctx.bundles[0]?.site.name ?? ctx.scenarios[0]?.siteId ?? 'Apollo 11'
-  const site2 = ctx.bundles[1]?.site.name ?? ctx.scenarios[1]?.siteId ?? 'Artemis region'
+  const site2 = ctx.bundles[1]?.site.name ?? ctx.scenarios[1]?.siteId ?? 'Artemis candidate region'
   return appendDemoDataNotice(
     `Comparing ${site1} and ${site2} under identical dates.`,
     ctx.isSynthetic,
@@ -65,7 +70,7 @@ export function formatStep2Caption(ctx: DemoStepContext): string {
 
 /** Step 3 caption: states the hours until sunset from countdown logic. */
 export function formatStep3Caption(ctx: DemoStepContext): string {
-  const siteName = ctx.bundles[1]?.site.name ?? ctx.scenarios[1]?.siteId ?? 'Artemis region'
+  const siteName = ctx.bundles[1]?.site.name ?? ctx.scenarios[1]?.siteId ?? 'Artemis candidate region'
   const scenario = ctx.scenarios[1]
   const events = ctx.events[1]
 
@@ -81,10 +86,10 @@ export function formatStep3Caption(ctx: DemoStepContext): string {
     return appendDemoDataNotice(`${siteName}: No sunset in selected window.`, ctx.isSynthetic)
   }
 
-  return appendDemoDataNotice(`${siteName}: Sunset time calculating...`, ctx.isSynthetic)
+  return appendDemoDataNotice(`${siteName}: No sunset data for this window.`, ctx.isSynthetic)
 }
 
-/** Step 4 caption: metrics difference between the two cards. */
+/** Step 4 caption: Sun visible and Earth in view of the two cards, as shown on them. */
 export function formatStep4Caption(
   scenarios: readonly Scenario[],
   metrics: readonly (ScenarioMetrics | null)[],
@@ -99,21 +104,13 @@ export function formatStep4Caption(
     return appendDemoDataNotice('Metrics unavailable for selected date range.', isSynthetic)
   }
 
-  const sunH1 = (m1.pct_sunlit / 100) * s1.durationH
-  const sunH2 = (m2.pct_sunlit / 100) * s2.durationH
-  const sunDiff = Math.abs(sunH1 - sunH2)
-
-  const earthH1 = (m1.pct_earth / 100) * s1.durationH
-  const earthH2 = (m2.pct_earth / 100) * s2.durationH
-  const earthDiff = Math.abs(earthH1 - earthH2)
-
   return appendDemoDataNotice(
-    `Sun visible: ${formatHoursWithUnit(sunH1)} vs ${formatHoursWithUnit(sunH2)} (${formatHoursWithUnit(sunDiff)} diff); Earth in view: ${formatHoursWithUnit(earthH1)} vs ${formatHoursWithUnit(earthH2)} (${formatHoursWithUnit(earthDiff)} diff).`,
+    `Sun visible: ${formatPercent(m1.pct_sunlit)} vs ${formatPercent(m2.pct_sunlit)}; Earth in view: ${formatPercent(m1.pct_earth)} vs ${formatPercent(m2.pct_earth)}.`,
     isSynthetic,
   )
 }
 
-/** Step 5 caption: change in Sun-visible hours from the slip preset. */
+/** Step 5 caption: Sun visible before and after the 14-day slip. */
 export function formatStep5Caption(
   scenarios: readonly Scenario[],
   metrics: readonly (ScenarioMetrics | null)[],
@@ -128,14 +125,8 @@ export function formatStep5Caption(
     return appendDemoDataNotice('Metrics unavailable for selected date range.', isSynthetic)
   }
 
-  const sunH1 = (m1.pct_sunlit / 100) * s1.durationH
-  const sunH2 = (m2.pct_sunlit / 100) * s2.durationH
-  const delta = sunH2 - sunH1
-  const sign = delta > 0 ? '+' : delta < 0 ? '−' : ''
-  const absDelta = Math.abs(delta)
-
   return appendDemoDataNotice(
-    `Same site, 14 days later: Sun visible changes by ${sign}${formatHoursWithUnit(absDelta)} (${formatHoursWithUnit(sunH1)} vs ${formatHoursWithUnit(sunH2)}).`,
+    `Same site, 14 days later: Sun visible changes from ${formatPercent(m1.pct_sunlit)} to ${formatPercent(m2.pct_sunlit)}.`,
     isSynthetic,
   )
 }

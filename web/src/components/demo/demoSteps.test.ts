@@ -9,6 +9,7 @@ import {
   formatStep1Caption,
   formatStep2Caption,
   formatStep3Caption,
+  formatPercent,
   formatStep4Caption,
   formatStep5Caption,
   formatStep6Caption,
@@ -155,14 +156,8 @@ describe('demoSteps', () => {
 
       const caption = formatStep4Caption(scenarios, [m1, m2], false)
 
-      // Expected exact computed numbers:
-      // Sun visible: 120 h vs 60 h (diff: 60 h)
-      // Earth in view: 150 h vs 50 h (diff: 100 h)
-      expect(caption).toContain('120 h')
-      expect(caption).toContain('60 h')
-      expect(caption).toContain('150 h')
-      expect(caption).toContain('50 h')
-      expect(caption).toContain('100 h')
+      expect(caption).toContain('Sun visible: 60.0 % vs 30.0 %')
+      expect(caption).toContain('Earth in view: 75.0 % vs 25.0 %')
       expect(caption).toContain('Sun visible')
       expect(caption).toContain('Earth in view')
       expect(caption).not.toMatch(FORBIDDEN_WORDS)
@@ -181,10 +176,7 @@ describe('demoSteps', () => {
 
       const caption = formatStep5Caption(scenarios, [m1, m2], false)
 
-      // Delta: 65 - 45 = +20 h
-      expect(caption).toContain('+20 h')
-      expect(caption).toContain('45 h')
-      expect(caption).toContain('65 h')
+      expect(caption).toContain('from 45.0 % to 65.0 %')
       expect(caption).toContain('Sun visible')
       expect(caption).not.toMatch(FORBIDDEN_WORDS)
     })
@@ -306,7 +298,7 @@ describe('demoSteps', () => {
         isSynthetic: false,
       }
       const caption = formatStep3Caption(ctx)
-      expect(caption).toContain('Sunset time calculating...')
+      expect(caption).toContain('No sunset data for this window.')
       expect(caption).not.toContain('18 h')
     })
 
@@ -327,6 +319,11 @@ describe('demoSteps', () => {
       expect(formatHoursWithUnit(24)).toBe('24 h')
       expect(formatHoursWithUnit(24.5)).toBe('24.5 h')
       expect(formatHoursWithUnit(-0)).toBe('0 h')
+    })
+
+    it('formatPercent uses one decimal and a space before the sign', () => {
+      expect(formatPercent(6.8)).toBe('6.8 %')
+      expect(formatPercent(94)).toBe('94.0 %')
     })
   })
 })
