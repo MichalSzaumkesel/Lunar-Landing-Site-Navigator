@@ -1,8 +1,12 @@
 # Status B (Web App & Demo)
 
-Lead: Claude (Opus). Last update: 2026-11-14 02:15 CET. **Nothing is committed yet** (human's instruction: the event starts officially at 09:00 on 2026-11-14).
+Lead: Claude (Opus). Last update: 2026-11-14 09:10 CET. First push done at 09:03.
 
-Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private, owner is the scope A human, B's human has push but not admin access). It is empty: no commits and no `main` yet, so `git show origin/main:CRITICAL.md` fails until someone pushes. The local `CRITICAL.md` has no notices. Nothing has been pushed from here.
+Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private, owner is the scope A human, B human has push but not admin access). `CRITICAL.md` has no notices.
+
+## Status 09:10
+
+The web app runs end to end on three synthetic mock sites: sky plot, panorama, loupe, timeline with Play, countdowns, metrics, up to 4 cards, slip slider, Moon map, site library, window map, 3D view, Simple/Advanced modes with a tutorial, demo mode, share link, CSV and PNG export. 553 tests, typecheck, lint and the production build pass locally and on GitHub Actions (Linux). `main` has the shared set plus the merged scaffold (PR 1) and a lockfile fix (PR 2). **Deploy is not live:** the Pages step of the Deploy web workflow fails because GitHub Pages is not enabled on the repo. Enabling it needs the repo owner (Settings, Pages, Source: GitHub Actions), and private repos need a paid plan. Alternative: Vercel. Waiting for scope A: real data for apollo_11, a south pole site and an Artemis III region.
 
 ## Tasks
 
