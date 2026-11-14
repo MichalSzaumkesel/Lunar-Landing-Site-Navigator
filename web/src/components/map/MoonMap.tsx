@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, type FC, type KeyboardEvent, type MouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FC, type KeyboardEvent, type MouseEvent } from 'react'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay, round1 } from './coords'
 import { renderMarkerGlyph } from './markerGlyphs'
 import './map.css'
+import { PoleMap } from './PoleMap'
+import { renderShading, SHADE_H, SHADE_W } from './shadingRaster'
+import { useBasemap } from './useBasemap'
 import {
   equirectangularProject,
   equirectangularUnproject,
@@ -54,6 +57,20 @@ function getCategoryColorVar(category: Site['category']): string {
   }
 }
 
+function BasemapCredit({ info }: { info: { credit: string; creditUrl: string | null } }) {
+  return (
+    <div className="map-credit">
+      {info.creditUrl ? (
+        <a href={info.creditUrl} target="_blank" rel="noreferrer">
+          {info.credit}
+        </a>
+      ) : (
+        info.credit
+      )}
+    </div>
+  )
+}
+
 export const MoonMap: FC<MoonMapProps> = ({
   sites,
   selectedSiteIds,
@@ -68,6 +85,19 @@ export const MoonMap: FC<MoonMapProps> = ({
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const imgDataRef = useRef<ImageData | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
+  const globalBasemap = useBasemap('global')
+  const poleBasemap = useBasemap('southpole')
+  const activeIsPolar = useMemo(
+    () => (sites.find((s) => s.id === activeSiteId)?.lat_deg ?? 0) <= -80,
+    [sites, activeSiteId],
+  )
+  const [view, setView] = useState<'global' | 'pole'>(activeIsPolar ? 'pole' : 'global')
+  const [lastPolar, setLastPolar] = useState(activeIsPolar)
+  // Follow the active site: a polar site opens the south-pole map, any other site the global map
+  if (lastPolar !== activeIsPolar) {
+    setLastPolar(activeIsPolar)
+    setView(activeIsPolar ? 'pole' : 'global')
+  }
 
   // Redraw canvas shading only when shading changes, reusing one ImageData and canvas context
   useEffect(() => {
@@ -84,48 +114,17 @@ export const MoonMap: FC<MoonMapProps> = ({
       return
     }
 
-    const { sunElevation, earthElevation, nLat, nLon } = shading
-    if (canvas.width !== nLon || canvas.height !== nLat) {
-      canvas.width = nLon
-      canvas.height = nLat
+    if (canvas.width !== SHADE_W || canvas.height !== SHADE_H) {
+      canvas.width = SHADE_W
+      canvas.height = SHADE_H
       imgDataRef.current = null
     }
-
     let imgData = imgDataRef.current
-    if (!imgData || imgData.width !== nLon || imgData.height !== nLat) {
-      imgData = ctx.createImageData(nLon, nLat)
+    if (!imgData) {
+      imgData = ctx.createImageData(SHADE_W, SHADE_H)
       imgDataRef.current = imgData
     }
-    const data = imgData.data
-
-    for (let y = 0; y < nLat; y++) {
-      for (let x = 0; x < nLon; x++) {
-        const idx = y * nLon + x
-        const p = idx * 4
-        const sunEl = sunElevation[idx]
-        const earthEl = earthElevation[idx]
-
-        const isNight = sunEl < 0
-        const isNoEarth = earthEl < 0
-
-        if (isNight) {
-          // Night: dark translucent overlay
-          data[p] = 5
-          data[p + 1] = 8
-          data[p + 2] = 16
-          data[p + 3] = 175
-        }
-
-        if (isNoEarth) {
-          // Subtle blue tint, stronger over the night shading so it stays readable
-          data[p] = isNight ? 40 : 80
-          data[p + 1] = isNight ? 80 : 150
-          data[p + 2] = isNight ? 150 : 235
-          data[p + 3] = isNight ? 190 : 45
-        }
-      }
-    }
-
+    renderShading(imgData.data, shading.sunElevation, shading.earthElevation, shading.nLat, shading.nLon)
     ctx.putImageData(imgData, 0, 0)
   }, [shading])
 
@@ -294,16 +293,42 @@ export const MoonMap: FC<MoonMapProps> = ({
 
   return (
     <div className={`moon-map-viewport ${pickMode ? 'moon-map-viewport--picking' : ''}`}>
+      <div className="map-viewswitch" role="group" aria-label="Map view">
+        <button type="button" aria-pressed={view === 'global'} onClick={() => setView('global')}>
+          Global
+        </button>
+        <button type="button" aria-pressed={view === 'pole'} onClick={() => setView('pole')}>
+          South pole
+        </button>
+      </div>
+      {view === 'pole' && (
+        <PoleMap
+          sites={sites}
+          selectedSiteIds={selectedSiteIds}
+          activeSiteId={activeSiteId}
+          pickMode={pickMode}
+          basemap={poleBasemap}
+          onSelectSite={onSelectSite}
+          onPickPoint={onPickPoint}
+        />
+      )}
+      {view === 'pole' && poleBasemap?.credit && <BasemapCredit info={poleBasemap} />}
+      {view === 'global' && globalBasemap && (
+        <img className="moon-map-basemap" src={globalBasemap.imageUrl} alt="" aria-hidden="true" draggable={false} />
+      )}
+      {view === 'global' && globalBasemap?.credit && <BasemapCredit info={globalBasemap} />}
       <canvas
         ref={canvasRef}
         className="moon-map-canvas"
         aria-hidden="true"
-        width={shading?.nLon ?? 90}
-        height={shading?.nLat ?? 45}
+        width={SHADE_W}
+        height={SHADE_H}
+        hidden={view !== 'global'}
       />
       <svg
         ref={svgRef}
         className="moon-map-svg"
+        style={view !== 'global' ? { display: 'none' } : undefined}
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         onClick={handleSvgClick}
         role="region"
