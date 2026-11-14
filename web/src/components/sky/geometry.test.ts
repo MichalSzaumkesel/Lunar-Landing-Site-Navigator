@@ -250,3 +250,13 @@ describe('fmtNum', () => {
     expect(fmtNum(0, 1, true)).toBe('0.0')
   })
 })
+
+describe('sky zoom text', () => {
+  it('names the centre elevation from the actual zoom', async () => {
+    const { skyZoomLabel, skyCentreText } = await import('./geometry')
+    expect(skyZoomLabel(20)).toBe('Zoom: centre = 20° elevation')
+    expect(skyZoomLabel(90)).toContain('straight up')
+    expect(skyCentreText(20)).toContain('20°')
+    expect(skyCentreText(90)).toBe('straight up')
+  })
+})

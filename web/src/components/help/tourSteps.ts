@@ -91,7 +91,7 @@ export const advancedSteps: TourStep[] = [
     id: 'view-tabs',
     target: '[data-tour="view-tabs"]',
     title: 'Views',
-    text: 'Polar: the sky seen from above, centre is straight up, rim is the horizon. Panorama: the horizon unrolled. 3D: the terrain with moving shadows.',
+    text: 'Polar: the sky seen from above, rim is the horizon and the centre is the elevation named in the Zoom label under the plot (straight up only at 90°). Panorama: the horizon unrolled. 3D: the terrain with moving shadows.',
     placement: 'bottom',
   },
   {

@@ -3,7 +3,7 @@ import { clampStartUtc, dateInputBounds, nextEventAfter, splitEvents } from '../
 import { DataBadges } from '../badges/DataBadges'
 import { ShareButton } from '../share/ShareButton'
 import { SkyPlot } from '../sky/SkyPlot'
-import { describeBody, pickMask } from '../sky/geometry'
+import { chooseSkyZoom, describeBody, pickMask, skyCentreText } from '../sky/geometry'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { useScenarioEvents } from '../../lib/useScenarioEvents'
 import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
@@ -45,6 +45,11 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const cursorMs = scenario ? scenarioCursorMs(scenario, cursorH) : 0
   const split = useMemo(() => (events ? splitEvents(events) : null), [events])
   const mask = useMemo(() => (bundle ? pickMask(bundle, heightM) : null), [bundle, heightM])
+
+  const centreText = useMemo(
+    () => skyCentreText(bundle ? chooseSkyZoom(bundle, heightM, startMs, endMs) : 90),
+    [bundle, heightM, startMs, endMs],
+  )
 
   const durationH = scenario?.durationH ?? 0
   const readout = useMemo(() => {
@@ -95,7 +100,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
           </div>
           <div className="simple-legend" aria-label="Sky plot legend">
             <p className="simple-legend__text">
-              Sky seen from the ground. Gold circle: the Sun. Blue circle: the Earth. Grey: hills that block the sky. Centre: straight up. Edge: the horizon.
+              Sky seen from the ground. Gold circle: the Sun. Blue circle: the Earth. Grey: hills that block the sky. Centre: {centreText}. Edge: the horizon.
             </p>
           </div>
         </div>
