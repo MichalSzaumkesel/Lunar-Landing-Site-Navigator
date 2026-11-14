@@ -34,6 +34,9 @@ import type { OffsetM } from './landerHelpers'
 import { createKeyMotion } from './keyMotion'
 import type { KeyMotion } from './keyMotion'
 import { MOVE_MS } from './tween'
+import { lockReducer } from './cameraLock'
+import type { LockBody, LockState } from './cameraLock'
+import { LockButton } from './LockButton'
 
 /** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
 const LANDER_M_PER_S = 400
@@ -79,7 +82,8 @@ function simpleSunText(visible: boolean, el: number): string {
   return el < 0 ? 'Sun below the horizon' : 'Sun hidden behind hills'
 }
 
-function faceTitle(body: 'Sun' | 'Earth', mode: ViewMode, hasSample: boolean): string {
+function faceTitle(body: 'Sun' | 'Earth' | 'lander', mode: ViewMode, hasSample: boolean): string {
+  if (body === 'lander') return mode === 'overview' ? 'Centre the camera on the lander' : 'On the surface the camera is already at the lander'
   if (!hasSample) return `${body} direction is not available at this time`
   if (mode === 'overview') return `Orbit the camera to look towards the ${body}`
   return `Turn the camera towards the ${body}`
@@ -116,6 +120,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   const [sizeScale, setSizeScale] = useState(SIZE_MIN)
   const [showCredits, setShowCredits] = useState(false)
   const [facing, setFacing] = useState<'sun' | 'earth' | null>(null)
+  const [locked, setLocked] = useState<LockState>(null)
 
   // Lander movement and what-if state (local only, not in global store)
   const [landerOffset, setLanderOffset] = useState<OffsetM>({ eastM: 0, northM: 0 })
@@ -335,6 +340,50 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
     }
     setFacing(body)
     void scene.faceBody(faceTarget(pos.az, pos.el, horizonAt(mask, azStepDeg, pos.az)))
+  }
+  const lockBody = (body: LockBody) => {
+    if (!scene) return
+    setLocked((s) => lockReducer(s, { type: 'lock', body }))
+    if (body === 'lander') {
+      setFacing(null)
+      scene.centerOnLander(true)
+      return
+    }
+    const pos = body === 'sun' ? sample?.sun : sample?.earth
+    if (!pos) return
+    setFacing(mode === 'surface' ? body : null)
+    scene.lockOnDirection(pos.az, pos.el)
+  }
+  const unlock = () => {
+    scene?.clearLock()
+    setLocked(null)
+  }
+  const faceLander = () => {
+    setLocked(null)
+    scene?.centerOnLander(false)
+  }
+  useEffect(() => {
+    scene?.setOnLockBreak(() => setLocked(null))
+    return () => scene?.setOnLockBreak(null)
+  }, [scene])
+  useEffect(() => {
+    if (locked !== 'sun' && locked !== 'earth') return
+    const pos = locked === 'sun' ? sample?.sun : sample?.earth
+    if (pos) scene?.updateLockDirection(pos.az, pos.el)
+  }, [scene, locked, sample])
+  useEffect(() => {
+    if (!locked) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      scene?.clearLock()
+      setLocked(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [scene, locked])
+  const switchMode = (next: ViewMode) => {
+    setMode(next)
+    if (next === 'surface' && locked === 'lander') unlock()
   }
   const facingPos = facing === 'sun' ? sample?.sun : facing === 'earth' ? sample?.earth : null
   const facingTarget = facingPos
@@ -723,9 +772,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
           <button
             type="button"
             aria-pressed={mode === 'surface'}
-            onClick={() => {
-              setMode('surface')
-            }}
+            onClick={() => switchMode('surface')}
           >
             On the surface
           </button>
@@ -733,29 +780,52 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             type="button"
             aria-pressed={mode === 'overview'}
             onClick={() => {
-              setMode('overview')
+              switchMode('overview')
               setFacing(null)
             }}
           >
             Overview
           </button>
         </div>
-        <button
-          type="button"
+        <LockButton
+          body="sun"
           disabled={!sample}
           title={faceTitle('Sun', mode, Boolean(sample))}
-          onClick={() => faceBody('sun')}
+          locked={locked === 'sun'}
+          onClick={() => {
+            setLocked(null)
+            faceBody('sun')
+          }}
+          onLock={() => lockBody('sun')}
+          onUnlock={unlock}
         >
           Face the Sun
-        </button>
-        <button
-          type="button"
+        </LockButton>
+        <LockButton
+          body="earth"
           disabled={!sample}
           title={faceTitle('Earth', mode, Boolean(sample))}
-          onClick={() => faceBody('earth')}
+          locked={locked === 'earth'}
+          onClick={() => {
+            setLocked(null)
+            faceBody('earth')
+          }}
+          onLock={() => lockBody('earth')}
+          onUnlock={unlock}
         >
           Face the Earth
-        </button>
+        </LockButton>
+        <LockButton
+          body="lander"
+          disabled={mode !== 'overview'}
+          title={faceTitle('lander', mode, true)}
+          locked={locked === 'lander'}
+          onClick={faceLander}
+          onLock={() => lockBody('lander')}
+          onUnlock={unlock}
+        >
+          Face the lander
+        </LockButton>
         {!simple && (
           <>
         <label className="group">
