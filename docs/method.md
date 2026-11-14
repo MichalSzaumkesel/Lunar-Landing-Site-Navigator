@@ -34,3 +34,6 @@ For each site we cast 720 rays (0.5 deg apart) over a 100 km range (150 km at th
 
 ## Wording rule
 We say **"Sun visible"** and **"Earth in view"**. We never say "power available" or "link available". Seeing the Sun does not guarantee power (panel angle, dust, temperature, terrain shadows below our resolution), and seeing Earth does not guarantee a link (antenna, schedule, ground station).
+
+## Local illumination heatmap (`illum/southpole_landed.json`, approximate)
+A 21 x 21 grid, 200 m spacing (+-2 km), observer 2 m, 2026-12 to 2028-12. Each point gets its own horizon from LDEM_80S_20M (150 km). The Sun direction comes from the site's ephemeris, transported as a body-fixed vector into each point's local frame; reusing the site's az/el would be off by up to 0.72 deg at the corners. The lander's own shadow is not modelled; the file is marked `approximate`. Row 0 is north, column 0 is west. Centre 45.1 % Sun visible (equals the site value); 0 to 51.7 % over the grid, 21.9 to 51.1 % within +-1 km. PGDA's 120 m map shows 31.8 to 51.4 % in its ~1 km neighbourhood: consistent.
