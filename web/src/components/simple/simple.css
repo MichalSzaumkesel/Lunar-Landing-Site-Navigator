@@ -413,7 +413,7 @@
 .simple-status {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 12px);
+  gap: var(--space-2, 8px);
 }
 
 .simple-block {
@@ -472,31 +472,38 @@
   color: var(--muted);
 }
 
-.simple-groups {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 12px);
-}
-
-/* One tree per body: accent bar in the body colour, parent row, then children. */
+/* One panel per body: status block on top, divider, then its metric tree; accent bar spans the panel. */
 .simple-group {
   --body-color: var(--sun);
-  padding-top: var(--space-3, 12px);
-  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--body-color);
+  border-radius: var(--radius, 10px);
+  overflow: hidden;
+  animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
 }
 
 .simple-group--earth {
   --body-color: var(--earth);
 }
 
+.simple-group .simple-block {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  animation: none;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+}
+
 .simple-tree {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 4px);
+  gap: 2px;
   margin: 0;
-  padding-left: var(--space-3, 12px);
-  border-left: 3px solid var(--body-color);
-  border-radius: 1px;
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  border-top: 1px solid var(--line);
 }
 
 .simple-row {
@@ -529,6 +536,7 @@
 
 .simple-row--child {
   padding-left: var(--space-3, 12px);
+  min-height: 2rem;
 }
 
 /* Corner arrow drawn with borders, no glyph that could render as tofu */

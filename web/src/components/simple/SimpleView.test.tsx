@@ -200,6 +200,9 @@ describe('SimpleView component', () => {
     expect(groups[0].querySelectorAll('.simple-row:not(.simple-row--child)')).toHaveLength(1)
     expect(groups[1].querySelectorAll('.simple-row:not(.simple-row--child)')).toHaveLength(1)
     expect(groups[1].querySelectorAll('.simple-row--child')).toHaveLength(2)
+    // Each tree sits inside its own panel, right after its status block.
+    groups.forEach((g, i) => expect(g.querySelector('.simple-block')?.classList.contains(i === 0 ? 'simple-block--sun' : 'simple-block--earth')).toBe(true))
+    expect(groups[0].querySelector('.simple-row dt')?.textContent).toBe('Sun visible over the window')
     container.querySelectorAll('.simple-group .simple-row').forEach((r) => expect(r.getAttribute('title')).toBeTruthy())
     expect(container.textContent).not.toContain('Highest hill')
     expect(container.textContent).not.toContain('Taller mast')

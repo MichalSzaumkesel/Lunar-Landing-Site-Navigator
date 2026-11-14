@@ -178,39 +178,35 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
           {readout && readout !== 'outside' && (
             <div className="simple-summary" data-tour="simple-summary" aria-label="Summary">
               <div className="simple-status" role="status" aria-label="Sun and Earth now">
-                {readout.blocks.map((block) => (
-                  <section
-                    key={block.id}
-                    className={`simple-block simple-block--${block.id} ${block.on ? 'simple-block--on' : 'simple-block--off'}`}
-                  >
-                    <span className="simple-block__dot" aria-hidden="true" />
-                    <div className="simple-block__text">
-                      <p className="simple-block__headline">{block.headline}</p>
-                      <p className="simple-block__detail">{block.detail}</p>
-                    </div>
-                  </section>
-                ))}
-              </div>
-              <div className="simple-groups">
-                {readout.groups.map((group) => (
-                  <section
-                    key={group.id}
-                    className={`simple-group simple-group--${group.id}`}
-                    aria-label={`${group.title} over the whole window`}
-                  >
-                    <dl className="simple-tree">
-                      {group.rows.map((row) => (
-                        <div key={row.id} className={row.child ? 'simple-row simple-row--child' : 'simple-row'} title={row.hint}>
-                          <dt>
-                            {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
-                            {row.label}
-                          </dt>
-                          <dd>{row.value}</dd>
+                {readout.blocks.map((block, i) => {
+                  const group = readout.groups[i]
+                  return (
+                    <section
+                      key={block.id}
+                      className={`simple-group simple-group--${block.id} ${block.on ? 'simple-block--on' : 'simple-block--off'}`}
+                      aria-label={`${group.title} now and over the whole window`}
+                    >
+                      <div className={`simple-block simple-block--${block.id}`}>
+                        <span className="simple-block__dot" aria-hidden="true" />
+                        <div className="simple-block__text">
+                          <p className="simple-block__headline">{block.headline}</p>
+                          <p className="simple-block__detail">{block.detail}</p>
                         </div>
-                      ))}
-                    </dl>
-                  </section>
-                ))}
+                      </div>
+                      <dl className="simple-tree">
+                        {group.rows.map((row) => (
+                          <div key={row.id} className={row.child ? 'simple-row simple-row--child' : 'simple-row'} title={row.hint}>
+                            <dt>
+                              {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
+                              {row.label}
+                            </dt>
+                            <dd>{row.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  )
+                })}
               </div>
               {readout.note && <p className="simple-summary__note">{readout.note}</p>}
             </div>
