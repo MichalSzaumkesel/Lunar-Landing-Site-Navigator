@@ -125,7 +125,7 @@
 
 .map-graticule-label {
   fill: var(--muted);
-  font-size: 12px;
+  font-size: var(--fs-tick, 11px);
   font-family: var(--font);
   user-select: none;
   pointer-events: none;
@@ -200,7 +200,7 @@
 
 .polar-inset-label {
   fill: var(--muted);
-  font-size: 12px;
+  font-size: var(--fs-label, 12px);
   font-weight: 600;
   pointer-events: none;
   user-select: none;
@@ -445,10 +445,11 @@
 .pole-map__scale-label,
 .pole-map__site-label {
   fill: #e6ebf7;
+  font-size: var(--fs-label, 12px);
   font-family: var(--font);
   paint-order: stroke;
   stroke: rgba(7, 9, 15, 0.85);
-  stroke-width: 3px;
+  stroke-width: var(--fs-halo, 3px);
   stroke-linejoin: round;
   pointer-events: none;
 }

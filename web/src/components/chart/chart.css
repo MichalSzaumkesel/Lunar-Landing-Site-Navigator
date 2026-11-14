@@ -163,7 +163,7 @@
 
 .chart__axis-text {
   fill: var(--muted, #a3afc7);
-  font-size: 11px;
+  font-size: var(--fs-tick, 11px);
   font-family: var(--font, system-ui);
 }
 
@@ -175,7 +175,7 @@
 
 .chart__zero-label {
   fill: var(--muted, #a3afc7);
-  font-size: 11px;
+  font-size: var(--fs-label, 12px);
   font-weight: 600;
   font-family: var(--font, system-ui);
 }

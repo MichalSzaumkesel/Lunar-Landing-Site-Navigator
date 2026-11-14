@@ -21,7 +21,7 @@
 
 .tl__label {
   fill: var(--text);
-  font: 600 13px var(--font);
+  font: 600 var(--svg-fs-label) var(--font);
   dominant-baseline: central;
 }
 
@@ -55,7 +55,7 @@
 
 .tl__nodata-label {
   fill: var(--text);
-  font: 600 12px var(--font);
+  font: 600 var(--svg-fs-label) var(--font);
   dominant-baseline: central;
   paint-order: stroke;
   stroke: var(--panel-2);
@@ -74,7 +74,7 @@
 
 .tl__tick {
   fill: var(--muted);
-  font: 12px var(--font);
+  font: var(--svg-fs-tick) var(--font);
 }
 
 .tl__cursor line {
@@ -319,7 +319,7 @@
 }
 
 .tl__bar-label {
-  font: 600 12px var(--font);
+  font: 600 var(--svg-fs-label) var(--font);
   paint-order: stroke;
   stroke: var(--panel-2);
   stroke-width: 3px;

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useMemo,
   useRef,
   useState,
@@ -7,6 +8,7 @@ import {
   type ReactElement,
 } from 'react'
 import { line, scaleLinear } from 'd3'
+import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import { useHeldCursorKeys } from '../../lib/useHeldCursorKeys'
 import type { ObserverHeightM, SiteBundle } from '../../lib/types'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
@@ -55,6 +57,14 @@ export function ElevationLineChart({
   onSeek,
 }: ElevationLineChartProps): ReactElement {
   const svgRef = useRef<SVGSVGElement | null>(null)
+  const scaleRef = useSvgTextScale()
+  const setSvg = useCallback(
+    (el: SVGSVGElement | null) => {
+      svgRef.current = el
+      scaleRef(el)
+    },
+    [scaleRef],
+  )
 
   // X scale mapping relative hours to SVG coordinates
   const xScale = useMemo(() => {
@@ -178,8 +188,8 @@ export function ElevationLineChart({
 
   return (
     <svg
-      ref={svgRef}
-      className={`elevation-chart-svg ${playing ? 'is-playing' : ''}`}
+      ref={setSvg}
+      className={`elevation-chart-svg svg-scaled ${playing ? 'is-playing' : ''}`}
       viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
       preserveAspectRatio="xMidYMid meet"
       role="slider"

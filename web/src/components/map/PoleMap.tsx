@@ -9,6 +9,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from 'react'
+import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay } from './coords'
 import { renderMarkerGlyph } from './markerGlyphs'
@@ -187,6 +188,14 @@ export const PoleMap: FC<PoleMapProps> = ({
   const x0 = view.cx - w / 2
   const y0 = -view.cy - h / 2
   const s = w / BASE_W // metres per reference px (markers, text)
+  const scaleRef = useSvgTextScale(s)
+  const setSvg = useCallback(
+    (el: SVGSVGElement | null) => {
+      svgRef.current = el
+      scaleRef(el)
+    },
+    [scaleRef],
+  )
 
   const toProjected = useCallback((clientX: number, clientY: number) => {
     const svg = svgRef.current
@@ -312,8 +321,8 @@ export const PoleMap: FC<PoleMapProps> = ({
   return (
     <div className="pole-map">
       <svg
-        ref={svgRef}
-        className="pole-map__svg"
+        ref={setSvg}
+        className="pole-map__svg svg-scaled"
         viewBox={`${x0} ${y0} ${w} ${h}`}
         preserveAspectRatio="xMidYMid meet"
         onClick={handleSvgClick}
@@ -384,7 +393,7 @@ export const PoleMap: FC<PoleMapProps> = ({
             <g key={`c-${lat}`}>
               <circle cx={0} cy={0} r={rho(lat)} vectorEffect="non-scaling-stroke" className="pole-map__grid-line" />
               <g transform={`translate(0 ${-rho(lat)}) scale(${s})`}>
-                <text x={0} y={-3} textAnchor="middle" fontSize={11} className="pole-map__label">
+                <text x={0} y={-3} textAnchor="middle" className="pole-map__label">
                   {Math.abs(lat)}°S
                 </text>
               </g>
@@ -428,7 +437,7 @@ export const PoleMap: FC<PoleMapProps> = ({
                 )}
                 {renderMarkerGlyph({ category: site.category, cx: 0, cy: 0, color, isActive })}
                 {isActive && (
-                  <text x={11} y={4} fontSize={11} className="pole-map__site-label">
+                  <text x={11} y={4} className="pole-map__site-label">
                     {site.name.replace(/^Artemis candidate region — /, '')}
                   </text>
                 )}
@@ -444,7 +453,7 @@ export const PoleMap: FC<PoleMapProps> = ({
             <line x1={0} y1={-4 * s} x2={0} y2={4 * s} className="pole-map__scale" vectorEffect="non-scaling-stroke" />
             <line x1={barPlanar} y1={-4 * s} x2={barPlanar} y2={4 * s} className="pole-map__scale" vectorEffect="non-scaling-stroke" />
             <g transform={`scale(${s})`}>
-              <text x={0} y={-8} fontSize={11} className="pole-map__scale-label">
+              <text x={0} y={-8} className="pole-map__scale-label">
                 {fmtLen(barGround)}
               </text>
             </g>
@@ -472,7 +481,7 @@ export const PoleMap: FC<PoleMapProps> = ({
           <g transform={`rotate(${northDeg})`}>
             <path d="M0,-16 L6,6 L0,2 L-6,6 Z" fill="currentColor" />
           </g>
-          <text x={0} y={19} textAnchor="middle" fontSize="9" fill="currentColor">
+          <text x={0} y={19} textAnchor="middle" fontSize="10" fill="currentColor">
             N
           </text>
         </svg>
