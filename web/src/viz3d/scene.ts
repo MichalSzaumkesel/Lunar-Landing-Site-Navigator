@@ -106,6 +106,7 @@ const HINT_RAISE_DEG = 0.9
 const DAY_MS = 86_400_000
 const DECOR_DEBOUNCE_MS = 140
 const REGOLITH_COLOR = 0x8d8c89
+const HEATMAP_FADE_MS = 180
 const HAZE_MAX = 0.7
 const HAZE_DISPLAY = new THREE.Vector3(0.085, 0.088, 0.1)
 
@@ -199,6 +200,7 @@ export class SurfaceScene {
   private raf = 0
   private hoverRaf = 0
   private animationRaf = 0
+  private heatmapRaf = 0
   private landerAnimationCancel: (() => void) | null = null
   private benchRaf = 0
   private decorTimer = 0
@@ -666,19 +668,58 @@ export class SurfaceScene {
     })
   }
 
+  /** Swaps the sunlight map texture. A user toggle dips through dark over ~180 ms; instant under reduced motion. */
   setHeatmapTexture(texture: THREE.Texture | null): void {
-    if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
-      this.terrainMat.map.dispose()
+    const wasOn = this.terrainMat.map !== null
+    if (this.heatmapRaf) {
+      cancelAnimationFrame(this.heatmapRaf)
+      this.heatmapRaf = 0
     }
-    if (texture) {
+    const apply = () => {
+      if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
+        this.terrainMat.map.dispose()
+      }
       this.terrainMat.map = texture
-      this.terrainMat.color.set(0xffffff)
-    } else {
-      this.terrainMat.map = null
-      this.terrainMat.color.set(REGOLITH_COLOR)
+      this.terrainMat.color.set(texture ? 0xffffff : REGOLITH_COLOR)
+      this.terrainMat.needsUpdate = true
+      this.invalidate()
     }
-    this.terrainMat.needsUpdate = true
-    this.invalidate()
+    const reduce =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+    if (reduce || this.disposed || wasOn === (texture !== null)) {
+      apply()
+      return
+    }
+    const from = new THREE.Color(wasOn ? 0xffffff : REGOLITH_COLOR)
+    const dark = new THREE.Color(0x1a1a1a)
+    const to = new THREE.Color(texture ? 0xffffff : REGOLITH_COLOR)
+    const half = HEATMAP_FADE_MS / 2
+    const t0 = performance.now()
+    let swapped = false
+    const step = (now: number) => {
+      if (this.disposed) {
+        this.heatmapRaf = 0
+        return
+      }
+      const t = now - t0
+      if (t < half) {
+        this.terrainMat.color.copy(from).lerp(dark, t / half)
+      } else {
+        if (!swapped) {
+          swapped = true
+          if (this.terrainMat.map && texture && this.terrainMat.map !== texture) {
+            this.terrainMat.map.dispose()
+          }
+          this.terrainMat.map = texture
+          this.terrainMat.needsUpdate = true
+        }
+        this.terrainMat.color.copy(dark).lerp(to, Math.min(1, (t - half) / half))
+      }
+      this.invalidate()
+      this.heatmapRaf = t < HEATMAP_FADE_MS ? requestAnimationFrame(step) : 0
+    }
+    this.heatmapRaf = requestAnimationFrame(step)
   }
 
   raycastTerrain(
@@ -723,6 +764,8 @@ export class SurfaceScene {
     this.hoverRaf = 0
     if (this.animationRaf) cancelAnimationFrame(this.animationRaf)
     this.animationRaf = 0
+    if (this.heatmapRaf) cancelAnimationFrame(this.heatmapRaf)
+    this.heatmapRaf = 0
     if (this.benchRaf) cancelAnimationFrame(this.benchRaf)
     this.benchRaf = 0
     window.clearTimeout(this.decorTimer)
