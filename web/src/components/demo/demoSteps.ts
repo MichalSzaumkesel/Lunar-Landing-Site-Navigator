@@ -6,6 +6,7 @@ import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
 import { scenarioWindowMs } from '../../state/selectors'
 import type { AppStore, Scenario } from '../../state/types'
 import { formatDuration } from '../scenario/cardLogic'
+import { triggerDemoCameraPan } from './cameraControl'
 
 export interface DemoStepContext {
   scenarios: readonly Scenario[]
@@ -166,9 +167,10 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   {
     id: 'step-2-play-timeline',
     durationMs: 7000,
-    run(store) {
+    run(store, ctx) {
       store.setCursorH(0)
       store.setPlaying(true)
+      triggerDemoCameraPan(ctx, 7000)
     },
     caption(ctx) {
       return formatStep2Caption(ctx)

@@ -1,0 +1,115 @@
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  RECORDING_FILENAME,
+  RECORDER_ERROR_DECLINED,
+  RECORDER_ERROR_UNSUPPORTED,
+  downloadRecordedBlob,
+  getRecorderErrorMessage,
+  pickMimeType,
+} from './recorder'
+
+describe('recorder module', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  describe('RECORDING_FILENAME', () => {
+    it('is exactly lunar-landing-navigator-demo.webm', () => {
+      expect(RECORDING_FILENAME).toBe('lunar-landing-navigator-demo.webm')
+    })
+  })
+
+  describe('pickMimeType', () => {
+    it('picks the first supported candidate when VP9 is supported', () => {
+      const isTypeSupported = vi.fn((mime: string) => mime.includes('vp9,opus'))
+      const result = pickMimeType(isTypeSupported)
+      expect(result).toBe('video/webm;codecs=vp9,opus')
+    })
+
+    it('falls back to VP8 when VP9 is unsupported', () => {
+      const isTypeSupported = vi.fn((mime: string) => mime === 'video/webm;codecs=vp8')
+      const result = pickMimeType(isTypeSupported)
+      expect(result).toBe('video/webm;codecs=vp8')
+    })
+
+    it('falls back to video/webm when candidates are unsupported', () => {
+      const isTypeSupported = vi.fn(() => false)
+      const result = pickMimeType(isTypeSupported)
+      expect(result).toBe('video/webm')
+    })
+
+    it('uses global MediaRecorder.isTypeSupported if probe parameter is omitted', () => {
+      vi.stubGlobal('MediaRecorder', {
+        isTypeSupported: vi.fn((mime: string) => mime === 'video/webm;codecs=vp9'),
+      })
+      const result = pickMimeType()
+      expect(result).toBe('video/webm;codecs=vp9')
+    })
+  })
+
+  describe('getRecorderErrorMessage', () => {
+    it('maps unsupported string and Error to clear unsupported message', () => {
+      expect(getRecorderErrorMessage('unsupported')).toBe(RECORDER_ERROR_UNSUPPORTED)
+      expect(getRecorderErrorMessage(new Error('unsupported'))).toBe(RECORDER_ERROR_UNSUPPORTED)
+    })
+
+    it('maps declined string, NotAllowedError, and permission denied to exact specification text', () => {
+      const expected = RECORDER_ERROR_DECLINED
+      expect(getRecorderErrorMessage('declined')).toBe(expected)
+
+      const notAllowedErr = new DOMException('Permission denied', 'NotAllowedError')
+      expect(getRecorderErrorMessage(notAllowedErr)).toBe(expected)
+
+      const permDeniedErr = new DOMException('Permission denied', 'PermissionDeniedError')
+      expect(getRecorderErrorMessage(permDeniedErr)).toBe(expected)
+
+      const customMsgErr = new Error('User declined screen sharing')
+      expect(getRecorderErrorMessage(customMsgErr)).toBe(expected)
+    })
+
+    it('preserves generic error messages', () => {
+      expect(getRecorderErrorMessage(new Error('Track failed'))).toBe('Track failed')
+    })
+  })
+
+  describe('downloadRecordedBlob', () => {
+    it('creates object URL, triggers anchor click, and revokes URL after timeout', () => {
+      const mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
+      const mockRevokeObjectURL = vi.fn()
+      vi.stubGlobal('URL', {
+        createObjectURL: mockCreateObjectURL,
+        revokeObjectURL: mockRevokeObjectURL,
+      })
+
+      const appendChildSpy = vi.spyOn(document.body, 'appendChild')
+      const clickSpy = vi.fn()
+      const originalCreateElement = document.createElement.bind(document)
+      vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+        const el = originalCreateElement(tagName)
+        if (tagName === 'a') {
+          el.click = clickSpy
+        }
+        return el
+      })
+
+      const blob = new Blob(['mock video content'], { type: 'video/webm' })
+      downloadRecordedBlob(blob)
+
+      expect(mockCreateObjectURL).toHaveBeenCalledWith(blob)
+      expect(appendChildSpy).toHaveBeenCalled()
+      expect(clickSpy).toHaveBeenCalled()
+
+      // Before timer advances, revokeObjectURL is not yet called
+      expect(mockRevokeObjectURL).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(1500)
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    })
+  })
+})
