@@ -2,7 +2,7 @@
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '../../state/store'
 import { TourChip } from './TourChip'
 import { useTourStore } from './tourState'
@@ -33,7 +33,10 @@ describe('TourChip', () => {
   it('dismiss stores the choice for the mode and hides the chip', () => {
     const root = createRoot(container)
     act(() => root.render(createElement(TourChip)))
+    vi.useFakeTimers()
     act(() => container.querySelector<HTMLButtonElement>('.tour-chip__close')!.click())
+    act(() => void vi.advanceTimersByTime(200))
+    vi.useRealTimers()
     expect(localStorage.getItem(`lunar.tour.${useAppStore.getState().mode}`)).toBe('done')
     expect(container.querySelector('.tour-chip')).toBeNull()
     act(() => root.unmount())

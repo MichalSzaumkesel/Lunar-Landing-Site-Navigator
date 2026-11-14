@@ -357,3 +357,7 @@
     opacity: 1;
   }
 }
+
+.simple-places-error {
+  animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
+}

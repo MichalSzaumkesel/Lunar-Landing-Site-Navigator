@@ -441,3 +441,16 @@
   color: var(--muted);
   font-size: 0.875rem;
 }
+
+/* A removed card stays for its exit, then the board closes the gap */
+.board__leaving {
+  pointer-events: none;
+  animation: presence-collapse-card var(--motion-duration-fast) var(--motion-ease-in) forwards;
+}
+
+@keyframes presence-collapse-card {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

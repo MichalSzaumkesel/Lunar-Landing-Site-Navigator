@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactElement } from 'react'
+import { usePresenceValue } from '../../lib/usePresence'
 import { exportCardAsPng, type CardExportData } from '../../lib/exportPng'
 import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
 import { scenarioWindowMs } from '../../state/selectors'
@@ -28,6 +29,7 @@ export function ExportCardPngButton({
 }: ExportCardPngButtonProps): ReactElement {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const errorP = usePresenceValue(error)
   const [isPolarActive, setIsPolarActive] = useState(true)
 
   useEffect(() => {
@@ -110,9 +112,9 @@ export function ExportCardPngButton({
       >
         {loading ? 'Saving PNG…' : 'Save card as PNG'}
       </button>
-      {error && (
-        <span role="alert" className="share-error">
-          {error}
+      {errorP.mounted && (
+        <span role="alert" className="share-error presence-rise" data-state={errorP.state}>
+          {errorP.value}
         </span>
       )}
     </div>

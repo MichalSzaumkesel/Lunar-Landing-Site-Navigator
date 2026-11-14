@@ -1,5 +1,6 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
 import { memo, useMemo, useState } from 'react'
+import { usePresence, usePresenceList } from '../../lib/usePresence'
 import type { MouseEvent } from 'react'
 import { HOUR_MS } from '../../config/dataRange'
 import { MAX_SCENARIOS } from '../../config/dataRange'
@@ -145,6 +146,8 @@ export function ScenarioBoard() {
   const activeId = useAppStore((s) => s.activeScenarioId)
   const addScenario = useAppStore((s) => s.addScenario)
   const full = scenarios.length >= MAX_SCENARIOS
+  const compare = usePresence(compareOpen)
+  const cards = usePresenceList(scenarios, (s) => s.id)
 
   // The new card starts as a copy of the active one, so "same site, other date" is one edit away.
   const onAdd = () => {
@@ -175,11 +178,23 @@ export function ScenarioBoard() {
           </button>
         )}
       </div>
-      {compareOpen && <CompareTable onClose={() => setCompareOpen(false)} />}
-      <div className={`board board--${scenarios.length}`} data-tour="scenario-cards">
-        {scenarios.map((s) => (
-          <ScenarioCard key={s.id} scenarioId={s.id} />
-        ))}
+      {compare.mounted && (
+        <div className="presence-collapse" data-state={compare.state}>
+          <div className="presence-collapse__inner">
+            <CompareTable onClose={() => setCompareOpen(false)} />
+          </div>
+        </div>
+      )}
+      <div className={`board board--${cards.length}`} data-tour="scenario-cards">
+        {cards.map(({ item, state }) =>
+          state === 'open' ? (
+            <ScenarioCard key={item.id} scenarioId={item.id} />
+          ) : (
+            <div key={item.id} className="board__leaving" aria-hidden="true" inert>
+              <CardBody scenario={item} />
+            </div>
+          ),
+        )}
       </div>
     </div>
   )

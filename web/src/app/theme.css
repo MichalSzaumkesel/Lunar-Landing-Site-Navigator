@@ -46,6 +46,55 @@
   --motion-ease-default: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
   --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Shared enter/exit for elements kept mounted by usePresence (data-state="open" | "closed") */
+@keyframes presence-rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@keyframes presence-rise-out {
+  to { opacity: 0; transform: translateY(8px); }
+}
+@keyframes presence-fade-in {
+  from { opacity: 0; }
+}
+@keyframes presence-fade-out {
+  to { opacity: 0; }
+}
+@keyframes presence-collapse-in {
+  from { grid-template-rows: 0fr; opacity: 0; }
+}
+@keyframes presence-collapse-out {
+  to { grid-template-rows: 0fr; opacity: 0; }
+}
+
+.presence-rise {
+  animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+.presence-rise[data-state='closed'] {
+  animation: presence-rise-out var(--motion-duration-fast) var(--motion-ease-in) forwards;
+  pointer-events: none;
+}
+.presence-fade {
+  animation: presence-fade-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+.presence-fade[data-state='closed'] {
+  animation: presence-fade-out var(--motion-duration-fast) var(--motion-ease-in) forwards;
+  pointer-events: none;
+}
+.presence-collapse {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: presence-collapse-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+.presence-collapse[data-state='closed'] {
+  animation: presence-collapse-out var(--motion-duration-fast) var(--motion-ease-in) forwards;
+  pointer-events: none;
+}
+.presence-collapse__inner {
+  min-height: 0;
+  overflow: hidden;
 }
 
 * {

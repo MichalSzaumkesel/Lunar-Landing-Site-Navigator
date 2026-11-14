@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from 'react'
+import { usePresenceValue } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { computeMetrics } from '../../lib/metrics'
@@ -25,6 +26,7 @@ export function ExportButton({
 }: ExportButtonProps): ReactElement {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const errorP = usePresenceValue(error)
 
   const handleExport = async (): Promise<void> => {
     if (loading) return
@@ -102,9 +104,9 @@ export function ExportButton({
           {loading ? 'Exporting…' : 'Export CSV'}
         </button>
       </div>
-      {error && (
-        <span role="alert" className="share-error">
-          {error}
+      {errorP.mounted && (
+        <span role="alert" className="share-error presence-rise" data-state={errorP.state}>
+          {errorP.value}
         </span>
       )}
     </div>

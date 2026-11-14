@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { usePresence } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
 import { useDemoStore } from '../demo/demoState'
 import { getStoredTourStatus, setStoredTourStatus, useTourStore } from './tourState'
@@ -15,10 +16,12 @@ export function TourChip() {
 
   const suppressed =
     typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tour') === '0'
-  if (isOpen || isDemoActive || !shouldAutoStart(getStoredTourStatus(mode), suppressed)) return null
+  const offered = !isOpen && !isDemoActive && shouldAutoStart(getStoredTourStatus(mode), suppressed)
+  const { mounted, state } = usePresence(offered)
+  if (!mounted) return null
 
   return (
-    <div className="tour-chip" role="group" aria-label="Tutorial offer">
+    <div className="tour-chip presence-rise" data-state={state} role="group" aria-label="Tutorial offer">
       <button type="button" className="ghost tour-chip__go" onClick={() => openTour(0)}>
         New here? Take the tutorial
       </button>
