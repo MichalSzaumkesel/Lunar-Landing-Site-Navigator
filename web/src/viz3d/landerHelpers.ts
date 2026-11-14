@@ -26,6 +26,13 @@ export const VIRIDIS_STOPS: readonly (readonly [number, number, number])[] = [
   [253, 231, 37], // 1.00: yellow #fde725
 ]
 
+/** CSS linear-gradient built from VIRIDIS_STOPS, so legends match the heatmap texture. */
+export function viridisGradientCss(): string {
+  const n = VIRIDIS_STOPS.length - 1
+  const parts = VIRIDIS_STOPS.map((c, i) => `rgb(${c[0]}, ${c[1]}, ${c[2]}) ${Math.round((i / n) * 100)}%`)
+  return `linear-gradient(to right, ${parts.join(', ')})`
+}
+
 /** Interpolate Viridis RGB for t in 0..1. */
 export function viridisRgb(t: number): [number, number, number] {
   const clamped = Math.max(0, Math.min(1, t))

@@ -8,6 +8,7 @@ import {
   formatOffset,
   legendRange,
   viridisRgb,
+  viridisGradientCss,
 } from './landerHelpers'
 
 describe('clampLanderOffset', () => {
@@ -220,5 +221,14 @@ describe('computeSunVisibleHours', () => {
     const ephem = makeMockEphem(10, new Array(10).fill(0), new Array(10).fill(1), 60)
     const mask = new Float32Array(360).fill(0)
     expect(computeSunVisibleHours(ephem, mask, 1, 1000, 500)).toBeNull()
+  })
+})
+
+describe('viridisGradientCss', () => {
+  it('lists every Viridis stop from 0% to 100%', () => {
+    const css = viridisGradientCss()
+    expect(css).toContain('rgb(68, 1, 84) 0%')
+    expect(css).toContain('rgb(253, 231, 37) 100%')
+    expect(css.match(/rgb\(/g)).toHaveLength(5)
   })
 })

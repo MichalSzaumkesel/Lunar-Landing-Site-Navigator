@@ -30,6 +30,7 @@ import {
   formatDeltaHours,
   formatOffset,
   legendRange,
+  viridisGradientCss,
 } from './landerHelpers'
 import type { OffsetM } from './landerHelpers'
 import { createKeyMotion } from './keyMotion'
@@ -146,6 +147,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
   const [dismissedResult, setDismissedResult] = useState<BestSpotResult | null>(null)
   const chipResult = bestSpotResult !== dismissedResult ? bestSpotResult : null
   const chipPresence = usePresence(chipResult !== null)
+  const legendPresence = usePresence(showHeatmap && heatmapGrid !== null)
   const [showComparison, setShowComparison] = useState(false)
 
   // Readouts update about 10 times a second; the sky itself is pushed to the scene per frame below.
@@ -772,9 +774,30 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
         )}
         {!simple && (
           <>
-        <div className="surface__overlay surface__overlay--bl">
-          <div>{legend}</div>
-          <div>{earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}</div>
+        <div className="surface__stack-bl">
+          {legendPresence.mounted && (
+            <div
+              className="surface__overlay surface__map-legend presence-rise"
+              data-state={legendPresence.state}
+              role="img"
+              aria-label={`Sunlight map colour scale: from ${Math.round(heatmapRange.min)} percent (less Sun visible) to ${Math.round(heatmapRange.max)} percent (more Sun visible)`}
+            >
+              <div className="surface__map-legend-row">
+                <span>Less</span>
+                <span className="surface__map-legend-bar" style={{ background: viridisGradientCss() }} />
+                <span>More</span>
+              </div>
+              <div className="surface__map-legend-row surface__map-legend-nums">
+                <span>{Math.round(heatmapRange.min)}%</span>
+                <span>{Math.round(heatmapRange.max)}%</span>
+              </div>
+              <div className="surface__map-legend-cap">Share of the window with Sun visible</div>
+            </div>
+          )}
+          <div className="surface__overlay surface__overlay--bl">
+            <div>{legend}</div>
+            <div>{earthOrientation ? 'Earth imagery: NASA Blue Marble' : 'Earth imagery: NASA Blue Marble (orientation illustrative)'}</div>
+          </div>
         </div>
         <div className="surface__overlay surface__overlay--br">
           {mode === 'surface'
@@ -1064,15 +1087,6 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
                   {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
                 </div>
                 <span className="surface__legend-res">Resolution: ~{cellResolutionM} m</span>
-              </div>
-              <div className="surface__ramp-row">
-                <span className="surface__ramp-num">{Math.round(heatmapRange.min)}%</span>
-                <div
-                  className="surface__ramp-bar"
-                  role="img"
-                  aria-label="Colour-blind safe Viridis sequential ramp from 0 to 100 percent"
-                />
-                <span className="surface__ramp-num">{Math.round(heatmapRange.max)}%</span>
               </div>
               <div className="surface__cell-inspector" aria-live={hoveredCell ? 'off' : 'polite'}>
                 {hoveredCell !== null

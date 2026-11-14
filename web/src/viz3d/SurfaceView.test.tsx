@@ -374,6 +374,13 @@ describe('SurfaceView 3D View Fixes', () => {
     const heatmapPanel = container.querySelector('.surface__heatmap-panel')
     expect(heatmapPanel).not.toBeNull()
 
+    // Overlaid colour legend on the canvas, shown with the map
+    const legend = container.querySelector('.surface__frame .surface__map-legend')
+    expect(legend).not.toBeNull()
+    expect(legend?.getAttribute('role')).toBe('img')
+    expect(legend?.getAttribute('aria-label')).toContain('Sunlight map colour scale')
+    expect(legend?.textContent).toContain('Sun visible')
+
     // Inspector readout should NOT have tabIndex
     const inspector = container.querySelector('.surface__cell-inspector')
     expect(inspector?.getAttribute('tabIndex')).toBeNull()
