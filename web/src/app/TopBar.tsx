@@ -6,7 +6,6 @@ import { useTourStore } from '../components/help/tourState'
 import { usePresence } from '../lib/usePresence'
 import { useAppStore } from '../state/store'
 import type { Mode } from '../state/types'
-import { PresetBar } from './PresetBar'
 
 const AboutData = lazy(() => import('../components/about/AboutData'))
 
@@ -72,7 +71,6 @@ export function TopBar() {
           ))}
         </div>
       </div>
-      <PresetBar className="topbar__presets" />
       <div className="topbar__links">
         <button
           type="button"

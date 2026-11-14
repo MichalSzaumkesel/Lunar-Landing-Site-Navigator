@@ -1,6 +1,6 @@
 // Pure definitions and helpers for demo mode narration steps.
 import { HOUR_MS } from '../../config/dataRange'
-import { PRESET_APOLLO_VS_ARTEMIS, PRESET_SLIP } from '../../config/presets'
+import { PRESET_APOLLO_VS_ARTEMIS, PRESET_SLIP, type Preset } from '../../config/presets'
 import type { SectionKey } from '../../lib/disclosure'
 import type { SkyEvent } from '../../lib/events'
 import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
@@ -9,6 +9,35 @@ import type { AppStore, Scenario } from '../../state/types'
 import { formatDuration } from '../scenario/cardLogic'
 import { fmtHours } from '../sky/geometry'
 import { triggerDemoCameraPan } from './cameraControl'
+import { useDemoStore } from './demoState'
+
+const MENU_OPEN_MS = 250
+const MENU_HIGHLIGHT_MS = 600
+
+/** Shows the Add scenario menu opening and the preset highlighted, then applies it through the store. */
+export function showPresetChoice(store: AppStore, preset: Preset): void {
+  const apply = () => store.applyPreset(preset, { autoplay: false })
+  const toggle =
+    typeof document === 'undefined'
+      ? null
+      : document.querySelector<HTMLButtonElement>('[data-demo="add-menu-toggle"]')
+  if (!toggle) {
+    apply()
+    return
+  }
+  const stillRunning = () => useDemoStore.getState().isActive
+  if (toggle.getAttribute('aria-expanded') !== 'true') toggle.click()
+  setTimeout(() => {
+    if (!stillRunning()) return
+    const item = document.querySelector<HTMLElement>(`[role="menu"] [data-preset="${preset.id}"]`)
+    item?.setAttribute('data-demo-highlight', 'true')
+    item?.focus()
+    setTimeout(() => {
+      if (stillRunning()) apply()
+      if (toggle.getAttribute('aria-expanded') === 'true') toggle.click()
+    }, MENU_HIGHLIGHT_MS)
+  }, MENU_OPEN_MS)
+}
 
 export interface DemoStepContext {
   scenarios: readonly Scenario[]
@@ -163,10 +192,11 @@ export const DEMO_STEPS: readonly DemoStep[] = [
     id: 'step-1-apollo-vs-artemis',
     durationMs: 6000,
     run(store) {
-      store.applyPreset(PRESET_APOLLO_VS_ARTEMIS, { autoplay: false })
       store.setMode('advanced')
       store.setCursorH(0)
       store.setPlaying(false)
+      // Wait a tick so the Advanced toolbar (and its menu) is mounted before the menu is shown.
+      setTimeout(() => showPresetChoice(store, PRESET_APOLLO_VS_ARTEMIS), 50)
     },
     caption(ctx) {
       return formatStep1Caption(ctx)

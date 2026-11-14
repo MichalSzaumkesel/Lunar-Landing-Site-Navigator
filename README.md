@@ -22,7 +22,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ### Compare
 - Up to four scenario cards (site and date per card) in the scenario board, with a compare table.
-- Presets: *Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)*, *South pole*, and *Same site, 14 days later*.
+- Presets, in the menu of the Add scenario button: *Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)*, *South pole*, and *Same site, 14 days later*.
 - Metrics per card: Sun visible, longest dark stretch, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
 - Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 

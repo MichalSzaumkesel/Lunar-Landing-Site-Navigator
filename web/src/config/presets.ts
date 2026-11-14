@@ -36,25 +36,25 @@ export const DEFAULT_DURATION_H = 30 * 24
 export const PRESET_SOUTH_POLE: Preset = {
   id: 'south_pole',
   label: 'South pole',
-  description: 'One south-pole site: the Sun skims a jagged horizon.',
+  description: 'One south-pole site with a jagged horizon.',
   scenarios: [{ siteId: 'southpole_landed' }],
 }
 
 export const PRESET_APOLLO_VS_ARTEMIS: Preset = {
   id: 'apollo11_vs_artemis',
   label: 'Compare: Apollo 11 (equator) vs South Pole (Artemis candidate region)',
-  description: 'Same dates, two very different skies.',
+  description: 'Two cards with the same dates: the Sun high at the equator versus skimming the south pole horizon.',
   scenarios: [{ siteId: 'apollo_11' }, { siteId: 'artemis_region_1' }],
 }
 
-/** Slip preset window: 14 days from 2027-01-01; the 6.8 % and 94.0 % in its description are pinned in realData.test.ts. */
+/** Slip preset window: 14 days from 2027-01-01; its 6.8 % and 94.0 % Sun visible are pinned in realData.test.ts. */
 const SLIP_START_UTC = '2027-01-01T00:00:00Z'
 const SLIP_DURATION_H = 336
 
 export const PRESET_SLIP: Preset = {
   id: 'same_site_slip',
   label: 'Same site, 14 days later',
-  description: 'A 14-day mission from 2027-01-01: Sun visible 6.8 % of the time, and 94.0 % after a 14-day slip.',
+  description: 'The same site with the window slipped by two weeks.',
   scenarios: [
     { siteId: 'southpole_landed', startUtc: SLIP_START_UTC, durationH: SLIP_DURATION_H },
     { siteId: 'southpole_landed', startUtc: SLIP_START_UTC, durationH: SLIP_DURATION_H, slipDays: 14 },
