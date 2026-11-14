@@ -284,7 +284,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
       expect(themeCss).toContain('visibility: hidden !important')
       expect(themeCss).toContain('pointer-events: none !important')
       expect(themeCss).toContain('[data-tour="mode-switch"] button')
-      expect(panelsCss).toContain('.shell > .tools')
+      expect(panelsCss).toContain('.shell > .board__toolbar')
       expect(panelsCss).toContain('animation: none')
     })
   })

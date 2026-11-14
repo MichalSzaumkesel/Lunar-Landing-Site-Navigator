@@ -191,6 +191,51 @@ button.ghost:disabled {
   cursor: default;
 }
 
+/* Add-style action: tinted, not the amber primary reserved for Play */
+button.accent {
+  background: rgba(74, 168, 255, 0.14);
+  border-color: var(--earth);
+  font-weight: 600;
+}
+
+button.accent:hover:not(:disabled) {
+  background: rgba(74, 168, 255, 0.26);
+  border-color: var(--earth);
+}
+
+/* Segmented control: one 40 px block, buttons share its border */
+.group.seg {
+  gap: 0;
+  height: 2.5rem;
+  align-items: stretch;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+
+.seg button {
+  min-height: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.seg > :first-child,
+.seg button:first-child {
+  border-left: 0;
+}
+
+.seg .group__label {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+}
+
+.seg button:focus-visible {
+  outline-offset: -2px;
+}
+
 /* Toolbar stability between Simple and Advanced: reserve space without shifting */
 .toolbar-hidden {
   visibility: hidden !important;
@@ -204,7 +249,7 @@ button.ghost:disabled {
 
 /* Mode switch button stability: fixed min-width so text bolding never alters button or group width */
 [data-tour="mode-switch"] button {
-  min-width: 7rem;
+  min-width: 6.5rem;
   text-align: center;
 }
 
@@ -254,23 +299,76 @@ button[aria-pressed='true'] {
 }
 
 .topbar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'brand links'
+    'mode mode'
+    'presets presets';
   align-items: center;
-  gap: 0.75rem 1.25rem;
-  padding: 0.75rem 1.25rem;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-5);
   background: var(--panel);
   border-bottom: 1px solid var(--line);
 }
 
 .brand {
+  grid-area: brand;
   margin: 0;
   font-size: 1.15rem;
   letter-spacing: 0.01em;
 }
 
-.topbar__spacer {
-  flex: 1;
+.topbar__mode {
+  grid-area: mode;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.topbar__presets {
+  grid-area: presets;
+}
+
+.topbar__links {
+  grid-area: links;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+@media (min-width: 1100px) {
+  .topbar {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand mode . links'
+      'presets presets presets presets';
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'brand'
+      'links'
+      'mode'
+      'presets';
+  }
+
+  .topbar__links {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-inline: calc(var(--space-2) * -1);
+  }
+
+  .topbar__mode .group {
+    flex: 1 1 auto;
+  }
+
+  .topbar__mode .group button {
+    flex: 1 1 auto;
+  }
 }
 
 .group {

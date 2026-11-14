@@ -43,60 +43,63 @@ export function TopBar() {
   return (
     <header className="topbar">
       <h1 className="brand">Lunar Landing Site Navigator</h1>
-      <PresetBar />
-      <span className="topbar__spacer" />
-      <button
-        type="button"
-        className="ghost"
-        data-tour="help-button"
-        aria-label="Open the tutorial"
-        onClick={() => {
-          if (isDemoActive) stopDemo()
-          openTour(0)
-        }}
-      >
-        <span aria-hidden="true">(?)</span> Tutorial
-      </button>
-      <button type="button" className="ghost" onClick={() => setAboutOpen(true)}>
-        About the data
-      </button>
-      <button
-        type="button"
-        className="ghost"
-        aria-label="Start demo"
-        aria-pressed={isDemoActive}
-        disabled={isBundleLoading}
-        title={isBundleLoading ? 'Site data is loading...' : 'Start demo'}
-        onClick={handleDemoClick}
-      >
-        Demo
-      </button>
-      <div className="group" role="group" aria-label="Mode" data-tour="mode-switch">
-        {MODES.map((m) => (
-          <button key={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>
-            {m.label}
-          </button>
-        ))}
+      <div className="topbar__mode">
+        <div className="group seg" role="group" aria-label="Mode" data-tour="mode-switch">
+          {MODES.map((m) => (
+            <button key={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <div
+          className={`group seg ${mode === 'simple' ? 'toolbar-hidden' : ''}`}
+          role="group"
+          aria-label="Observer height"
+          data-tour="observer-height"
+          aria-hidden={mode === 'simple' ? 'true' : undefined}
+        >
+          <span className="group__label">Observer height</span>
+          {HEIGHTS.map((h) => (
+            <button
+              key={h}
+              aria-pressed={observerHeightM === h}
+              onClick={() => setObserverHeight(h)}
+              tabIndex={mode === 'simple' ? -1 : undefined}
+              disabled={mode === 'simple'}
+            >
+              {h} m
+            </button>
+          ))}
+        </div>
       </div>
-      <div
-        className={`group ${mode === 'simple' ? 'toolbar-hidden' : ''}`}
-        role="group"
-        aria-label="Observer height"
-        data-tour="observer-height"
-        aria-hidden={mode === 'simple' ? 'true' : undefined}
-      >
-        <span className="group__label">Observer height</span>
-        {HEIGHTS.map((h) => (
-          <button
-            key={h}
-            aria-pressed={observerHeightM === h}
-            onClick={() => setObserverHeight(h)}
-            tabIndex={mode === 'simple' ? -1 : undefined}
-            disabled={mode === 'simple'}
-          >
-            {h} m
-          </button>
-        ))}
+      <PresetBar className="topbar__presets" />
+      <div className="topbar__links">
+        <button
+          type="button"
+          className="ghost"
+          data-tour="help-button"
+          aria-label="Open the tutorial"
+          onClick={() => {
+            if (isDemoActive) stopDemo()
+            openTour(0)
+          }}
+        >
+          <span aria-hidden="true">(?)</span> Tutorial
+        </button>
+        <button type="button" className="ghost" onClick={() => setAboutOpen(true)}>
+          About the data
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          aria-label="Start demo"
+          aria-pressed={isDemoActive}
+          disabled={isBundleLoading}
+          title={isBundleLoading ? 'Site data is loading...' : 'Start demo'}
+          onClick={handleDemoClick}
+        >
+          Demo
+        </button>
       </div>
       {about.mounted && (
         <Suspense fallback={null}>

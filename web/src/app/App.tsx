@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { DemoCaption } from '../components/demo/DemoCaption'
 import { Tour } from '../components/help/Tour'
 import { TourChip } from '../components/help/TourChip'
@@ -22,6 +22,7 @@ export default function App() {
   useUrlSync()
   useEventSounds()
   const mode = useAppStore((s) => s.mode)
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     prefetchDemoSites()
@@ -32,12 +33,15 @@ export default function App() {
       <TopBar />
       <TourChip />
       <main className="shell">
-        <Tools />
+        <div className="board__toolbar">
+          <div className="board__scenarios" ref={setToolbarSlot} />
+          <Tools />
+        </div>
         {mode === 'simple' ? (
           <SimpleView />
         ) : (
           <>
-            <ScenarioBoard />
+            <ScenarioBoard toolbarSlot={toolbarSlot} />
             <Panels />
           </>
         )}

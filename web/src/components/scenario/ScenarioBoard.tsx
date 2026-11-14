@@ -1,5 +1,6 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
 import { memo, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { usePresence, usePresenceList } from '../../lib/usePresence'
 import type { MouseEvent } from 'react'
 import { HOUR_MS } from '../../config/dataRange'
@@ -140,7 +141,12 @@ export function ScenarioCard({ scenarioId }: { scenarioId: string }) {
   return <CardBody scenario={scenario} />
 }
 
-export function ScenarioBoard() {
+export interface ScenarioBoardProps {
+  /** Element in the app toolbar that hosts the scenario controls; without it they render inline. */
+  toolbarSlot?: HTMLElement | null
+}
+
+export function ScenarioBoard({ toolbarSlot }: ScenarioBoardProps) {
   const [compareOpen, setCompareOpen] = useState(false)
   const scenarios = useAppStore((s) => s.scenarios)
   const activeId = useAppStore((s) => s.activeScenarioId)
@@ -156,28 +162,36 @@ export function ScenarioBoard() {
     addScenario({ siteId: base.siteId, startUtc: base.startUtc, durationH: base.durationH, slipDays: base.slipDays })
   }
 
+  const scenarioControls = (
+    <>
+      <span className="board__count">
+        {scenarios.length} of {MAX_SCENARIOS} scenarios
+      </span>
+      <button
+        type="button"
+        className={compareOpen ? 'secondary compare-toggle-btn active' : 'secondary compare-toggle-btn'}
+        onClick={() => setCompareOpen((v) => !v)}
+        aria-pressed={compareOpen}
+        aria-expanded={compareOpen}
+        aria-controls="scenario-compare-table"
+      >
+        Compare table
+      </button>
+      {!full && (
+        <button type="button" className="accent" onClick={onAdd}>
+          Add scenario
+        </button>
+      )}
+    </>
+  )
+
   return (
     <div className="board-wrap">
-      <div className="board__toolbar">
-        <span className="board__count">
-          {scenarios.length} of {MAX_SCENARIOS} scenarios
-        </span>
-        <button
-          type="button"
-          className={compareOpen ? 'secondary compare-toggle-btn active' : 'secondary compare-toggle-btn'}
-          onClick={() => setCompareOpen((v) => !v)}
-          aria-pressed={compareOpen}
-          aria-expanded={compareOpen}
-          aria-controls="scenario-compare-table"
-        >
-          Compare table
-        </button>
-        {!full && (
-          <button type="button" onClick={onAdd}>
-            Add scenario
-          </button>
-        )}
-      </div>
+      {toolbarSlot ? (
+        createPortal(scenarioControls, toolbarSlot)
+      ) : (
+        <div className="board__scenarios">{scenarioControls}</div>
+      )}
       {compare.mounted && (
         <div className="presence-collapse" data-state={compare.state}>
           <div className="presence-collapse__inner">

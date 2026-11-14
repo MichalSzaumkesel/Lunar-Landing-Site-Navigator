@@ -54,19 +54,18 @@ describe('SoundToggle', () => {
     expect(container.textContent).not.toContain('fade in and out')
   })
 
-  it('stableLayout: reserves the slider slot whether Off or Ambient', async () => {
+  it('stableLayout: the slider mounts inline only while sound is on', async () => {
     const engine = createSoundEngine()
     await act(async () => {
       root.render(createElement(SoundToggle, { engine }))
     })
-    const slot = container.querySelector('.sound-control__slot')
-    expect(slot).not.toBeNull()
-    expect(slot?.querySelector('[role="slider"]')).toBeNull()
+    expect(container.querySelector('[role="slider"]')).toBeNull()
+    const modes = container.querySelector('[role="radiogroup"]')
     await act(async () => {
       container.querySelectorAll<HTMLButtonElement>('button')[1].click()
     })
-    expect(container.querySelector('.sound-control__slot')).toBe(slot)
-    expect(slot?.querySelector('[role="slider"]')).not.toBeNull()
+    expect(container.querySelector('[role="radiogroup"]')).toBe(modes)
+    expect(container.querySelector('[role="slider"]')).not.toBeNull()
   })
 
   it('switches to Ambient mode on click and persists to localStorage', async () => {
