@@ -167,9 +167,11 @@ def main() -> int:
     if sc:
         try:
             elon, elat = [float(x) for x in sc.strip("'").split(",")[:2]]
-            if abs(elon - lon) > 1e-4 or abs(elat - lat) > 1e-4:
+            if abs(elon - lon) > 5.1e-4 or abs(elat - lat) > 5.1e-4:  # sites.json is rounded to 3 decimals
                 ok_site = False
                 notes.append(f"SITE MISMATCH: ephem used lon/lat {elon},{elat}; sites.json {lon},{lat}.")
+            elif abs(elon - lon) > 1e-9 or abs(elat - lat) > 1e-9:
+                notes.append(f"site coordinates differ only by sites.json rounding (<= 0.0005 deg, about 15 m): ephem {elon},{elat} vs {lon},{lat}.")
         except ValueError:
             notes.append(f"could not parse SITE_COORD {sc!r}")
 

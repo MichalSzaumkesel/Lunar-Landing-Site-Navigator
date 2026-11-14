@@ -1,0 +1,344 @@
+{
+ "sources": {
+  "Shackleton": "https://planetarynames.wr.usgs.gov/Feature/5450",
+  "Shoemaker": "https://planetarynames.wr.usgs.gov/Feature/5494",
+  "de Gerlache": "https://planetarynames.wr.usgs.gov/Feature/1439"
+ },
+ "variants": {
+  "ASSUMED": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": 3471.2,
+     "best_fit_centre_offset_km": 0.28,
+     "best_fit_contrast_m": 3430.3,
+     "floor_min_dist_km": 2.26,
+     "pix_rowcol": [
+      15519.6,
+      4755.0
+     ]
+    },
+    "Shoemaker": {
+     "ok": true,
+     "contrast_m": 3142.0,
+     "best_fit_centre_offset_km": 1.71,
+     "best_fit_contrast_m": 3155.6,
+     "floor_min_dist_km": 14.67,
+     "pix_rowcol": [
+      13237.2,
+      6396.2
+     ]
+    },
+    "de Gerlache": {
+     "ok": true,
+     "contrast_m": 1860.3,
+     "best_fit_centre_offset_km": 1.22,
+     "best_fit_contrast_m": 1884.5,
+     "floor_min_dist_km": 3.54,
+     "pix_rowcol": [
+      15132.7,
+      2066.8
+     ]
+    }
+   },
+   "all_good": true,
+   "n_good": 3
+  },
+  "mirror=no,rot=90": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": -960.3,
+     "best_fit_centre_offset_km": 8.77,
+     "best_fit_contrast_m": 789.3,
+     "floor_min_dist_km": 9.4,
+     "pix_rowcol": [
+      15584.0,
+      4050.4
+     ]
+    },
+    "Shoemaker": {
+     "ok": false,
+     "reason": "outside cached window"
+    },
+    "de Gerlache": {
+     "ok": true,
+     "contrast_m": -416.3,
+     "best_fit_centre_offset_km": 10.76,
+     "best_fit_contrast_m": 694.8,
+     "floor_min_dist_km": 14.67,
+     "pix_rowcol": [
+      12895.8,
+      4437.3
+     ]
+    }
+   },
+   "all_good": false,
+   "n_good": 0
+  },
+  "mirror=no,rot=180": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": 486.6,
+     "best_fit_centre_offset_km": 7.84,
+     "best_fit_contrast_m": 979.7,
+     "floor_min_dist_km": 7.8,
+     "pix_rowcol": [
+      14879.4,
+      3986.0
+     ]
+    },
+    "Shoemaker": {
+     "ok": false,
+     "reason": "outside cached window"
+    },
+    "de Gerlache": {
+     "ok": false,
+     "reason": "outside cached window"
+    }
+   },
+   "all_good": false,
+   "n_good": 0
+  },
+  "mirror=no,rot=270": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": -994.9,
+     "best_fit_centre_offset_km": 8.49,
+     "best_fit_contrast_m": 358.7,
+     "floor_min_dist_km": 9.4,
+     "pix_rowcol": [
+      14815.0,
+      4690.6
+     ]
+    },
+    "Shoemaker": {
+     "ok": true,
+     "contrast_m": 513.2,
+     "best_fit_centre_offset_km": 10.67,
+     "best_fit_contrast_m": 1263.5,
+     "floor_min_dist_km": 16.02,
+     "pix_rowcol": [
+      13173.8,
+      2408.2
+     ]
+    },
+    "de Gerlache": {
+     "ok": false,
+     "reason": "outside cached window"
+    }
+   },
+   "all_good": false,
+   "n_good": 0
+  },
+  "mirror=yes,rot=0": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": -713.5,
+     "best_fit_centre_offset_km": 8.77,
+     "best_fit_contrast_m": 950.4,
+     "floor_min_dist_km": 9.41,
+     "pix_rowcol": [
+      15519.6,
+      3986.0
+     ]
+    },
+    "Shoemaker": {
+     "ok": true,
+     "contrast_m": 535.3,
+     "best_fit_centre_offset_km": 10.0,
+     "best_fit_contrast_m": 1264.5,
+     "floor_min_dist_km": 15.73,
+     "pix_rowcol": [
+      13237.2,
+      2344.8
+     ]
+    },
+    "de Gerlache": {
+     "ok": true,
+     "contrast_m": -19.6,
+     "best_fit_centre_offset_km": 9.74,
+     "best_fit_contrast_m": 216.5,
+     "floor_min_dist_km": 7.29,
+     "pix_rowcol": [
+      15132.7,
+      6674.2
+     ]
+    }
+   },
+   "all_good": false,
+   "n_good": 0
+  },
+  "mirror=yes,rot=90": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": 454.6,
+     "best_fit_centre_offset_km": 8.49,
+     "best_fit_contrast_m": 932.2,
+     "floor_min_dist_km": 9.39,
+     "pix_rowcol": [
+      14815.0,
+      4050.4
+     ]
+    },
+    "Shoemaker": {
+     "ok": true,
+     "contrast_m": 3044.3,
+     "best_fit_centre_offset_km": 3.05,
+     "best_fit_contrast_m": 3159.8,
+     "floor_min_dist_km": 15.86,
+     "pix_rowcol": [
+      13173.8,
+      6332.8
+     ]
+    },
+    "de Gerlache": {
+     "ok": false,
+     "reason": "outside cached window"
+    }
+   },
+   "all_good": false,
+   "n_good": 1
+  },
+  "mirror=yes,rot=180": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": -1161.3,
+     "best_fit_centre_offset_km": 8.49,
+     "best_fit_contrast_m": 399.1,
+     "floor_min_dist_km": 9.41,
+     "pix_rowcol": [
+      14879.4,
+      4755.0
+     ]
+    },
+    "Shoemaker": {
+     "ok": false,
+     "reason": "outside cached window"
+    },
+    "de Gerlache": {
+     "ok": false,
+     "reason": "outside cached window"
+    }
+   },
+   "all_good": false,
+   "n_good": 0
+  },
+  "mirror=yes,rot=270": {
+   "per_crater": {
+    "Shackleton": {
+     "ok": true,
+     "contrast_m": 3003.5,
+     "best_fit_centre_offset_km": 2.16,
+     "best_fit_contrast_m": 3479.6,
+     "floor_min_dist_km": 3.84,
+     "pix_rowcol": [
+      15584.0,
+      4690.6
+     ]
+    },
+    "Shoemaker": {
+     "ok": false,
+     "reason": "outside cached window"
+    },
+    "de Gerlache": {
+     "ok": true,
+     "contrast_m": -55.3,
+     "best_fit_centre_offset_km": 9.2,
+     "best_fit_contrast_m": 699.3,
+     "floor_min_dist_km": 14.62,
+     "pix_rowcol": [
+      12895.8,
+      4303.7
+     ]
+    }
+   },
+   "all_good": false,
+   "n_good": 1
+  }
+ },
+ "alt_centres_assumed_orientation": {
+  "Shackleton": [
+   {
+    "lat": -89.63,
+    "lon": 132.32,
+    "ok": true,
+    "contrast_m": 3352.1,
+    "best_fit_centre_offset_km": 1.22,
+    "best_fit_contrast_m": 3479.4,
+    "floor_min_dist_km": 2.41,
+    "pix_rowcol": [
+     15577.2,
+     4785.3
+    ]
+   },
+   {
+    "lat": -89.9,
+    "lon": 0.0,
+    "ok": true,
+    "contrast_m": -920.6,
+    "best_fit_centre_offset_km": 8.2,
+    "best_fit_contrast_m": 1654.4,
+    "floor_min_dist_km": 9.3,
+    "pix_rowcol": [
+     15047.9,
+     4370.5
+    ]
+   }
+  ],
+  "Shoemaker": [
+   {
+    "lat": -88.03,
+    "lon": 39.85,
+    "ok": true,
+    "contrast_m": 2449.5,
+    "best_fit_centre_offset_km": 7.52,
+    "best_fit_contrast_m": 3157.1,
+    "floor_min_dist_km": 21.3,
+    "pix_rowcol": [
+     12906.2,
+     6284.6
+    ]
+   },
+   {
+    "lat": -88.1,
+    "lon": 44.9,
+    "ok": true,
+    "contrast_m": 3096.8,
+    "best_fit_centre_offset_km": 1.71,
+    "best_fit_contrast_m": 3158.3,
+    "floor_min_dist_km": 16.28,
+    "pix_rowcol": [
+     13158.8,
+     6404.1
+    ]
+   }
+  ],
+  "de Gerlache": [
+   {
+    "lat": -88.45,
+    "lon": -90.45,
+    "ok": false,
+    "reason": "outside cached window"
+   },
+   {
+    "lat": -88.5,
+    "lon": -87.1,
+    "ok": true,
+    "contrast_m": 1712.3,
+    "best_fit_centre_offset_km": 2.34,
+    "best_fit_contrast_m": 1892.4,
+    "floor_min_dist_km": 4.81,
+    "pix_rowcol": [
+     15084.4,
+     2099.0
+    ]
+   }
+  ]
+ }
+}
