@@ -40,9 +40,9 @@
   },
   {
    "id": "artemis_region_1",
-   "name": "Artemis III candidate region — Mons Mouton Plateau",
+   "name": "Artemis candidate region — Mons Mouton Plateau",
    "category": "artemis_region",
-   "mission": "Artemis III (candidate)",
+   "mission": "Artemis (candidate region, NASA 2024 list)",
    "agency": "NASA",
    "country": "USA",
    "lat_deg": -84.3,
@@ -55,7 +55,7 @@
     "title": "LROC NAC ROI mosaic: Mons Mouton Plateau",
     "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_MOUTNPLTLO1"
    },
-   "notes": "Representative point = centre of the LROC NAC mosaic covering this candidate region; not a surveyed region centre. NASA publishes no region coordinates."
+   "notes": "Representative point = centre of the LROC NAC mosaic covering this candidate region; not a surveyed region centre. NASA publishes no region coordinates. NASA re-scoped Artemis on 2026-02-27 (Artemis III became an Earth-orbit test); these 9 regions remain the latest official candidate list."
   },
   {
    "id": "apollo_12",
@@ -363,9 +363,9 @@
   },
   {
    "id": "artemis_region_2",
-   "name": "Artemis III candidate region — Malapert Massif",
+   "name": "Artemis candidate region — Malapert Massif",
    "category": "artemis_region",
-   "mission": "Artemis III (candidate landing region)",
+   "mission": "Artemis (candidate region, NASA 2024 list)",
    "agency": "NASA",
    "country": "USA",
    "lat_deg": -86.0,
@@ -378,13 +378,13 @@
     "title": "LROC NAC ROI MALAPERTLO1: Malapert Massif low-Sun controlled NAC mosaic (center -86.0, 0.3)",
     "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_MALAPERTLO1"
    },
-   "notes": "Representative point = center of the LROC NAC mosaic of this candidate region (bbox lat -86.33..-85.63, lon -5.66..5.15). Not a surveyed region center; no radius sourced for the 9-region set (2022 list of 13 used 15 x 15 km regions)."
+   "notes": "Representative point = center of the LROC NAC mosaic of this candidate region (bbox lat -86.33..-85.63, lon -5.66..5.15). Not a surveyed region center; no radius sourced for the 9-region set (2022 list of 13 used 15 x 15 km regions). NASA re-scoped Artemis on 2026-02-27 (Artemis III became an Earth-orbit test); these 9 regions remain the latest official candidate list."
   },
   {
    "id": "artemis_region_3",
-   "name": "Artemis III candidate region — Haworth",
+   "name": "Artemis candidate region — Haworth",
    "category": "artemis_region",
-   "mission": "Artemis III (candidate landing region)",
+   "mission": "Artemis (candidate region, NASA 2024 list)",
    "agency": "NASA",
    "country": "USA",
    "lat_deg": -86.7,
@@ -397,7 +397,7 @@
     "title": "LROC NAC ROI HAWORTH_LOB: Haworth 265-305 sub-solar longitude mosaic (center -86.7, 336.3 E)",
     "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_HAWORTH_LOB"
    },
-   "notes": "Representative point = center of one LROC NAC low-Sun mosaic (B) covering this candidate region (bbox lat -87.39..-86.11, lon -34.98..-12.36). Longitude converted from 336.3 E. Not a surveyed region center; no radius sourced."
+   "notes": "Representative point = center of one LROC NAC low-Sun mosaic (B) covering this candidate region (bbox lat -87.39..-86.11, lon -34.98..-12.36). Longitude converted from 336.3 E. Not a surveyed region center; no radius sourced. NASA re-scoped Artemis on 2026-02-27 (Artemis III became an Earth-orbit test); these 9 regions remain the latest official candidate list."
   }
  ]
 }
