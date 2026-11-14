@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_apollo_11",
+  "kind": "horizon_sensitivity",
+  "site_id": "apollo_11",
+  "max_abs_error_deg": 1.1442,
+  "rms_worst_deg": 0.1036,
+  "recommended_uncertainty_deg": 0.15,
+  "n_samples": 720,
+  "pass": true,
+  "threshold_deg": 0.15,
+  "notes": "2 m mask, DEM LOLA LDEM_1024 (LRO-L-LOLA-4-GDR-V1.0, V1.05) (29.6126 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 49.6%). dem_x2: rms 0.064 max 0.642 deg, d_pct_sunlit +0.00 pp; dem_x4: rms 0.120 max 0.940 deg, d_pct_sunlit +0.01 pp; shift_N: rms 0.104 max 1.026 deg, d_pct_sunlit -0.01 pp; shift_S: rms 0.096 max 1.144 deg, d_pct_sunlit +0.01 pp; shift_E: rms 0.058 max 0.690 deg, d_pct_sunlit +0.00 pp; shift_W: rms 0.057 max 0.631 deg, d_pct_sunlit +0.00 pp. File uncertainty_deg 0.15; worst RMS (x2 and +-1 px shifts) 0.104 deg -> recommended uncertainty_deg 0.15. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}

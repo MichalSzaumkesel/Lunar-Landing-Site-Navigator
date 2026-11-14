@@ -1,0 +1,10 @@
+{
+  "id": "ephem_independent_change_4",
+  "kind": "ephemeris",
+  "site_id": "change_4",
+  "max_abs_error_deg": 0.001167,
+  "n_samples": 50,
+  "pass": true,
+  "threshold_deg": 0.05,
+  "notes": "max|d_el|=0.00117 deg; max|d_az|=0.00050 deg raw, 0.00050 deg weighted by cos(el); error = max(d_el, d_az*cos el); sun 0.00049/0.00050, earth 0.00117/0.00037 (el/az*cos el); independent form: TLIST JD, seed 20261114, 50 times x 2 bodies; wrap-aware azimuth."
+}

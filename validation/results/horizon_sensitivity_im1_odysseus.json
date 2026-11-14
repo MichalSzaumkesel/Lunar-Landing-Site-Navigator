@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_im1_odysseus",
+  "kind": "horizon_sensitivity",
+  "site_id": "im1_odysseus",
+  "max_abs_error_deg": 15.9668,
+  "rms_worst_deg": 2.8155,
+  "recommended_uncertainty_deg": 2.85,
+  "n_samples": 720,
+  "pass": false,
+  "threshold_deg": 0.25,
+  "notes": "2 m mask, DEM LOLA LDEM_256 (LRO-L-LOLA-4-GDR-V1.0, V4.0) (118.451 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 33.2%). dem_x2: rms 1.642 max 8.813 deg, d_pct_sunlit +6.05 pp; dem_x4: rms 2.321 max 12.110 deg, d_pct_sunlit +7.55 pp; shift_N: rms 2.815 max 14.474 deg, d_pct_sunlit +2.31 pp; shift_S: rms 1.591 max 7.302 deg, d_pct_sunlit +4.78 pp; shift_E: rms 2.530 max 15.967 deg, d_pct_sunlit -1.76 pp; shift_W: rms 1.844 max 11.661 deg, d_pct_sunlit +1.31 pp. File uncertainty_deg 0.25; worst RMS (x2 and +-1 px shifts) 2.815 deg -> recommended uncertainty_deg 2.85. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}

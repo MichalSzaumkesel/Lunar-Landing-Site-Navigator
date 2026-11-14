@@ -3,7 +3,7 @@
 **What this tool does:** for a site and a date range it shows where the Sun and Earth are relative to the real local horizon, and counts how much of the time each is above it. It is a planning aid. It does not model power, heat or radio links.
 
 ## Data
-- **Terrain:** NASA LOLA digital elevation models from the PDS Geosciences Node (LRO-L-LOLA-4-GDR-V1.0). Sites with |latitude| >= 80 deg use the south-polar LDEM_80S_20M (20 m per pixel). All other sites use the global LDEM_1024 (about 30 m per pixel). Heights are relative to a 1737.4 km sphere. The product used is recorded in each horizon file (`meta.inputs`).
+- **Terrain:** NASA LOLA digital elevation models from the PDS Geosciences Node (LRO-L-LOLA-4-GDR-V1.0). Sites with |latitude| >= 80 deg use the south-polar LDEM_80S_20M (20 m per pixel). All other sites use a global LOLA product: LDEM_1024 (about 30 m per pixel) at Apollo 11, LDEM_256 (about 118 m per pixel) at the other library sites (see each horizon file's `dem` block). Heights are relative to a 1737.4 km sphere. The product used is recorded in each horizon file (`meta.inputs`).
 - **Sun and Earth positions:** JPL Horizons, observer on the Moon at the site, apparent azimuth and elevation without refraction (the Moon has no atmosphere). Hourly, 2026-12-01 to 2028-12-31 (18288 samples). We do not re-implement libration or Moon orientation; Horizons provides them.
 - **Sites:** coordinates come from LROC and NASA NSSDCA pages listed in `docs/sources.md`; every site has a source URL.
 
@@ -21,7 +21,7 @@ For each site we cast 720 rays (0.5 deg apart) over a 100 km range (150 km at th
 - The disc cut uses a straight horizon across the disc; real jagged horizons differ in detail.
 - Angular radii are constants (Sun 0.2666 deg, Earth 0.95 deg); the real values vary by a few percent.
 - The data cover two years. Lunar illumination repeats over about 18.6 years, so two years is not a long-term average.
-- DEM resolution is 20 m (polar) or about 30 m (global). Small boulders and rims below that scale are not in the horizon. Horizon files carry an `uncertainty_deg` (0.1 deg at the polar sites, 0.15 deg at Apollo 11).
+- DEM resolution is 20 m (polar demo sites), about 30 m (Apollo 11) or about 118 m (other library sites). Small boulders and rims below that scale are not in the horizon. Horizon files carry an `uncertainty_deg` (see `uncertainty_deg`; a sensitivity test with the DEM coarsened x2 and the site moved by one pixel gave RMS horizon changes of 0.03 deg at southpole_landed, 0.25 deg at artemis_region_1, 0.10 deg at Apollo 11, and 0.1 to 2.8 deg at sites on the 118 m DEM, while pct_sunlit changed by under 0.7 percentage points except at im1_odysseus, 7.5 pp).
 - The global DEM is a gridded product, so features smaller than its pixel size are not captured at the Apollo sites.
 - Observer heights are 2 m and 10 m only. Site height comes from the DEM, not from a surveyed position.
 - No thermal, power or communications modelling.

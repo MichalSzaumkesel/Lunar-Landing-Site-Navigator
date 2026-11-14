@@ -1,0 +1,12 @@
+{
+  "id": "horizon_sensitivity_artemis_region_1",
+  "kind": "horizon_sensitivity",
+  "site_id": "artemis_region_1",
+  "max_abs_error_deg": 1.3224,
+  "rms_worst_deg": 0.2485,
+  "recommended_uncertainty_deg": 0.25,
+  "n_samples": 720,
+  "pass": false,
+  "threshold_deg": 0.1,
+  "notes": "2 m mask, DEM LOLA LDEM_80S_20M (LRO-L-LOLA-4-GDR-V1.0, V2.0) (20 m px), baseline recomputed with the pipeline code (max diff to file 0.0005 deg; baseline pct_sunlit 24.5%). dem_x2: rms 0.202 max 0.762 deg, d_pct_sunlit +0.83 pp; dem_x4: rms 0.395 max 1.322 deg, d_pct_sunlit +2.10 pp; shift_N: rms 0.248 max 0.727 deg, d_pct_sunlit +1.54 pp; shift_S: rms 0.112 max 0.476 deg, d_pct_sunlit -0.36 pp; shift_E: rms 0.196 max 0.675 deg, d_pct_sunlit +0.94 pp; shift_W: rms 0.148 max 0.528 deg, d_pct_sunlit -0.20 pp. File uncertainty_deg 0.1; worst RMS (x2 and +-1 px shifts) 0.248 deg -> recommended uncertainty_deg 0.25. Sensitivity of the pipeline's own horizon to resolution and position only; does not include LOLA height error or DEM geolocation error."
+}
