@@ -3,6 +3,8 @@ import type { SkyEvent } from '../../lib/events'
 import type { ScenarioMetrics } from '../../lib/types'
 import {
   bodyCountdown,
+  longestDarkLine,
+  longestNoEarthLine,
   clampStartUtc,
   cursorMetricRows,
   datesSummary,
@@ -139,6 +141,13 @@ describe('metric rows', () => {
     expect(rows.longest_dark_h).toBe('132.0 h')
     expect(rows.longest_no_earth_h).toBe('5.5 h')
     expect(rows.pct_both).toBe('31.3 %')
+  })
+
+  it('words the chip detail lines', () => {
+    expect(longestDarkLine(132)).toBe('Longest dark stretch 5 d 12 h')
+    expect(longestDarkLine(20)).toBe('Longest dark stretch 20 h')
+    expect(longestNoEarthLine(144)).toBe('Longest without Earth 6 d')
+    expect(longestNoEarthLine(0)).toBe('No gap in this window')
   })
 
   it('gives every row a definition', () => {

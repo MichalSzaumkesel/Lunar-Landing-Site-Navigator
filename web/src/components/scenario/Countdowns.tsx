@@ -6,7 +6,7 @@ import { scenarioCursorMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { describeBody, pickMask } from '../sky/geometry'
-import { EVENT_DEFINITION, bodyCountdown, formatChange, splitEvents } from './cardLogic'
+import { EVENT_DEFINITION, bodyCountdown, formatChange, longestDarkLine, longestNoEarthLine, splitEvents } from './cardLogic'
 import type { Countdown, CountdownBody, SlipChange } from './cardLogic'
 import './scenario.css'
 
@@ -39,17 +39,19 @@ function Headline({ body, countdown }: { body: CountdownBody; countdown: Countdo
   )
 }
 
-function Share({ body, label, value, tip, change }: {
+function Share({ body, label, value, tip, detail, change }: {
   body: CountdownBody
   label: string
   value: number
   tip: string
+  detail: string
   change: string | null
 }) {
   return (
     <div className={`countdown countdown--${body}`} title={tip}>
       <span className="countdown__value">{`${label} ${value.toFixed(1)} %`}</span>
-      <span className="countdown__utc">{change ? `vs slip 0: ${change}` : ' '}</span>
+      <span className="countdown__utc">{detail}</span>
+      {change && <span className="countdown__utc">{`vs slip 0: ${change}`}</span>}
     </div>
   )
 }
@@ -82,6 +84,7 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             label="Sun visible"
             value={metrics.pct_sunlit}
             tip="pct_sunlit: share of samples in the window where the Sun centre is above the terrain horizon."
+            detail={longestDarkLine(metrics.longest_dark_h)}
             change={change ? formatChange(change.sunH, change.sunPp) : null}
           />
           <Share
@@ -89,6 +92,7 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             label="Earth in view"
             value={metrics.pct_earth}
             tip="pct_earth: share of samples in the window where the Earth centre is above the terrain horizon."
+            detail={longestNoEarthLine(metrics.longest_no_earth_h)}
             change={change ? formatChange(change.earthH, change.earthPp) : null}
           />
         </>
