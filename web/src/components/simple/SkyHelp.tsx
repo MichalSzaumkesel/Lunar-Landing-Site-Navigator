@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { usePresence } from '../../lib/usePresence'
+import '../common/FullscreenButton.css'
 
 /** Legend text for the sky plot; the centre part is computed from the actual plot zoom. */
 function skyHelpText(centreText: string): string {

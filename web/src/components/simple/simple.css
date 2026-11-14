@@ -302,27 +302,7 @@
 
 .sky-help {
   position: relative;
-}
-
-.sky-help__marker {
-  width: 20px;
-  height: 20px;
-  min-height: 0;
-  min-width: 0;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-  cursor: help;
-}
-
-.sky-help__marker:hover,
-.sky-help__marker:focus-visible {
-  color: var(--text);
+  display: flex;
 }
 
 .sky-help__tip {
@@ -663,6 +643,9 @@
   align-items: flex-start;
   justify-content: center;
   overflow: auto;
+  /* The stage scrollbar must not sit under the corner buttons: they get their own row above. */
+  scrollbar-gutter: stable;
+  margin-top: calc(var(--corner-btn-size, 28px) + var(--space-1, 4px));
   container-type: size;
 }
 
@@ -693,6 +676,7 @@
 
 /* Full screen: the stage fills the screen and the view scales to it. */
 .simple-sky-wrap[data-fullscreen='true'] {
+  border: 0;
   padding: var(--space-3, 12px);
   justify-content: center;
 }
@@ -702,7 +686,6 @@
   aspect-ratio: auto;
   height: auto;
   min-height: 0;
-  padding-bottom: 3.5rem;
   align-items: center;
 }
 
@@ -735,31 +718,10 @@
   right: 72px;
 }
 
-.simple-fs-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4, 16px);
-  padding: var(--space-3, 12px);
-}
-
-.simple-fs-bar__time {
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.simple-fs-bar__play {
-  min-height: 2.5rem;
-  min-width: 5rem;
-  padding: 0 var(--space-4, 16px);
-  border: 1px solid var(--control-border);
-  border-radius: 999px;
-  background: var(--panel-2);
-  color: var(--text);
-  cursor: pointer;
+/* The full app transport bar sits under the view in full screen. */
+.simple-sky-wrap[data-fullscreen='true'] .transport {
+  position: static;
+  flex: none;
+  align-self: stretch;
+  margin: var(--space-3, 12px) calc(-1 * var(--space-3, 12px)) calc(-1 * var(--space-3, 12px));
 }

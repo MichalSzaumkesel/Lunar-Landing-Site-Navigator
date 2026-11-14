@@ -12,7 +12,7 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import { DiagramStage } from './DiagramStage'
 import { VIEW_OPTIONS, readDiagramView, writeDiagramView } from './diagramView'
-import { FullscreenOverlay } from './FullscreenOverlay'
+import { Transport } from '../../app/Transport'
 import { SkyHelp } from './SkyHelp'
 import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
@@ -127,7 +127,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               <SkyHelp centreText={centreText} view={view} />
               <FullscreenButton targetRef={wrapRef} onChange={setFullscreen} />
             </div>
-            {fullscreen && <FullscreenOverlay cursorMs={cursorMs} />}
+            {fullscreen && <Transport />}
           </div>
         </div>
 
