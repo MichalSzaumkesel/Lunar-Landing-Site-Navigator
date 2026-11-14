@@ -59,6 +59,8 @@ const PrinterIcon = () => (
 )
 
 /** One "Share and export" button with a menu: copy link, export CSV, open the print dossier. */
+const ADVANCED_ONLY = 'Needs Advanced mode. Switch to Advanced to use this.'
+
 export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactElement {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -242,13 +244,14 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
             role="menuitem"
             className="share-menu__item"
             disabled={advancedDisabled || busy}
+            title={advancedDisabled ? ADVANCED_ONLY : undefined}
             onClick={onCsv}
           >
             <TableIcon />
             <span className="share-menu__text">
               <span className="share-menu__title">Export CSV</span>
               <span className="share-menu__desc">
-                Downloads the metrics and events of every scenario as a spreadsheet file.
+                {advancedDisabled ? ADVANCED_ONLY : 'Downloads the metrics and events of every scenario as a spreadsheet file.'}
               </span>
             </span>
           </button>
@@ -257,12 +260,13 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
             role="menuitem"
             className="share-menu__item"
             disabled={advancedDisabled}
+            title={advancedDisabled ? ADVANCED_ONLY : undefined}
             onClick={onDossier}
           >
             <PrinterIcon />
             <span className="share-menu__text">
               <span className="share-menu__title">Export dossier</span>
-              <span className="share-menu__desc">Opens a one-page brief to print or save as PDF.</span>
+              <span className="share-menu__desc">{advancedDisabled ? ADVANCED_ONLY : 'Opens a one-page brief to print or save as PDF.'}</span>
             </span>
           </button>
         </div>
