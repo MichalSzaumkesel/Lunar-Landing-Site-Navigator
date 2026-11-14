@@ -99,6 +99,8 @@ ACK scope A 2026-11-14 13:36 — web/public/data/earth_orientation.json is on ma
   package.json) stay scope B's; scope A requests changes there via scope B.
 - Action required: scope B — don't touch components/map/; review and merge PR from a/ui-map.
 - Status: open
+- UPDATE 2026-11-14 23:00: ownership continues for follow-up work — hover fix, tooltips, overlay
+  opacity, optional globe view. PRs from a/ui-map2. Scope B: still don't touch components/map/.
 
 ### C-006 · New data: basemap/ (map backgrounds) + sites[].slope_deg
 - Date (CET): 2026-11-14 <fill in>
