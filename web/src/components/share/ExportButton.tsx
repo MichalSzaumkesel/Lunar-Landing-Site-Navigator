@@ -20,7 +20,6 @@ export function ExportButton({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const errorP = usePresenceValue(error)
-  const errorP = usePresenceValue(error)
 
   const handleExport = async (): Promise<void> => {
     if (loading) return
