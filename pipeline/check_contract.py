@@ -29,7 +29,7 @@ ISO_Z = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
 SNAKE = re.compile(r"^[a-z0-9]+(_[a-z0-9]+)*$")
 CATEGORIES = {"apollo", "clps", "commercial", "international", "artemis_region", "custom"}
 STATUSES = {"landed", "crashed", "planned", "candidate_region"}
-KINDS = ("sites", "validation", "horizon", "ephem", "terrain", "illum")
+KINDS = ("sites", "validation", "horizon", "ephem", "terrain", "illum", "earth_orientation")
 
 
 @dataclass
@@ -369,6 +369,27 @@ def check_terrain(c: Checker, doc: dict, real: bool, data_root: Path) -> None:
             c.err(f"bin size {f.stat().st_size} B != size_px^2 * 2 = {size * size * 2} B")
 
 
+def check_earth_orientation(c: Checker, doc: dict, real: bool) -> None:
+    """Contract §2.8 (v1.2.0): one global file, same hourly grid as ephem/."""
+    start = c.require(doc, "start_utc", str, "$")
+    start_ok = start is not None and c.iso(start, "start_utc")
+    step = c.require(doc, "step_minutes", (int, float), "$")
+    if step is not None and step <= 0:
+        c.err("step_minutes must be > 0")
+    count = c.require(doc, "count", int, "$")
+    if count is not None and count <= 0:
+        c.err("count must be > 0")
+    c.num_array(doc.get("sub_lunar_lat_deg"), count, -90, 90, "sub_lunar_lat_deg")
+    c.num_array(doc.get("sub_lunar_lon_deg"), count, -180, 180, "sub_lunar_lon_deg")
+    c.num_array(doc.get("pole_pa_deg"), count, 0, 360, "pole_pa_deg", hi_open=True)
+    if start_ok and _is_num(step) and isinstance(count, int) and count > 0:
+        t0 = datetime.fromisoformat(start[:-1] + "+00:00").timestamp()
+        want0 = datetime.fromisoformat(EPHEM_START_UTC[:-1] + "+00:00").timestamp()
+        want1 = datetime.fromisoformat(EPHEM_END_UTC[:-1] + "+00:00").timestamp()
+        if t0 != want0 or t0 + (count - 1) * step * 60 != want1:
+            c.warn("grid does not match the ephem/ grid (2026-12-01T00Z .. 2028-12-31T23Z hourly)")
+
+
 def check_validation(c: Checker, doc: dict, real: bool) -> None:
     checks = c.require(doc, "checks", list, "$")
     if checks is None:
@@ -421,6 +442,8 @@ def kind_of(path: Path) -> str | None:
         return "sites"
     if path.name == "validation.json":
         return "validation"
+    if path.name == "earth_orientation.json":
+        return "earth_orientation"
     if path.parent.name in ("horizon", "ephem", "terrain", "illum") and path.suffix == ".json":
         return path.parent.name
     return None
@@ -452,7 +475,7 @@ def check_file(path: Path) -> list[Issue]:
     check_decimals(c, doc)
     meta = check_meta(c, doc, is_mock)
     real = bool(meta) and meta.get("synthetic") is False
-    data_root = path.parent if kind in ("sites", "validation") else path.parent.parent
+    data_root = path.parent if kind in ("sites", "validation", "earth_orientation") else path.parent.parent
     if kind == "sites":
         check_sites(c, doc, real)
     elif kind == "ephem":
@@ -465,6 +488,8 @@ def check_file(path: Path) -> list[Issue]:
         check_validation(c, doc, real)
     elif kind == "illum":
         check_illum(c, doc, real)
+    elif kind == "earth_orientation":
+        check_earth_orientation(c, doc, real)
     return c.issues
 
 
