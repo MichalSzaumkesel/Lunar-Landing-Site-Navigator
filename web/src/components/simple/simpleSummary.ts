@@ -9,7 +9,7 @@ export interface SimpleStatusInput {
   nextEarthEvent?: SkyEvent | null
   cursorMs: number
   durationH: number
-  metrics: Pick<ScenarioMetrics, 'pct_sunlit' | 'longest_dark_h' | 'pct_earth'>
+  metrics: Pick<ScenarioMetrics, 'pct_sunlit' | 'longest_dark_h' | 'pct_earth' | 'longest_no_earth_h'>
   synthetic?: boolean
 }
 
@@ -23,9 +23,11 @@ export interface SimpleBlock {
 }
 
 export interface SimpleRow {
-  id: 'sun' | 'dark' | 'earth'
+  id: 'sun' | 'dark' | 'earth' | 'noEarth'
   label: string
   value: string
+  /** Secondary metric shown under the row above it. */
+  child?: boolean
 }
 
 export interface SimpleStatus {
@@ -97,6 +99,11 @@ function formatSpan(rawHours: number): string {
   return days === 1 ? '1 day' : `${days} days`
 }
 
+/** Longest-stretch value, or a plain phrase when there is none. */
+function formatStretch(rawHours: number): string {
+  return Math.round(Math.max(0, rawHours)) === 0 ? 'None in this window' : formatSpan(rawHours)
+}
+
 function windowPhrase(durationH: number): string {
   if (durationH < 12) return 'the next few hours'
   const days = Math.round(durationH / 24)
@@ -138,8 +145,9 @@ export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
     ],
     rows: [
       { id: 'sun', label: 'Sun visible', value: `${Math.round(input.metrics.pct_sunlit)}% of ${span}` },
-      { id: 'dark', label: 'Longest dark stretch', value: formatSpan(input.metrics.longest_dark_h) },
+      { id: 'dark', label: 'Longest dark stretch', value: formatStretch(input.metrics.longest_dark_h), child: true },
       { id: 'earth', label: 'Earth in view', value: `${Math.round(input.metrics.pct_earth)}% of ${span}` },
+      { id: 'noEarth', label: 'Longest without Earth', value: formatStretch(input.metrics.longest_no_earth_h), child: true },
     ],
     note: input.synthetic ? 'This is demo data, not a measurement.' : null,
   }

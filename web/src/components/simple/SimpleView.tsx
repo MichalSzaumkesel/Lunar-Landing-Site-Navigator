@@ -188,8 +188,11 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               </div>
               <dl className="simple-rows" aria-label="Over the whole window">
                 {readout.rows.map((row) => (
-                  <div key={row.id} className="simple-row">
-                    <dt>{row.label}</dt>
+                  <div key={row.id} className={row.child ? 'simple-row simple-row--child' : 'simple-row'}>
+                    <dt>
+                      {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
+                      {row.label}
+                    </dt>
                     <dd>{row.value}</dd>
                   </div>
                 ))}

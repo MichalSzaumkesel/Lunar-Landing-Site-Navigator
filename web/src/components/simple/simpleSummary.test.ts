@@ -22,7 +22,7 @@ const baseInput: SimpleStatusInput = {
   durationH: 720,
   nextSunEvent: makeEvent('sunset', 1_000_000 + 31 * HOUR_MS),
   nextEarthEvent: makeEvent('earthset', 1_000_000 + 31 * HOUR_MS),
-  metrics: { pct_sunlit: 49.2, longest_dark_h: 355.1, pct_earth: 36.4 },
+  metrics: { pct_sunlit: 49.2, longest_dark_h: 355.1, pct_earth: 36.4, longest_no_earth_h: 143.6 },
   synthetic: false,
 }
 
@@ -58,13 +58,13 @@ describe('date helpers', () => {
 })
 
 describe('simpleStatus', () => {
-  it('shows two matching blocks with countdowns and three window rows', () => {
+  it('shows two matching blocks with countdowns and four window rows', () => {
     const s = simpleStatus(baseInput)
     expect(s.blocks).toEqual([
       { id: 'sun', on: true, headline: 'Sun visible', detail: 'It sets in 31 hours.' },
       { id: 'earth', on: true, headline: 'Earth in view', detail: 'It sets in 31 hours.' },
     ])
-    expect(s.rows.map((r) => r.value)).toEqual(['49% of 30 days', '15 days', '36% of 30 days'])
+    expect(s.rows.map((r) => r.value)).toEqual(['49% of 30 days', '15 days', '36% of 30 days', '6 days'])
     expect(s.note).toBeNull()
   })
 
@@ -97,12 +97,13 @@ describe('simpleStatus', () => {
     const s = simpleStatus({
       ...baseInput,
       durationH: 6,
-      metrics: { pct_sunlit: 100, longest_dark_h: 1, pct_earth: 0 },
+      metrics: { pct_sunlit: 100, longest_dark_h: 1, pct_earth: 0, longest_no_earth_h: 0 },
     })
     expect(s.rows.map((r) => r.value)).toEqual([
       '100% of the next few hours',
       '1 hour',
       '0% of the next few hours',
+      'None in this window',
     ])
     expect(simpleStatus({ ...baseInput, durationH: 24 }).rows[0].value).toBe('49% of 1 day')
   })
