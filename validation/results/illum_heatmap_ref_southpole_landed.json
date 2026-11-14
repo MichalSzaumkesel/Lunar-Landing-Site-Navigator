@@ -1,0 +1,12 @@
+{
+  "id": "illum_heatmap_ref_southpole_landed",
+  "kind": "illumination_heatmap_reference",
+  "site_id": "southpole_landed",
+  "n_samples": 441,
+  "pearson_r": 0.98,
+  "median_abs_diff_pp": 0.9,
+  "mean_diff_pp": -1.23,
+  "max_abs_diff_pp": 36.57,
+  "pass": true,
+  "notes": "441 cells (21x21, 200 m): Pearson r 0.980, median |ours-PGDA| 0.9 pp, mean diff (bias, ours-PGDA) -1.2 pp, max |diff| 36.6 pp. Ours range 0.0-51.7 %, PGDA 0.0-51.8 %. Rule fixed in advance: r >= 0.5 and median |diff| <= 10 pp. Not like-for-like: ours = Sun centre above horizon, 2 yr (2026-12..2028-12), 200 m cells, horizon from the 20 m DEM at 2 m; PGDA = any part of the disc, ~18.6 yr average, 120 m px, observer height not stated, so a lower bias for ours is expected. Site coordinates (full precision) from pipeline/sites_input.json."
+}
