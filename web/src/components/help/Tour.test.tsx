@@ -45,6 +45,26 @@ describe('Tour component', () => {
     localStorage.clear()
   })
 
+  it('scrolls the target smoothly, or instantly with reduced motion', async () => {
+    const spy = vi.fn()
+    Element.prototype.scrollIntoView = spy
+    for (const [reduce, behavior] of [
+      [false, 'smooth'],
+      [true, 'auto'],
+    ] as const) {
+      spy.mockClear()
+      window.matchMedia = vi.fn().mockReturnValue({ matches: reduce }) as never
+      useTourStore.setState({ isOpen: true, stepIndex: 0 })
+      await act(async () => {
+        root.render(createElement(Tour))
+      })
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ block: 'center', behavior }))
+      await act(async () => {
+        root.render(null)
+      })
+    }
+  })
+
   it('renders nothing when closed', async () => {
     await act(async () => {
       root.render(createElement(Tour))

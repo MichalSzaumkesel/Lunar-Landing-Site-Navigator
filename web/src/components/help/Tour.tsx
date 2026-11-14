@@ -90,12 +90,30 @@ export function Tour({ className = '' }: TourProps) {
   useLayoutEffect(() => {
     if (!isOpen || !currentStep) return
     const el = document.querySelector(currentStep.target)
-    if (el) {
-      el.scrollIntoView?.({ block: 'center', inline: 'nearest' })
-    }
-    const raf = requestAnimationFrame(() => {
-      updatePosition()
+    const reduce =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    el?.scrollIntoView?.({
+      block: 'center',
+      inline: 'nearest',
+      behavior: reduce ? 'auto' : 'smooth',
     })
+    // Follow the target while the smooth scroll runs, until its rect is stable (max ~800 ms)
+    let raf = 0
+    const start = performance.now()
+    let last = ''
+    let stableFrames = 0
+    const tick = () => {
+      updatePosition()
+      const r = el?.getBoundingClientRect()
+      const key = r ? `${Math.round(r.top)}:${Math.round(r.left)}` : ''
+      stableFrames = key === last ? stableFrames + 1 : 0
+      last = key
+      if (stableFrames < 6 && performance.now() - start < 800) {
+        raf = requestAnimationFrame(tick)
+      }
+    }
+    raf = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(raf)
     }
@@ -117,7 +135,7 @@ export function Tour({ className = '' }: TourProps) {
   const prevOpenRef = useRef(false)
   useEffect(() => {
     if (isOpen && !prevOpenRef.current) {
-      cardRef.current?.focus()
+      cardRef.current?.focus({ preventScroll: true })
     }
     prevOpenRef.current = isOpen
   }, [isOpen])
@@ -147,10 +165,10 @@ export function Tour({ className = '' }: TourProps) {
 
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault()
-        last.focus()
+        last.focus({ preventScroll: true })
       } else if (!e.shiftKey && document.activeElement === last) {
         e.preventDefault()
-        first.focus()
+        first.focus({ preventScroll: true })
       }
     }
   }
