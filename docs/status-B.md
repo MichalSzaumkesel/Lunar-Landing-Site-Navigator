@@ -42,6 +42,25 @@ The web app runs end to end on three synthetic mock sites: sky plot, panorama, l
    - The service needs CORS enabled for the web origin.
    - B side: after the contract question is settled, `loadCustomSite(lat, lon)` in the loader tries `${VITE_API_URL}/api/custom-site` with a 4 s timeout, then falls back to the client-side approximation. B can build the fallback without waiting for A.
 
+4. **Optional new file: Earth orientation (proposed contract addition, not blocking).** The 3D view draws Earth with a real NASA Blue Marble texture, but which continent faces the Moon and the tilt of the axis are not in the contract, so today the texture rotation is decorative and the UI says so. Proposal for a new section (contract_version 1.2.0, additive, one global file because the Earth's appearance from the Moon is practically the same for every site): `data/earth_orientation.json` with `meta` (as §1, incl. `inputs` and the exact Horizons query), `start_utc`, `step_s` 3600, `count` (same grid as the ephemeris), `sub_lunar_lat_deg[]` and `sub_lunar_lon_deg[]` (the point on Earth that sees the Moon at the zenith; east-positive, -180..180) and `pole_pa_deg[]` (position angle of Earth's north pole as seen from the Moon, degrees east of celestial north). A should verify which Horizons observer-table quantities give these (sub-observer point and north-pole position angle for target Earth, observer at the Moon centre) and record them in `meta.inputs`. B renders it only if the file exists; otherwise the texture stays labelled illustrative.
+
+## Draft CRITICAL notice (second, for the contract addition above)
+
+Not sent. Same rules as C-001. Contract text changes go by a PR on `docs/contract.md` approved by scope A's human (not by agents).
+
+```
+### C-002 · Proposal: contract 1.2.0, add earth_orientation.json (optional)
+- Date (CET): <fill in when committed>
+- From: scope B
+- Affects: scope A (new file), contract (additive section)
+- Severity: nice-to-have (not blocking CP1 or CP2)
+- Contract: new section "Earth orientation", contract_version 1.2.0, see docs/status-B.md "Requests to other scope" item 4
+- What changed / what's wrong: the Earth texture orientation in the 3D view is currently illustrative.
+- Action required: A decides whether to produce `data/earth_orientation.json` after the 3 demo sites; if yes, A and B agree the field names in the PR.
+- Workaround until fixed: none needed, UI says "illustrative".
+- Status: open
+```
+
 ## Draft CRITICAL notice
 
 Not sent. Review and commit to `main` yourself if you agree (agents never commit this file).
