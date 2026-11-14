@@ -332,6 +332,33 @@ describe('PrintBrief component', () => {
     expect(container.textContent).toContain('Earth in view')
   })
 
+  it('evaluates the rules on the same window as the metrics table', () => {
+    const bundle: SiteBundle = {
+      ...mockBundle1,
+      ephem: {
+        ...mockBundle1.ephem!,
+        sun: {
+          az: new Array(336).fill(0),
+          el: new Array(336).fill(0).map((_, i) => (i < 240 ? 10 : -10)),
+        },
+      },
+    }
+    act(() => {
+      root.render(
+        createElement(PrintBrief, {
+          forceVisible: true,
+          scenarios: [mockScenario1],
+          bundles: { shackleton: bundle },
+          missionRules: mockRules,
+        }),
+      )
+    })
+
+    // Window is 336 h, rules mission is 240 h: the Sun share must be the whole-window 71.4 % in both tables.
+    const actuals = Array.from(container.querySelectorAll('.print-rule-detail__actual')).map((e) => e.textContent)
+    expect(actuals).toContain('71.4 %')
+  })
+
   it('renders provenance lines with real or mock indication and source IDs', () => {
     act(() => {
       root.render(
