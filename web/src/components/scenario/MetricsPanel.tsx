@@ -1,3 +1,4 @@
+import { DATA_END_UTC, DATA_START_UTC } from '../../config/dataRange'
 import { memo, useMemo } from 'react'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { mastDelta } from '../../lib/mastDelta'
@@ -7,6 +8,7 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { describeBody, pickMask } from '../sky/geometry'
+import { ElevationChart } from '../chart/ElevationChart'
 import { cursorMetricRows, windowMetricRows } from './cardLogic'
 import type { MetricRow } from './cardLogic'
 import './scenario.css'
@@ -54,6 +56,9 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
   bundle: SiteBundle | null
   heightM: ObserverHeightM
 }) {
+  const activeScenarioId = useAppStore((s) => s.activeScenarioId)
+  const isActive = scenario.id === activeScenarioId
+
   const { startMs, endMs } = scenarioWindowMs(scenario)
   // Once per bundle, observer height and window; the cursor never recomputes it.
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
@@ -67,7 +72,7 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
   if (!rows) {
     return (
       <div className="metrics metrics--empty" role="status">
-        Outside data range
+        Outside data range. Data cover {DATA_START_UTC.slice(0, 10)} to {DATA_END_UTC.slice(0, 10)} UTC; pick a start date inside it.
       </div>
     )
   }
@@ -96,6 +101,9 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
         )}
       </dl>
       {partial && <p className="metrics__note">Window partly outside data range. Window values cover the available part.</p>}
+      {isActive && (
+        <ElevationChart scenario={scenario} bundle={bundle} heightM={heightM} />
+      )}
     </div>
   )
 }

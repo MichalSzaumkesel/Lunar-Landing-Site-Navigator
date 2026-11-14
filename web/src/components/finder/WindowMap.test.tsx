@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LandingWindow, SiteBundle, SitesFile } from '../../lib/types'
+import type { SiteBundle, SitesFile } from '../../lib/types'
 import type { WindowMapRow } from '../../lib/windowMap'
 import { useAppStore } from '../../state/store'
 
@@ -20,11 +20,6 @@ vi.mock('../../lib/loader', () => ({
 const mockComputeWindowMapAsync = vi.fn()
 vi.mock('../../lib/windowMapClient', () => ({
   computeWindowMapAsync: (...args: unknown[]) => mockComputeWindowMapAsync(...args),
-}))
-
-const mockFindWindows = vi.fn()
-vi.mock('../../lib/finder', () => ({
-  findWindows: (...args: unknown[]) => mockFindWindows(...args),
 }))
 
 import { WindowMap } from './WindowMap'
@@ -187,10 +182,10 @@ describe('WindowMap', () => {
       longestDarkH: new Float32Array([0, 10]),
       valid: new Uint8Array([1, 0]),
     }
-    mockComputeWindowMapAsync.mockResolvedValue([mockRow])
-    mockFindWindows.mockReturnValue([
-      { start_utc: '2027-01-01T00:00:00Z', end_utc: '2027-01-02T00:00:00Z' } as LandingWindow,
-    ])
+    // First call is the daily grid, the second the hourly pass the window lists are built from.
+    mockComputeWindowMapAsync
+      .mockResolvedValueOnce([mockRow])
+      .mockResolvedValueOnce([{ ...mockRow, valid: new Uint8Array([1, 1]) }])
 
     await act(async () => {
       root.render(createElement(WindowMap))
@@ -275,7 +270,6 @@ describe('WindowMap', () => {
       return makeMockBundle(id, 'Site One')
     })
     mockComputeWindowMapAsync.mockResolvedValue([])
-    mockFindWindows.mockReturnValue([])
 
     await act(async () => {
       root.render(createElement(WindowMap))
@@ -335,7 +329,6 @@ describe('WindowMap', () => {
       valid: new Uint8Array([1, 0]),
     }
     mockComputeWindowMapAsync.mockResolvedValue([mockRow, { ...mockRow, siteId: 'site_2' }])
-    mockFindWindows.mockReturnValue([])
 
     await act(async () => {
       root.render(createElement(WindowMap))

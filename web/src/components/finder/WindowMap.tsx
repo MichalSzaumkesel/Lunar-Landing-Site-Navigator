@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import type { LandingWindow, SiteBundle } from '../../lib/types'
+import { windowsFromRow } from '../../lib/windowMap'
 import type { WindowMapRow } from '../../lib/windowMap'
 import * as windowMapClient from '../../lib/windowMapClient'
-import { findWindows } from '../../lib/finder'
 import { dataSource } from '../../lib/loader'
 import { useAppStore } from '../../state/store'
 import { MissionRulesForm } from './MissionRulesForm'
@@ -144,6 +144,8 @@ export function WindowMap({ className = '' }: WindowMapProps) {
     setRetryKey((k) => k + 1)
   }
 
+  const [siteWindows, setSiteWindows] = useState<Map<string, LandingWindow[]> | null>(null)
+
   // Compute window map whenever bundles, rules, or observer height change (debounced 250 ms)
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -160,6 +162,11 @@ export function WindowMap({ className = '' }: WindowMapProps) {
       windowMapClient.computeWindowMapAsync(inputs, { ...missionRules, observerHeightM }, { dayStepH: 24 })
         .then((computedRows) => {
           setRows(computedRows)
+          // Hourly pass for the window lists, in the worker: findWindows would block the page for seconds.
+          return windowMapClient.computeWindowMapAsync(inputs, { ...missionRules, observerHeightM }, { dayStepH: 1 })
+        })
+        .then((hourlyRows) => {
+          setSiteWindows(new Map(hourlyRows.map((r) => [r.siteId, windowsFromRow(r)])))
         })
         .catch((err: unknown) => {
           if (err instanceof Error && err.message === 'cancelled') {
@@ -182,19 +189,6 @@ export function WindowMap({ className = '' }: WindowMapProps) {
         // Ignored when module is mocked without cancelWindowMap in unit tests
       }
     }
-  }, [bundles, missionRules, observerHeightM])
-
-  // Memoised valid landing windows per site computed via findWindows
-  const siteWindows = useMemo(() => {
-    const map = new Map<string, LandingWindow[]>()
-    for (const b of bundles) {
-      const windows = findWindows(
-        { horizon: b.horizon, ephem: b.ephem },
-        { ...missionRules, observerHeightM }
-      )
-      map.set(b.site.id, windows)
-    }
-    return map
   }, [bundles, missionRules, observerHeightM])
 
   // Dimensions
@@ -370,12 +364,13 @@ export function WindowMap({ className = '' }: WindowMapProps) {
     const y = e.clientY - rect.top
 
     const cell = cellFromPointer(x, y, canvasWidth, canvasHeight, rowCount, colCount)
-    if (cell) {
-      setHoveredCell(cell)
-      setTooltipPos({ x: e.clientX, y: e.clientY })
-    } else {
-      setHoveredCell(null)
-    }
+    // Keep the same object while the pointer stays in one cell, so the canvas is not redrawn per pixel.
+    setHoveredCell((prev) => {
+      if (!cell) return null
+      if (prev && prev.rowIndex === cell.rowIndex && prev.colIndex === cell.colIndex) return prev
+      return cell
+    })
+    if (cell) setTooltipPos({ x: e.clientX, y: e.clientY })
   }
 
   function handlePointerLeave() {
@@ -651,14 +646,16 @@ export function WindowMap({ className = '' }: WindowMapProps) {
         <h3 className="finder__section-title">Valid landing windows per site</h3>
         <div className="finder__sites-list">
           {bundles.map((bundle) => {
-            const windows = siteWindows.get(bundle.site.id) ?? []
+            const windows = siteWindows?.get(bundle.site.id) ?? []
             const displayedWindows = windows.slice(0, 5)
             const remainingCount = Math.max(0, windows.length - 5)
 
             return (
               <div key={bundle.site.id} className="finder__site-card">
                 <h4 className="finder__site-name">{bundle.site.name}</h4>
-                {displayedWindows.length === 0 ? (
+                {siteWindows === null ? (
+                  <p className="finder__no-windows">Computing landing windows.</p>
+                ) : displayedWindows.length === 0 ? (
                   <p className="finder__no-windows">No landing window with these rules.</p>
                 ) : (
                   <ul className="finder__site-windows">
