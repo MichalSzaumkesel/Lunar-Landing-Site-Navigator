@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { clampStartUtc, dateInputBounds, nextEventAfter, splitEvents } from '../scenario/cardLogic'
 import { DataBadges } from '../badges/DataBadges'
-import { ShareButton } from '../share/ShareButton'
 import { FullscreenButton } from '../common/FullscreenButton'
 import { chooseSkyZoom, describeBody, pickMask, skyCentreText } from '../sky/geometry'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
@@ -99,11 +98,21 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
 
   return (
     <section className={`simple-view ${className}`.trim()} aria-label="Simple mode view">
-      <PlacePicker activeSiteId={scenario.siteId} />
+      <header className="simple-head">
+        <div className="simple-head__main">
+          <PlacePicker activeSiteId={scenario.siteId} />
+          <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
+            {formatWindowPlain(startMs, endMs)} · world time (UTC)
+          </p>
+        </div>
+        <div className="simple-head__aside">
+          {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
+        </div>
+      </header>
 
       <div className="simple-grid">
         <div className="simple-sky-col">
-          <div className="simple-view-switch" role="group" aria-label="Diagram view">
+          <div className="simple-view-switch" role="group" aria-label="Sky view">
             {VIEW_OPTIONS.map((o) => (
               <button
                 key={o.key}
@@ -132,19 +141,6 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
         </div>
 
         <article className="simple-card" aria-label={`Details for ${siteName}`}>
-          <header className="simple-card__header">
-            <div className="simple-card__titles">
-              <div className="simple-card__title-row">
-                <h2 className="simple-card__title">{siteName}</h2>
-                {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
-              </div>
-              <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
-                {formatWindowPlain(startMs, endMs)} · world time (UTC)
-              </p>
-            </div>
-            <ShareButton className="simple-card__share" />
-          </header>
-
           {status === 'error' && (
             <div className="simple-error" role="alert">
               <p className="simple-error__message">

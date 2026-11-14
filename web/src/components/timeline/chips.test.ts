@@ -14,7 +14,7 @@ describe('chip text', () => {
 
   it('builds an event chip with a definition tooltip', () => {
     const c = eventChip(ev('earthset', T0))
-    expect(c.label).toBe('Earth set')
+    expect(c.label).toBe('Earthset')
     expect(c.timeText).toBe('09-03 14:20')
     expect(c.ms).toBe(T0)
     expect(c.tip).toContain('2027-09-03 14:20 UTC')
@@ -24,8 +24,8 @@ describe('chip text', () => {
   it('builds stretch chips with the length', () => {
     const dark: SkyStretch = { kind: 'longest_dark', startMs: T0, endMs: T0 + 132 * H, hours: 132 }
     const noEarth: SkyStretch = { kind: 'longest_no_earth', startMs: T0, endMs: T0 + 5.5 * H, hours: 5.5 }
-    expect(stretchChip(dark).label).toBe('Longest dark 132 h')
-    expect(stretchChip(noEarth).label).toBe('Longest no-Earth 5.5 h')
+    expect(stretchChip(dark).label).toBe('Longest dark stretch 132 h')
+    expect(stretchChip(noEarth).label).toBe('Longest without Earth 5.5 h')
     expect(stretchChip(dark).ms).toBe(T0)
   })
 

@@ -51,7 +51,7 @@ export function stretchChip(s: SkyStretch): Chip {
   const dark = s.kind === 'longest_dark'
   return {
     id: `${s.kind}-${s.startMs}`,
-    label: `${dark ? 'Longest dark' : 'Longest no-Earth'} ${hoursText(s.hours)}`,
+    label: `${dark ? 'Longest dark stretch' : 'Longest without Earth'} ${hoursText(s.hours)}`,
     timeText: fmtChipTime(s.startMs),
     ms: s.startMs,
     tip: dark

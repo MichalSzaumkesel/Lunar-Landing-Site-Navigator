@@ -181,8 +181,8 @@ describe('SimpleView component', () => {
     // Two matching blocks and four window rows replace the old headline and chips
     const blocks = container.querySelectorAll('.simple-block')
     expect(blocks).toHaveLength(2)
-    expect(blocks[0].querySelector('.simple-block__headline')?.textContent).toMatch(/^Sun (visible|below the horizon)$/)
-    expect(blocks[1].querySelector('.simple-block__headline')?.textContent).toMatch(/^Earth (in view|below the horizon)$/)
+    expect(blocks[0].querySelector('.simple-block__headline')?.textContent).toMatch(/^Sun (visible|below horizon)$/)
+    expect(blocks[1].querySelector('.simple-block__headline')?.textContent).toMatch(/^Earth (in view|below horizon)$/)
     expect(container.querySelectorAll('.simple-chip')).toHaveLength(0)
     expect(container.querySelectorAll('.simple-row')).toHaveLength(4)
     expect(container.querySelectorAll('.simple-row--child')).toHaveLength(2)

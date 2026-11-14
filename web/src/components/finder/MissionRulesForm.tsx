@@ -210,14 +210,14 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
       </div>
 
       <div className="finder-form__fields">
-        {/* Mission length */}
+        {/* Window length */}
         <div className="finder-form__field">
           <label
             htmlFor="rule-missionDurationH"
             className="finder-form__label"
             title="Total mission duration on the lunar surface (contract §3: missionDurationH, 1 to 1440 hours)"
           >
-            <span>Mission length</span>
+            <span>Window length</span>
             <span className="finder-form__unit">hours ({daysDisplay} days)</span>
           </label>
           <input

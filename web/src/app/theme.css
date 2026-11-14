@@ -242,11 +242,6 @@ button.accent:hover:not(:disabled) {
   pointer-events: none !important;
 }
 
-/* Hide duplicate share button in simple card header; toolbar holds the single stable share button */
-.simple-card__share {
-  display: none !important;
-}
-
 /* Mode switch button stability: fixed min-width so text bolding never alters button or group width */
 [data-tour="mode-switch"] button {
   min-width: 6.5rem;
