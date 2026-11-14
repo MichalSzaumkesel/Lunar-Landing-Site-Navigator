@@ -146,22 +146,20 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
 
           {readout && readout !== 'outside' && (
             <div className="simple-summary" data-tour="simple-summary" aria-label="Summary">
-              <p
-                className={`simple-headline ${readout.headline === 'Sunlit' ? 'simple-headline--sun' : 'simple-headline--dark'}`}
-              >
-                {readout.headline}
-              </p>
-              <p className="simple-summary__sentence">{readout.detail}</p>
-              <ul className="simple-chips" aria-label="Sun and Earth now">
-                {readout.chips.map((chip) => (
-                  <li
-                    key={chip.id}
-                    className={`simple-chip simple-chip--${chip.id} ${chip.on ? 'simple-chip--on' : 'simple-chip--off'}`}
+              <div className="simple-status" role="status" aria-label="Sun and Earth now">
+                {readout.blocks.map((block) => (
+                  <section
+                    key={block.id}
+                    className={`simple-block simple-block--${block.id} ${block.on ? 'simple-block--on' : 'simple-block--off'}`}
                   >
-                    {chip.text}
-                  </li>
+                    <span className="simple-block__dot" aria-hidden="true" />
+                    <div className="simple-block__text">
+                      <p className="simple-block__headline">{block.headline}</p>
+                      <p className="simple-block__detail">{block.detail}</p>
+                    </div>
+                  </section>
                 ))}
-              </ul>
+              </div>
               <dl className="simple-rows" aria-label="Over the whole window">
                 {readout.rows.map((row) => (
                   <div key={row.id} className="simple-row">

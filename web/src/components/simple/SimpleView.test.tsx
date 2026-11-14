@@ -178,9 +178,12 @@ describe('SimpleView component', () => {
     expect(container.querySelector('.badge--synthetic')?.textContent).toBe('Synthetic data')
     expect(container.querySelector('.badge--approximate')?.textContent).toBe('Approximate')
 
-    // Headline, two chips and three window rows replace the old paragraph
-    expect(container.querySelector('.simple-headline')?.textContent).toMatch(/^(Sunlit|Dark)$/)
-    expect(container.querySelectorAll('.simple-chip')).toHaveLength(2)
+    // Two matching blocks and three window rows replace the old headline and chips
+    const blocks = container.querySelectorAll('.simple-block')
+    expect(blocks).toHaveLength(2)
+    expect(blocks[0].querySelector('.simple-block__headline')?.textContent).toMatch(/^Sun (visible|below the horizon)$/)
+    expect(blocks[1].querySelector('.simple-block__headline')?.textContent).toMatch(/^Earth (in view|below the horizon)$/)
+    expect(container.querySelectorAll('.simple-chip')).toHaveLength(0)
     expect(container.querySelectorAll('.simple-row')).toHaveLength(3)
     expect(container.textContent).not.toMatch(/CLPS|disc/)
   })
