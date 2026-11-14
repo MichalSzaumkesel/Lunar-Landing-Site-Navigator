@@ -1,6 +1,6 @@
 /* Shared by the full screen button and the (?) help marker: one size, shape and look. */
 :root {
-  --corner-btn-size: 28px;
+  --corner-btn-size: 32px;
 }
 
 .fs-button,

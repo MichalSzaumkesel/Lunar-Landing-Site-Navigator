@@ -79,10 +79,11 @@ export function computeWindowMap(
   const reqEndMs =
     opts?.endMs !== undefined ? Math.min(end0Ms, opts.endMs) : end0Ms
 
-  if (reqStartMs > reqEndMs) {
+  // A NaN bound (Math.max/min propagate it) would otherwise reach `new Float32Array(NaN)`.
+  if (Number.isNaN(reqStartMs) || Number.isNaN(reqEndMs) || reqStartMs > reqEndMs) {
     return inputs.map((input) => ({
       siteId: input.siteId,
-      startMs: opts?.startMs ?? start0Ms,
+      startMs: Number.isNaN(opts?.startMs ?? 0) ? start0Ms : (opts?.startMs ?? start0Ms),
       stepMs,
       count: 0,
       pctSunlit: new Float32Array(0),

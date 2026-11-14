@@ -100,7 +100,7 @@ describe('shortcutAction', () => {
   })
 
   it('returns null when target has composite widget role (grid, region, application, tab, tablist, menu)', () => {
-    const roles = ['grid', 'region', 'application', 'tab', 'tablist', 'menu', 'GRID', 'REGION']
+    const roles = ['grid', 'region', 'application', 'tab', 'tablist', 'menu', 'menuitem', 'menuitemradio', 'radio', 'radiogroup', 'listbox', 'option', 'GRID', 'REGION']
     for (const role of roles) {
       expect(shortcutAction(baseEvent({ key: ' ', targetRole: role }))).toBeNull()
       expect(shortcutAction(baseEvent({ key: 'ArrowRight', targetRole: role }))).toBeNull()

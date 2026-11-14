@@ -7,7 +7,7 @@ const simple = readFileSync('src/components/simple/simple.css', 'utf8')
 describe('corner buttons', () => {
   it('share one rule and one size token', () => {
     expect(css).toMatch(/\.fs-button,\s*\.sky-help__marker\s*\{[^}]*var\(--corner-btn-size\)/)
-    expect(css).toMatch(/--corner-btn-size:\s*28px/)
+    expect(css).toMatch(/--corner-btn-size:\s*32px/)
     expect(simple).not.toMatch(/\.sky-help__marker\s*\{[^}]*width:\s*20px/)
   })
 

@@ -28,6 +28,30 @@ describe('SoundToggle', () => {
     vi.restoreAllMocks()
   })
 
+  it('is a roving-tabindex radiogroup: arrows move focus and selection', async () => {
+    const engine = createSoundEngine()
+    await act(async () => {
+      root.render(createElement(SoundToggle, { engine }))
+    })
+    const radios = () => Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radio"]'))
+    expect(radios().map((b) => b.tabIndex)).toEqual([0, -1, -1])
+
+    const press = (el: HTMLElement, key: string) =>
+      act(async () => {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+      })
+    radios()[0].focus()
+    await press(radios()[0], 'ArrowRight')
+    expect(radios()[1].getAttribute('aria-checked')).toBe('true')
+    expect(document.activeElement).toBe(radios()[1])
+    expect(radios().map((b) => b.tabIndex)).toEqual([-1, 0, -1])
+
+    await press(radios()[1], 'ArrowLeft')
+    await press(radios()[0], 'ArrowLeft') // wraps from Off to Cues
+    expect(radios()[2].getAttribute('aria-checked')).toBe('true')
+    expect(document.activeElement).toBe(radios()[2])
+  })
+
   it('renders with label "Sound:" and Off/Ambient/Cues buttons, default Off', async () => {
     const engine = createSoundEngine()
 
