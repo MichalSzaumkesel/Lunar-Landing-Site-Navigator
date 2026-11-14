@@ -1,0 +1,47 @@
+.share-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.share-action-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.share-status {
+  font-size: 14px;
+  color: var(--both, #5ee6a8);
+}
+
+.share-error {
+  margin: 0;
+  font-size: 14px;
+  color: var(--danger);
+}
+
+.share-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  margin-top: var(--space-1, 4px);
+}
+
+.share-fallback-input {
+  background: var(--panel-2, #161d2e);
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  color: var(--text, #f2f5fb);
+  font-family: var(--mono, monospace);
+  font-size: 14px;
+  padding: 0.35rem 0.6rem;
+  min-height: 2.5rem;
+  width: 100%;
+  min-width: 260px;
+}
+
+.share-fallback-input:focus-visible {
+  outline: 2px solid var(--focus, #ffffff);
+  outline-offset: 2px;
+}

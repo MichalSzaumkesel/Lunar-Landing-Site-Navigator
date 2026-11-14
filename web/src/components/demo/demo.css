@@ -1,0 +1,93 @@
+/* Demo narration caption bar */
+.demo-caption {
+  position: fixed;
+  bottom: 4.5rem;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  background: var(--panel-2);
+  border-top: 2px solid var(--sun);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.demo-caption__content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.demo-caption__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 4px;
+  background: var(--sun);
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.demo-caption__text {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.demo-caption__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.demo-caption__hint {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.demo-caption__stop {
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: 1px solid var(--control-border);
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.demo-caption__stop:hover {
+  border-color: var(--muted);
+  background: var(--panel);
+}
+
+@media (max-width: 768px) {
+  .demo-caption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    bottom: 5.5rem;
+  }
+
+  .demo-caption__controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
