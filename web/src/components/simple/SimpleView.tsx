@@ -95,39 +95,29 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
 
   return (
     <section className={`simple-view ${className}`.trim()} aria-label="Simple mode view">
-      <header className="simple-head">
-        <div className="simple-head__main">
-          <PlacePicker activeSiteId={scenario.siteId} />
-          <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
-            {formatWindowPlain(startMs, endMs)} · world time (UTC)
-          </p>
-        </div>
-        <div className="simple-head__aside">
-          {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
-        </div>
-      </header>
+      <PlacePicker activeSiteId={scenario.siteId} />
 
       <div className="simple-grid">
         <div className="simple-sky-col">
-          <div className="simple-view-switch" role="group" aria-label="Sky view">
-            {VIEW_OPTIONS.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                className="simple-view-switch__btn"
-                aria-pressed={view === o.key}
-                onClick={() => {
-                  setView(o.key)
-                  writeDiagramView(o.key)
-                }}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
           <FullscreenStage className="simple-sky-wrap" dataTour="sky-plot">
             {(fsButton) => (
               <>
+                <div className="simple-view-switch" role="group" aria-label="Sky view">
+                  {VIEW_OPTIONS.map((o) => (
+                    <button
+                      key={o.key}
+                      type="button"
+                      className="simple-view-switch__btn"
+                      aria-pressed={view === o.key}
+                      onClick={() => {
+                        setView(o.key)
+                        writeDiagramView(o.key)
+                      }}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
                 <div className="simple-stage" data-view={view}>
                   <DiagramStage view={view} scenarioId={scenario.id} />
                 </div>
@@ -141,6 +131,18 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
         </div>
 
         <article className="simple-card" aria-label={`Details for ${siteName}`}>
+          <header className="simple-card__header">
+            <div className="simple-card__titles">
+              <h2 className="simple-card__title">{siteName}</h2>
+              <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
+                {formatWindowPlain(startMs, endMs)} · world time (UTC)
+              </p>
+            </div>
+            <div className="simple-card__aside">
+              {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
+            </div>
+          </header>
+
           {status === 'error' && (
             <div className="simple-error" role="alert">
               <p className="simple-error__message">
