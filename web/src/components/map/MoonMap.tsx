@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FC, type KeyboardEvent, type MouseEvent } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type FC, type KeyboardEvent, type MouseEvent } from 'react'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay, round1 } from './coords'
 import { renderMarkerGlyph } from './markerGlyphs'
@@ -6,6 +6,10 @@ import { MarkerTooltip, type MarkerTip } from './MarkerTooltip'
 import { markerAnchor } from './tooltipText'
 import './map.css'
 import { PoleMap } from './PoleMap'
+import type { SubPoint } from './GlobeView'
+
+// three.js globe is loaded only when the Globe view is first shown
+const GlobeView = lazy(() => import('./GlobeView'))
 import { renderShading, SHADE_H, SHADE_W } from './shadingRaster'
 import { useBasemap } from './useBasemap'
 import {
@@ -35,6 +39,9 @@ export interface MoonMapProps {
   activeSiteId: string | null
   shading: MoonMapShading | null
   terminator: Array<{ lat_deg: number; lon_deg: number }[]> | null
+  /** Points directly under the Sun / Earth at the time cursor (globe lighting and Earth-facing indicator). */
+  subSolar?: SubPoint | null
+  subEarth?: SubPoint | null
   onSelectSite(id: string, shiftKey?: boolean): void
   onPickPoint(lat: number, lon: number): void
   pickMode: boolean
@@ -79,6 +86,8 @@ export const MoonMap: FC<MoonMapProps> = ({
   activeSiteId,
   shading,
   terminator,
+  subSolar = null,
+  subEarth = null,
   onSelectSite,
   onPickPoint,
   pickMode,
@@ -101,15 +110,19 @@ export const MoonMap: FC<MoonMapProps> = ({
     [sites, activeSiteId],
   )
   const [view, setView] = useState<'global' | 'pole'>(activeIsPolar ? 'pole' : 'global')
+  const [globalMode, setGlobalMode] = useState<'globe' | 'flat'>('globe')
+  const flat = view === 'global' && globalMode === 'flat'
+  const globe = view === 'global' && globalMode === 'globe'
   const [lastPolar, setLastPolar] = useState(activeIsPolar)
   // Follow the active site: a polar site opens the south-pole map, any other site the global map
   if (lastPolar !== activeIsPolar) {
     setLastPolar(activeIsPolar)
     setView(activeIsPolar ? 'pole' : 'global')
   }
-  const [tipView, setTipView] = useState(view)
-  if (tipView !== view) {
-    setTipView(view)
+  const tipKey = `${view}-${globalMode}`
+  const [tipView, setTipView] = useState(tipKey)
+  if (tipView !== tipKey) {
+    setTipView(tipKey)
     setTip(null)
   }
 
@@ -323,6 +336,32 @@ export const MoonMap: FC<MoonMapProps> = ({
           South pole
         </button>
       </div>
+      {view === 'global' && (
+        <div className="map-viewswitch map-viewswitch--sub" role="group" aria-label="Global map style">
+          <button type="button" aria-pressed={globalMode === 'globe'} onClick={() => setGlobalMode('globe')}>
+            Globe
+          </button>
+          <button type="button" aria-pressed={globalMode === 'flat'} onClick={() => setGlobalMode('flat')}>
+            Flat
+          </button>
+        </div>
+      )}
+      {globe && (
+        <Suspense fallback={<div className="moon-map-skeleton">Loading globe…</div>}>
+          <GlobeView
+            sites={sites}
+            selectedSiteIds={selectedSiteIds}
+            activeSiteId={activeSiteId}
+            imageUrl={globalBasemap?.imageUrl ?? null}
+            subSolar={subSolar}
+            subEarth={subEarth}
+            pickMode={pickMode}
+            onSelectSite={onSelectSite}
+            onPickPoint={onPickPoint}
+            onTip={setTip}
+          />
+        </Suspense>
+      )}
       {view === 'pole' && (
         <PoleMap
           sites={sites}
@@ -337,7 +376,7 @@ export const MoonMap: FC<MoonMapProps> = ({
         />
       )}
       {view === 'pole' && poleBasemap?.credit && <BasemapCredit info={poleBasemap} />}
-      {view === 'global' && globalBasemap && (
+      {flat && globalBasemap && (
         <img className="moon-map-basemap" src={globalBasemap.imageUrl} alt="" aria-hidden="true" draggable={false} />
       )}
       {/* Top-right on the global map: the bottom edge holds the clamped south-pole markers */}
@@ -348,12 +387,12 @@ export const MoonMap: FC<MoonMapProps> = ({
         aria-hidden="true"
         width={SHADE_W}
         height={SHADE_H}
-        hidden={view !== 'global'}
+        hidden={!flat}
       />
       <svg
         ref={svgRef}
         className="moon-map-svg"
-        style={view !== 'global' ? { display: 'none' } : undefined}
+        style={!flat ? { display: 'none' } : undefined}
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         onClick={handleSvgClick}
         role="region"

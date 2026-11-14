@@ -9,7 +9,7 @@ import {
 import { MAX_SCENARIOS } from '../../config/dataRange'
 import { customSiteId } from '../../lib/customSite'
 import { dataSource } from '../../lib/loader'
-import { bodyPositionKm, elevationGrid, terminatorLine } from '../../lib/moonFrame'
+import { bodyPositionKm, elevationGrid, subpoint, terminatorLine } from '../../lib/moonFrame'
 import type { Site } from '../../lib/types'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs } from '../../state/selectors'
@@ -111,6 +111,8 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
   const [layers, setLayers] = useState<{
     shading: MoonMapShading | null
     terminator: Array<{ lat_deg: number; lon_deg: number }[]> | null
+    subSolar?: { lat_deg: number; lon_deg: number } | null
+    subEarth?: { lat_deg: number; lon_deg: number } | null
   }>({ shading: null, terminator: null })
 
   const lastLayersRef = useRef<{
@@ -174,11 +176,13 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
       setLayers({
         shading: { sunElevation, earthElevation, nLat, nLon },
         terminator: pieces,
+        subSolar: subpoint(sunKm),
+        subEarth: subpoint(earthKm),
       })
     })
   }, [bundle, cursorMs])
 
-  const { shading, terminator } = layers
+  const { shading, terminator, subSolar = null, subEarth = null } = layers
 
   // Active site object
   const activeSite = useMemo(
@@ -269,6 +273,8 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
           activeSiteId={activeSiteId}
           shading={shading}
           terminator={terminator}
+          subSolar={subSolar}
+          subEarth={subEarth}
           onSelectSite={handleSelectSite}
           onPickPoint={handlePickPoint}
           pickMode={pickMode}
