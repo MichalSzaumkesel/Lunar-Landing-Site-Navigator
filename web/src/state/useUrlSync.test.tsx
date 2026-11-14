@@ -42,6 +42,19 @@ describe('useUrlSync', () => {
     window.history.replaceState(null, '', '/')
   })
 
+  it('selects the mode from the ?m= query on mount, hash wins', () => {
+    window.history.replaceState(null, '', '/?m=s')
+    act(() => root.render(createElement(Harness)))
+    expect(useAppStore.getState().mode).toBe('simple')
+    act(() => root.unmount())
+
+    useAppStore.setState({ mode: 'simple' })
+    window.history.replaceState(null, '', '/?m=s#m=a')
+    root = createRoot(container)
+    act(() => root.render(createElement(Harness)))
+    expect(useAppStore.getState().mode).toBe('advanced')
+  })
+
   it('applies the hash to the store on hashchange', () => {
     act(() => root.render(createElement(Harness)))
 
