@@ -119,20 +119,71 @@
   padding: var(--space-3, 12px);
   display: flex;
   justify-content: center;
+  position: relative;
 }
 
-.simple-legend {
+.sky-help {
+  position: absolute;
+  top: var(--space-2, 8px);
+  right: var(--space-2, 8px);
+  z-index: 2;
+}
+
+.sky-help__marker {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+}
+
+.sky-help__marker:hover,
+.sky-help__marker:focus-visible {
+  color: var(--text);
+}
+
+.sky-help__tip {
+  position: absolute;
+  top: calc(100% + var(--space-1, 4px));
+  right: 0;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 48px));
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius, 10px);
-  padding: var(--space-3, 12px) var(--space-4, 16px);
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  pointer-events: none;
+  animation: sky-help-in var(--motion-duration-fast, 150ms) var(--motion-ease-out, ease-out);
 }
 
-.simple-legend__text {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--muted);
-  line-height: 1.5;
+.sky-help__tip[data-state='closed'] {
+  animation: sky-help-out var(--motion-duration-fast, 150ms) var(--motion-ease-in, ease-in) forwards;
+}
+
+@keyframes sky-help-in {
+  from { opacity: 0; transform: translateY(4px); }
+}
+
+@keyframes sky-help-out {
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-help__tip,
+  .sky-help__tip[data-state='closed'] {
+    animation: none;
+  }
 }
 
 .simple-card {

@@ -10,6 +10,7 @@ import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
+import { SkyHelp } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
 import { displayName } from './placeLabels'
 import { formatWindowPlain, outOfRangeMessage, simpleStatus } from './simpleSummary'
@@ -97,11 +98,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
         <div className="simple-sky-col">
           <div className="simple-sky-wrap" data-tour="sky-plot">
             <SkyPlot scenarioId={scenario.id} />
-          </div>
-          <div className="simple-legend" aria-label="Sky plot legend">
-            <p className="simple-legend__text">
-              Sky seen from the ground. Gold circle: the Sun. Blue circle: the Earth. Grey: hills that block the sky. Centre: {centreText}. Edge: the horizon.
-            </p>
+            <SkyHelp centreText={centreText} />
           </div>
         </div>
 
