@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "accessed": "2026-11-14",
+    "note": "Input for sites.json. Coordinates planetocentric degrees, east-positive. Fetched sources only; UNVERIFIED items are listed in 'unverified'."
+  },
+  "sites": [
+    {
+      "id": "apollo_11",
+      "name": "Apollo 11 — Tranquility Base",
+      "category": "apollo",
+      "mission": "Apollo 11",
+      "agency": "NASA",
+      "country": "USA",
+      "lat_deg": 0.6742,
+      "lon_deg": 23.4731,
+      "elevation_m": null,
+      "landing_date_utc": "1969-07-20T20:17:40Z",
+      "status": "landed",
+      "region_radius_km": null,
+      "source": {"title": "LROC Featured Image 1122: 'Oceanus Procellarum Base Here - The Eagle Has Landed' (LRO NAC-derived Eagle position)", "url": "https://lroc.im-ldi.com/posts/1122"},
+      "notes": "LROC-derived LM position. Coordinate system/datum not stated on the page (degrees N / E).",
+      "alt_sources": [
+        {"lat_deg": 0.67416, "lon_deg": 23.47314, "what": "Planetary Society Apollo 11 page", "url": "https://www.planetary.org/space-missions/apollo-11"},
+        {"lat_deg": 0.6875, "lon_deg": 23.43333, "what": "Wikipedia (00°41'15\"N 23°26'E) via mirror; older value, matches Mission Report as quoted in a search snippet; Mission Report itself NOT fetched (PDF >10 MB)", "url": "https://bafybeiemxf5abjwjbikoz4mc3a3dla6ual3jsgpdr4cjr3oz3evfyavhwq.ipfs.4everland.io/wiki/Tranquility_Base.html"},
+        {"landing_date_utc": "1969-07-20T20:17:39Z", "what": "Planetary Society states 20:17:39 UTC; other secondary sources say 20:17:40 UTC; Mission Report MET 102:45:40 per search snippet only", "url": "https://www.planetary.org/space-missions/apollo-11"}
+      ]
+    },
+    {
+      "id": "southpole_landed",
+      "name": "IM-2 Athena — Mons Mouton",
+      "category": "clps",
+      "mission": "IM-2 (Intuitive Machines, NASA CLPS)",
+      "agency": "Intuitive Machines (NASA CLPS)",
+      "country": "USA",
+      "lat_deg": -84.7906,
+      "lon_deg": 29.1957,
+      "elevation_m": null,
+      "landing_date_utc": "2025-03-06T17:30:00Z",
+      "landing_date_precision": "approximate: ~12:30 p.m. EST (about 17:30 UTC, UTC conversion done by us); exact touchdown time UNVERIFIED. The date 2025-03-06 is sourced.",
+      "status": "landed",
+      "region_radius_km": null,
+      "source": {"title": "LROC: IM-2 Athena: A Closer View (final position 84.7906 S, 29.1957 E, in ~20 m crater)", "url": "https://lroc.im-ldi.com/images/1408"},
+      "notes": "Landed on its side in a ~20 m crater on Mons Mouton, about 250 m from the intended site; mission ended about 12 h 45 min after landing. NASA: closer to the South Pole than any previous lunar lander. Latitude -84.79 gives a jagged polar horizon.",
+      "alt_sources": [
+        {"lat_deg": -84.78, "lon_deg": 29.13, "what": "Intended landing site (pre-landing)", "url": "https://lroc.im-ldi.com/images/1401"}
+      ],
+      "status_sources": [
+        "https://spacepolicyonline.com/news/im-2-mission-ends-one-day-after-lunar-landing/",
+        "https://www.nasa.gov/?p=839249",
+        "https://spaceflightnow.com/2025/03/07/intuitive-machines-lunar-lander-healthy-but-apparently-on-its-side/"
+      ]
+    },
+    {
+      "id": "artemis_region_1",
+      "name": "Artemis III candidate region — Mons Mouton Plateau",
+      "category": "artemis_region",
+      "mission": "Artemis III (candidate landing region)",
+      "agency": "NASA",
+      "country": "USA",
+      "lat_deg": -84.3,
+      "lon_deg": 30.6,
+      "elevation_m": null,
+      "landing_date_utc": null,
+      "status": "candidate_region",
+      "region_radius_km": null,
+      "source": {"title": "LROC NAC ROI MOUTNPLTLO1: Mons Mouton Plateau low-Sun controlled NAC mosaic (center -84.3, 30.6)", "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_MOUTNPLTLO1"},
+      "notes": "Representative point = center of the LROC NAC mosaic covering this Artemis III candidate region (mosaic bbox lat -85.76..-82.85, lon 15.49..46.61, far larger than a region; so a representative location, not a surveyed region center). No source found for region_radius_km for the 2024 nine-region set (the 15 x 15 km size is from the 2022 list of 13, which did not include Mons Mouton Plateau).",
+      "alt_sources": [
+        {"lat_deg": -85.4, "lon_deg": 35.3, "what": "LROC mosaic center, 'Nobile Rim 1 and Mons Mouton (Leibnitz Beta Plateau)'", "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_MTMOUTONLOC"}
+      ],
+      "region_list_sources": [
+        {"what": "NASA: nine regions named (Oct 28, 2024, no coordinates)", "url": "https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/"},
+        {"what": "NTRS: George et al., LPSC 2026 abstract, downselection 13 to 9", "url": "https://ntrs.nasa.gov/citations/20250011660"},
+        {"what": "Artemis III re-scoped to Earth-orbit test; first crewed landing now Artemis IV (Feb 27, 2026)", "url": "https://spacepolicyonline.com/news/nasa-makes-a-course-correction-for-the-artemis-program/"}
+      ]
+    }
+  ],
+  "unverified": [
+    "Exact IM-2 touchdown time (UTC); only ~12:30 pm EST sourced",
+    "Apollo 11 Mission Report coordinates/time (PDF too large to fetch); only seen in a search snippet",
+    "Per-region coordinates and radii for the 9 Artemis III regions (NASA publishes none; only LROC mosaic centers found)"
+  ]
+}
