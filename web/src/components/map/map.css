@@ -1,7 +1,7 @@
 .map-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 12px);
+  /* Map height budget: viewport minus page chrome, sticky transport bar and panel header; capped for big screens */
+  --map-h: clamp(220px, calc(100dvh - 250px), 540px);
+  container-type: inline-size;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -9,7 +9,15 @@
   color: var(--text);
 }
 
+.map-panel__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-3, 12px);
+}
+
 .map-panel__header {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -28,6 +36,32 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2, 8px);
+}
+
+.map-panel__map {
+  min-width: 0;
+}
+
+.map-panel__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  min-width: 0;
+}
+
+/* Wide panel: map on the left (height-capped), site details and controls beside it */
+@container (min-width: 760px) {
+  .map-panel__layout {
+    grid-template-columns: minmax(0, calc(var(--map-h) * 2)) minmax(280px, 1fr);
+    column-gap: var(--space-4, 16px);
+  }
+}
+
+/* Narrow panel: stacked, the map is capped by the same height budget */
+@container (max-width: 759px) {
+  .map-panel__map {
+    max-width: calc(var(--map-h) * 2);
+  }
 }
 
 /* Map viewport & layers */
@@ -190,8 +224,8 @@
 .map-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2, 8px) var(--space-4, 16px);
-  padding: var(--space-2, 8px) 0;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+  padding: var(--space-2, 8px) 0 0;
   font-size: 0.875rem;
   color: var(--muted);
   border-top: 1px solid var(--line);
@@ -237,7 +271,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2, 8px);
-  padding: var(--space-3, 12px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -258,7 +292,7 @@
 }
 
 .map-custom-form__input {
-  width: 100px;
+  width: 84px;
   min-height: 2.5rem;
   padding: 0.45rem 0.6rem;
   background: var(--bg);
