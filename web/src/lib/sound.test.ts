@@ -81,7 +81,7 @@ describe('findEventsBetween (event-window selection)', () => {
     expect(result.map((e) => e.kind)).toEqual(['sunset'])
   })
 
-  it('skips all cues when playback speed exceeds 72 h/s', () => {
+  it('skips all cues when playback speed exceeds 72 hours per second', () => {
     const normal = findEventsBetween(events, 500_000, 2_500_000, 72)
     expect(normal.length).toBe(2)
 

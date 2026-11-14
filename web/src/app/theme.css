@@ -526,6 +526,21 @@ button[aria-pressed='true'] {
   }
 }
 
+.transport__play {
+  min-width: 6rem;
+  text-align: center;
+}
+
+.transport__speed {
+  width: 14rem;
+}
+
+@media (max-width: 600px) {
+  .transport__speed {
+    width: 9.5rem;
+  }
+}
+
 .transport__scrub {
   flex: 1 1 260px;
   min-width: 200px;

@@ -88,7 +88,7 @@ export function shouldPlayCue(
 
 /**
  * Pure helper selecting sky events occurring strictly between prevMs and currMs.
- * Skips cues when speed is above 72 h/s or when cursor jumped backwards or by > 12 h (manual seek).
+ * Skips cues when speed is above 72 hours per second or when cursor jumped backwards or by > 12 h (manual seek).
  */
 export function findEventsBetween(
   events: SkyEvent[],

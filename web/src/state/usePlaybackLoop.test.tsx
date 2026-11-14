@@ -68,7 +68,7 @@ describe('usePlaybackLoop', () => {
     act(() => useAppStore.getState().setPlaying(true))
     expect(frames.size).toBe(1)
 
-    // 50 ms after the start time at 6 h/s moves the cursor by 0.3 h.
+    // 50 ms after the start time at 6 hours per second moves the cursor by 0.3 h.
     act(() => runFrame(1050))
 
     expect(useAppStore.getState().cursorH).toBeCloseTo(0.3, 10)
@@ -79,7 +79,7 @@ describe('usePlaybackLoop', () => {
     act(() => root.render(createElement(Harness)))
     act(() => useAppStore.getState().setPlaying(true))
 
-    // A 10 s gap is clamped to 0.1 s, which is 0.6 h at 6 h/s.
+    // A 10 s gap is clamped to 0.1 s, which is 0.6 h at 6 hours per second.
     act(() => runFrame(11000))
 
     expect(useAppStore.getState().cursorH).toBeCloseTo(0.6, 10)

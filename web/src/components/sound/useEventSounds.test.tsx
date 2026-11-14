@@ -234,7 +234,7 @@ describe('useEventSounds', () => {
     expect(setPlayingSpy).toHaveBeenCalledWith(false)
   })
 
-  it('skips cues when playback speed exceeds 72 h/s', async () => {
+  it('skips cues when playback speed exceeds 72 hours per second', async () => {
     const engine = createSoundEngine()
     engine.setMode('cues')
     const cueSpy = vi.spyOn(engine, 'cue')
