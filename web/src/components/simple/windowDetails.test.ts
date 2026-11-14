@@ -24,7 +24,7 @@ describe('detail formatters', () => {
 const metrics = { pct_sunlit: 51, longest_dark_h: 100, pct_earth: 100, longest_no_earth_h: 0 }
 
 describe('windowGroups', () => {
-  it('builds Sun and Earth trees and hides the mast row without both heights', () => {
+  it('builds Sun and Earth trees', () => {
     const groups = windowGroups(metrics, 720, {
       maxSunElDeg: 5.4,
       sunPartlyHiddenPct: 20,
@@ -34,13 +34,13 @@ describe('windowGroups', () => {
       maxHillDeg: 3,
     })
     expect(groups.map((g) => g.title)).toEqual(['Sun', 'Earth'])
-    expect(groups[0].rows.map((r) => r.id)).toEqual(['sun', 'dark', 'maxSun', 'maxHill'])
+    expect(groups[0].rows.map((r) => r.id)).toEqual(['sun', 'dark', 'maxSun'])
     expect(groups[1].rows.map((r) => r.id)).toEqual(['earth', 'noEarth', 'maxEarth'])
     expect(groups[0].rows[0].value).toBe('51% of 30 days')
     expect(groups[0].rows[2].value).toBe('5°')
   })
 
-  it('shows the mast row last when available and Not available for missing data', () => {
+  it('shows Not available for missing data', () => {
     const groups = windowGroups(metrics, 720, {
       maxSunElDeg: null,
       sunPartlyHiddenPct: null,
@@ -49,7 +49,6 @@ describe('windowGroups', () => {
       earthLitPct: null,
       maxHillDeg: null,
     })
-    expect(groups[0].rows.at(-1)?.value).toBe('+30 hours')
     expect(groups[0].rows[2].value).toBe('Not available')
     expect(groups[1].rows[2].value).toBe('Not available')
   })

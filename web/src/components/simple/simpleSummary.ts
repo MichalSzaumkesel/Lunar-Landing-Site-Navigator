@@ -182,23 +182,7 @@ export function windowGroups(
       hint: 'The highest the centre of the Sun climbs above the flat (mean) horizon in this window. Hills are ignored here.',
       child: true,
     },
-    {
-      id: 'maxHill',
-      label: 'Highest hill on the horizon',
-      value: formatDegrees(d?.maxHillDeg),
-      hint: 'The highest point of the terrain skyline at this place, for the chosen observer height, in degrees above the flat horizon. Hills this high cut the Sun off.',
-      child: true,
-    },
   ]
-  if (d && d.mastGainH != null && Number.isFinite(d.mastGainH)) {
-    sun.push({
-      id: 'mast',
-      label: 'Taller mast (10 m) adds',
-      value: formatMastGain(d.mastGainH),
-      hint: 'Extra hours of Sun visible when the observer stands 10 m above the ground instead of 2 m.',
-      child: true,
-    })
-  }
   return [
     { id: 'sun', title: 'Sun', rows: sun },
     {
