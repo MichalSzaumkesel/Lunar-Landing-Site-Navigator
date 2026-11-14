@@ -21,7 +21,8 @@ export function buildPngFilename(siteId: string, startDate: string | number): st
     const match = startDate.match(/\d{4}-\d{2}-\d{2}/)
     dateStr = match ? match[0] : startDate.slice(0, 10)
   }
-  return `${cleanSiteId}_${dateStr}.png`
+  const cleanDate = dateStr.replace(/[^a-zA-Z0-9_-]/g, '_')
+  return `${cleanSiteId}_${cleanDate}.png`
 }
 
 export interface CardExportData {
@@ -84,6 +85,12 @@ export function inlineSvgStyles(svg: SVGSVGElement): string {
   const clone = svg.cloneNode(true) as SVGSVGElement
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+  if (!clone.getAttribute('width')) {
+    clone.setAttribute('width', '400')
+  }
+  if (!clone.getAttribute('height')) {
+    clone.setAttribute('height', '400')
+  }
 
   const origElements = Array.from(svg.querySelectorAll<SVGElement>('*'))
   const cloneElements = Array.from(clone.querySelectorAll<SVGElement>('*'))
@@ -199,7 +206,7 @@ export async function renderCardToCanvas(
   ctx.fillStyle = '#f2f5fb'
   ctx.font = 'bold 32px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText(data.siteName || data.siteId, headerX, headerY)
+  ctx.fillText(data.siteName || data.siteId, headerX, headerY, 680)
 
   // Date range
   const startDateStr = data.startUtc.slice(0, 10)
@@ -354,7 +361,7 @@ export async function downloadCanvasAsPng(canvas: HTMLCanvasElement, filename: s
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
-        setTimeout(() => URL.revokeObjectURL(url), 1000)
+        setTimeout(() => URL.revokeObjectURL(url), 10_000)
         resolve()
       } catch (err) {
         reject(err)

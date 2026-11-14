@@ -260,15 +260,67 @@ describe('demoSteps', () => {
       expect(appendDemoDataNotice('Already tagged (demo data)', true)).toBe('Already tagged (demo data)')
     })
 
-    it('findFirstSunsetH calculates exact cursor hour offset', () => {
+    it('findFirstSunsetH calculates exact cursor hour offset within window only', () => {
       const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
       const t0 = Date.parse(scenario.startUtc)
       const events = [
+        // Past sunset before window start (should be ignored)
+        { kind: 'sunset' as const, ms: t0 - 24 * 3600000, utc: '2027-08-29T00:00:00Z' },
         { kind: 'sunrise' as const, ms: t0 + 10 * 3600000, utc: '2027-08-30T10:00:00Z' },
         { kind: 'sunset' as const, ms: t0 + 24 * 3600000, utc: '2027-08-31T00:00:00Z' },
       ]
       expect(findFirstSunsetH(scenario, events)).toBe(24)
       expect(findFirstSunsetH(scenario, [])).toBeNull()
+    })
+
+    it('formatStep3Caption says "Sun sets in less than a minute" below 1 minute', () => {
+      const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
+      const t0 = Date.parse(scenario.startUtc)
+      // 30 seconds into window (0.5 minute)
+      const sunsetMs = t0 + 30 * 1000
+      const events = [{ kind: 'sunset' as const, ms: sunsetMs, utc: '2027-08-30T00:00:30Z' }]
+      const ctx: DemoStepContext = {
+        scenarios: [makeMockScenario('s1', 'apollo_11'), scenario],
+        bundles: [
+          makeMockBundle('apollo_11', 'Apollo 11'),
+          makeMockBundle('artemis_region_1', 'Artemis region 1'),
+        ],
+        metrics: [null, null],
+        events: [[], events],
+        isSynthetic: false,
+      }
+      const caption = formatStep3Caption(ctx)
+      expect(caption).toContain('Sun sets in less than a minute.')
+    })
+
+    it('formatStep3Caption handles no sunset in window gracefully without claiming one', () => {
+      const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
+      const ctx: DemoStepContext = {
+        scenarios: [makeMockScenario('s1', 'apollo_11'), scenario],
+        bundles: [
+          makeMockBundle('apollo_11', 'Apollo 11'),
+          makeMockBundle('artemis_region_1', 'Artemis region 1'),
+        ],
+        metrics: [null, null],
+        events: [[], []],
+        isSynthetic: false,
+      }
+      const caption = formatStep3Caption(ctx)
+      expect(caption).toContain('Sunset time calculating...')
+      expect(caption).not.toContain('18 h')
+    })
+
+    it('formatStep4Caption and formatStep5Caption show unavailable message when metrics are null', () => {
+      const scenarios = [
+        makeMockScenario('s1', 'apollo_11'),
+        makeMockScenario('s2', 'artemis_region_1'),
+      ]
+      expect(formatStep4Caption(scenarios, [null, null])).toBe(
+        'Metrics unavailable for selected date range.',
+      )
+      expect(formatStep5Caption(scenarios, [null, null])).toBe(
+        'Metrics unavailable for selected date range.',
+      )
     })
 
     it('formatHoursWithUnit formats integers and decimals cleanly', () => {

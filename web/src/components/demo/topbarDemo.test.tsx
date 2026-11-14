@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../../app/TopBar'
 import { useTourStore } from '../help/tourState'
 import { useDemoStore } from './demoState'
+import { useAppStore } from '../../state/store'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -30,13 +31,13 @@ describe('TopBar Demo button', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders Demo button next to Tour button with ghost class', async () => {
+  it('renders Demo button next to Tutorial button with ghost class', async () => {
     await act(async () => {
       root.render(createElement(TopBar))
     })
 
     const buttons = Array.from(container.querySelectorAll('button'))
-    const tourBtn = buttons.find((b) => b.textContent?.includes('Tour'))
+    const tourBtn = buttons.find((b) => b.textContent?.includes('Tutorial'))
     const demoBtn = buttons.find((b) => b.textContent?.trim() === 'Demo')
 
     expect(tourBtn).toBeDefined()
@@ -63,5 +64,47 @@ describe('TopBar Demo button', () => {
 
     expect(useTourStore.getState().isOpen).toBe(false)
     expect(useDemoStore.getState().isActive).toBe(true)
+  })
+
+  it('clicking Demo button while demo is active stops demo and sets playing to false', async () => {
+    useAppStore.setState({ playing: true })
+    useDemoStore.setState({ isActive: true })
+
+    await act(async () => {
+      root.render(createElement(TopBar))
+    })
+
+    const demoBtn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Demo',
+    )
+    expect(demoBtn).toBeDefined()
+
+    await act(async () => {
+      demoBtn?.click()
+    })
+
+    expect(useDemoStore.getState().isActive).toBe(false)
+    expect(useAppStore.getState().playing).toBe(false)
+  })
+
+  it('clicking Tutorial button while demo is active stops demo before opening tour', async () => {
+    useDemoStore.setState({ isActive: true })
+    useTourStore.setState({ isOpen: false })
+
+    await act(async () => {
+      root.render(createElement(TopBar))
+    })
+
+    const tourBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Tutorial'),
+    )
+    expect(tourBtn).toBeDefined()
+
+    await act(async () => {
+      tourBtn?.click()
+    })
+
+    expect(useDemoStore.getState().isActive).toBe(false)
+    expect(useTourStore.getState().isOpen).toBe(true)
   })
 })

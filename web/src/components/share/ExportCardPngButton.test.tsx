@@ -179,4 +179,72 @@ describe('ExportCardPngButton', () => {
     const alert = container.querySelector('[role="alert"]')
     expect(alert?.textContent).toContain('Could not save PNG: Canvas draw error')
   })
+
+  it('disables button with informative title when not on polar view tab', async () => {
+    // Mount simulated tabs in DOM
+    const polarTab = document.createElement('button')
+    polarTab.id = 'sky-views-sc1-tab-polar'
+    polarTab.setAttribute('role', 'tab')
+    polarTab.setAttribute('aria-selected', 'false')
+    document.body.appendChild(polarTab)
+
+    const tab3d = document.createElement('button')
+    tab3d.id = 'sky-views-sc1-tab-3d'
+    tab3d.setAttribute('role', 'tab')
+    tab3d.setAttribute('aria-selected', 'true')
+    document.body.appendChild(tab3d)
+
+    await act(async () => {
+      root.render(
+        createElement(ExportCardPngButton, {
+          scenario,
+          siteName: 'Apollo 11',
+          bundle: mockBundle,
+          metrics: mockMetrics,
+        }),
+      )
+    })
+
+    const button = container.querySelector('button')!
+    expect(button.disabled).toBe(true)
+    expect(button.title).toBe('Switch to the Polar view to save the card')
+
+    polarTab.remove()
+    tab3d.remove()
+  })
+
+  it('sets aria-busy while exporting', async () => {
+    let resolveExport!: () => void
+    const exportPromise = new Promise<string>((res) => {
+      resolveExport = () => res('apollo_11_2026-12-01.png')
+    })
+    vi.spyOn(exportPngModule, 'exportCardAsPng').mockReturnValue(exportPromise)
+
+    await act(async () => {
+      root.render(
+        createElement(ExportCardPngButton, {
+          scenario,
+          siteName: 'Apollo 11',
+          bundle: mockBundle,
+          metrics: mockMetrics,
+        }),
+      )
+    })
+
+    const button = container.querySelector('button')!
+    expect(button.getAttribute('aria-busy')).toBe('false')
+
+    await act(async () => {
+      button.click()
+    })
+
+    expect(button.getAttribute('aria-busy')).toBe('true')
+    expect(button.disabled).toBe(true)
+
+    await act(async () => {
+      resolveExport()
+    })
+
+    expect(button.getAttribute('aria-busy')).toBe('false')
+  })
 })

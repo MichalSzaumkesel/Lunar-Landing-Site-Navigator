@@ -88,6 +88,12 @@
 
 .tl__cursor {
   pointer-events: none;
+  outline: none;
+}
+
+.tl__cursor:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .tl__hit {
@@ -195,24 +201,27 @@
 /* Mission bar toolbar and controls */
 .tl__toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
-  min-height: 2.25rem;
+  min-height: 2rem;
+  overflow-x: auto;
 }
 
 .tl__toggle {
   font-size: 0.8125rem;
+  flex-shrink: 0;
 }
 
 .tl__mission-info {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-2);
   font-size: 0.8125rem;
+  white-space: nowrap;
 }
 
 .tl__mission-utc {
@@ -265,6 +274,8 @@
   color: var(--muted);
   cursor: pointer;
   user-select: none;
+  min-height: 2.5rem;
+  padding: 0 var(--space-1);
 }
 
 .tl__release-check input {
@@ -314,7 +325,9 @@
 }
 
 .tl__bar-label--green {
-  fill: #f2f5fb;
+  fill: #07090f;
+  stroke: var(--both);
+  stroke-width: 1px;
 }
 
 .tl__bar-label--red {

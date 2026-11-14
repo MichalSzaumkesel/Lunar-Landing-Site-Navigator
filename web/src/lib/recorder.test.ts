@@ -7,6 +7,7 @@ import {
   downloadRecordedBlob,
   getRecorderErrorMessage,
   pickMimeType,
+  startRecordingSession,
 } from './recorder'
 
 describe('recorder module', () => {
@@ -108,8 +109,68 @@ describe('recorder module', () => {
       // Before timer advances, revokeObjectURL is not yet called
       expect(mockRevokeObjectURL).not.toHaveBeenCalled()
 
-      vi.advanceTimersByTime(1500)
+      vi.advanceTimersByTime(10500)
       expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url')
+    })
+  })
+
+  describe('startRecordingSession', () => {
+    it('stops stream tracks and resolves null when stopped before startCapture', async () => {
+      const mockStopTrack = vi.fn()
+      const mockStream = {
+        getTracks: vi.fn(() => [{ stop: mockStopTrack }]),
+        getVideoTracks: vi.fn(() => [{ addEventListener: vi.fn() }]),
+      } as unknown as MediaStream
+
+      vi.stubGlobal('navigator', {
+        mediaDevices: {
+          getDisplayMedia: vi.fn().mockResolvedValue(mockStream),
+        },
+      })
+
+      const mockStart = vi.fn()
+      const mockStop = vi.fn()
+      class MockMediaRecorder {
+        state = 'inactive'
+        ondataavailable = null
+        onstop: (() => void) | null = null
+        start = mockStart
+        stop = mockStop
+        static isTypeSupported = vi.fn(() => true)
+      }
+      vi.stubGlobal('MediaRecorder', MockMediaRecorder)
+
+      const session = await startRecordingSession()
+      expect(mockStart).not.toHaveBeenCalled()
+
+      // Stop before capture started
+      const blob = await session.stop()
+      expect(blob).toBeNull()
+      expect(mockStopTrack).toHaveBeenCalled()
+    })
+
+    it('stops stream tracks if MediaRecorder constructor throws', async () => {
+      const mockStopTrack = vi.fn()
+      const mockStream = {
+        getTracks: vi.fn(() => [{ stop: mockStopTrack }]),
+        getVideoTracks: vi.fn(() => []),
+      } as unknown as MediaStream
+
+      vi.stubGlobal('navigator', {
+        mediaDevices: {
+          getDisplayMedia: vi.fn().mockResolvedValue(mockStream),
+        },
+      })
+
+      class ThrowingMediaRecorder {
+        constructor() {
+          throw new Error('Unsupported mimeType')
+        }
+      }
+      vi.stubGlobal('MediaRecorder', ThrowingMediaRecorder)
+
+      await expect(startRecordingSession()).rejects.toThrow('Unsupported mimeType')
+      expect(mockStopTrack).toHaveBeenCalled()
     })
   })
 })

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { EphemFile, HorizonFile, MissionRules } from '../../lib/types'
+import { findWindows } from '../../lib/finder'
 import {
   clampMissionStartH,
   evaluateMissionRulesAt,
@@ -77,6 +78,11 @@ describe('missionKeyStepH', () => {
     expect(missionKeyStepH('ArrowLeft', true)).toBe(-24)
     expect(missionKeyStepH('ArrowUp', true)).toBe(24)
     expect(missionKeyStepH('ArrowDown', true)).toBe(-24)
+  })
+
+  it('steps to extremes on Home and End keys', () => {
+    expect(missionKeyStepH('Home', false)).toBe(-1e6)
+    expect(missionKeyStepH('End', false)).toBe(1e6)
   })
 
   it('returns null for non-arrow keys', () => {
@@ -218,5 +224,51 @@ describe('evaluateMissionRulesAt', () => {
     expect(res.valid).toBe(false)
     expect(res.color).toBe('red')
     expect(res.failingRule).toBe('Outside data range')
+  })
+
+  it('matches finder.ts exactly across sample boundaries including last valid and first invalid', () => {
+    const bundle = createBundle({})
+    const windows = findWindows(bundle, baseRules)
+    expect(windows.length).toBeGreaterThan(0)
+
+    const n = Math.round(baseRules.missionDurationH) // 24 samples
+    const lastValidK = count - n // 100 - 24 = 76
+    const firstInvalidK = lastValidK + 1 // 77
+
+    // Helper checking whether timestamp falls in finder windows
+    const isInsideFinder = (ms: number): boolean => {
+      return windows.some((w) => {
+        const wStart = Date.parse(w.start_utc)
+        const wEnd = Date.parse(w.end_utc)
+        return ms >= wStart && ms <= wEnd
+      })
+    }
+
+    // Check multiple candidate starts
+    const testCases = [0, 5, 20, 50, lastValidK, firstInvalidK, 90]
+    for (const k of testCases) {
+      const candidateMs = startMs + k * 3600_000
+      const evalRes = evaluateMissionRulesAt(bundle, baseRules, candidateMs)
+      const expectedValid = isInsideFinder(candidateMs)
+      expect(evalRes.valid).toBe(expectedValid)
+    }
+
+    // Last valid start (k = count - n = 76)
+    const lastValidMs = startMs + lastValidK * 3600_000
+    const lastRes = evaluateMissionRulesAt(bundle, baseRules, lastValidMs)
+    expect(lastRes.valid).toBe(true)
+    expect(isInsideFinder(lastValidMs)).toBe(true)
+
+    // First invalid start (k = count - n + 1 = 77)
+    const firstInvalidMs = startMs + firstInvalidK * 3600_000
+    const invalidRes = evaluateMissionRulesAt(bundle, baseRules, firstInvalidMs)
+    expect(invalidRes.valid).toBe(false)
+    expect(invalidRes.failingRule).toBe('Outside data range')
+    expect(isInsideFinder(firstInvalidMs)).toBe(false)
+
+    // Dragging non-integer position rounds to nearest sample and does not flash red
+    const draggingMidSampleMs = startMs + 10.3 * 3600_000
+    const dragRes = evaluateMissionRulesAt(bundle, baseRules, draggingMidSampleMs)
+    expect(dragRes.valid).toBe(true)
   })
 })

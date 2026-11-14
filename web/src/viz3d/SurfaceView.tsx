@@ -3,6 +3,7 @@ import { registerActiveScene } from '../components/demo/cameraControl'
 import { describeBody, fmtNum, fmtUtc, pickMask, sunStateText } from '../components/sky/geometry'
 import { sampleAt } from '../lib/ephem'
 import { earthIlluminatedFraction } from '../lib/earthPhase'
+import { horizonAt } from '../lib/horizon'
 import type { SiteBundle, TerrainFile } from '../lib/types'
 import { useSiteBundle } from '../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../state/selectors'
@@ -28,9 +29,24 @@ import {
 } from './landerHelpers'
 import type { OffsetM } from './landerHelpers'
 import { useTerrainHeights } from './useTerrainHeights'
+import {
+  belowHorizonText,
+  faceTarget,
+  SIZE_MAX,
+  SIZE_MIN,
+  SIZE_STEP,
+  sizeLabel,
+  sizeValueText,
+} from './viewMath'
 import './surface.css'
 
 const MAX_EXAGGERATION = 5
+
+function faceTitle(body: 'Sun' | 'Earth', mode: ViewMode, hasSample: boolean): string {
+  if (!hasSample) return `${body} direction is not available at this time`
+  if (mode !== 'surface') return `Switch to On the surface to turn the camera towards the ${body}`
+  return `Turn the camera towards the ${body}`
+}
 
 function Badges({ bundle, edgeWarning }: { bundle: SiteBundle; edgeWarning?: boolean }) {
   return (
@@ -54,7 +70,8 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   const [scene, setScene] = useState<SurfaceScene | null>(null)
   const [mode, setMode] = useState<ViewMode>('surface')
   const [exaggeration, setExaggeration] = useState(1)
-  const [magnify, setMagnify] = useState(false)
+  const [sizeScale, setSizeScale] = useState(SIZE_MIN)
+  const [facing, setFacing] = useState<'sun' | 'earth' | null>(null)
 
   // Lander movement and what-if state (local only, not in global store)
   const [landerOffset, setLanderOffset] = useState<OffsetM>({ eastM: 0, northM: 0 })
@@ -165,9 +182,10 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       earth: sample?.earth ?? null,
       sunAngRadiusDeg: bundle.ephem.sun_ang_radius_deg,
       earthAngRadiusDeg: bundle.ephem.earth_ang_radius_deg,
-      magnify,
+      sizeScale,
+      timeMs: cursorMs,
     }),
-    [sample, bundle.ephem, magnify],
+    [sample, bundle.ephem, sizeScale, cursorMs],
   )
 
   const skyRef = useRef(sky)
@@ -202,6 +220,29 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     if (!scene) return
     return registerActiveScene(scene)
   }, [scene])
+
+  const mask = useMemo(() => pickMask(bundle, observerHeightM), [bundle, observerHeightM])
+  const azStepDeg = bundle.horizon.az_step_deg
+  useEffect(() => scene?.setHorizon(mask, azStepDeg), [scene, mask, azStepDeg])
+  useEffect(() => {
+    scene?.setOnUserLook(() => setFacing(null))
+    return () => scene?.setOnUserLook(null)
+  }, [scene])
+
+  const faceBody = (body: 'sun' | 'earth') => {
+    const pos = body === 'sun' ? sample?.sun : sample?.earth
+    if (!pos || !scene) return
+    setFacing(body)
+    void scene.faceBody(faceTarget(pos.az, pos.el, horizonAt(mask, azStepDeg, pos.az)))
+  }
+  const facingPos = facing === 'sun' ? sample?.sun : facing === 'earth' ? sample?.earth : null
+  const facingTarget = facingPos
+    ? faceTarget(facingPos.az, facingPos.el, horizonAt(mask, azStepDeg, facingPos.az))
+    : null
+  const facingNote =
+    facing && facingTarget?.belowHorizon
+      ? belowHorizonText(facing === 'sun' ? 'Sun' : 'Earth', facingTarget.belowDeg)
+      : null
 
   useEffect(() => scene?.setMode(mode), [scene, mode])
   useEffect(() => scene?.setExaggeration(exaggeration), [scene, exaggeration])
@@ -451,7 +492,15 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
             <div className="surface__state">Outside data range</div>
           )}
         </div>
-        <div className="surface__overlay surface__overlay--bl">{legend}</div>
+        {facingNote && (
+          <div className="surface__overlay surface__overlay--note" role="status">
+            {facingNote}
+          </div>
+        )}
+        <div className="surface__overlay surface__overlay--bl">
+          <div>{legend}</div>
+          <div>Earth imagery: NASA Blue Marble (orientation illustrative)</div>
+        </div>
         <div className="surface__overlay surface__overlay--br">
           {mode === 'surface'
             ? 'Drag or arrow keys to look around; click terrain to move lander'
@@ -464,14 +513,19 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           <button
             type="button"
             aria-pressed={mode === 'surface'}
-            onClick={() => setMode('surface')}
+            onClick={() => {
+              setMode('surface')
+            }}
           >
             On the surface
           </button>
           <button
             type="button"
             aria-pressed={mode === 'overview'}
-            onClick={() => setMode('overview')}
+            onClick={() => {
+              setMode('overview')
+              setFacing(null)
+            }}
           >
             Overview
           </button>
@@ -479,9 +533,18 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         <button
           type="button"
           disabled={mode !== 'surface' || !sample}
-          onClick={() => sample && scene?.faceDirection(sample.sun.az, sample.sun.el)}
+          title={faceTitle('Sun', mode, Boolean(sample))}
+          onClick={() => faceBody('sun')}
         >
           Face the Sun
+        </button>
+        <button
+          type="button"
+          disabled={mode !== 'surface' || !sample}
+          title={faceTitle('Earth', mode, Boolean(sample))}
+          onClick={() => faceBody('earth')}
+        >
+          Face the Earth
         </button>
         <label className="group">
           <span className="group__label">Vertical exaggeration</span>
@@ -496,8 +559,17 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           <b className="surface__value">{exaggeration}x</b>
         </label>
         <label className="group">
-          <input type="checkbox" checked={magnify} onChange={(e) => setMagnify(e.target.checked)} />
-          <span className="group__label">Magnify Sun and Earth x4</span>
+          <span className="group__label">Sun and Earth size</span>
+          <input
+            type="range"
+            min={SIZE_MIN}
+            max={SIZE_MAX}
+            step={SIZE_STEP}
+            value={sizeScale}
+            aria-valuetext={sizeValueText(sizeScale)}
+            onChange={(e) => setSizeScale(Number(e.target.value))}
+          />
+          <b className="surface__value surface__value--wide">{sizeLabel(sizeScale)}</b>
         </label>
 
         <button

@@ -1,11 +1,14 @@
 import type { SurfaceScene } from '../../viz3d/scene'
-import { cameraEase } from '../../viz3d/scene'
 import { sampleAt } from '../../lib/ephem'
 import { scenarioCursorMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { DemoStepContext } from './demoSteps'
 
-export { cameraEase }
+/** Smooth easing for cinematic camera movement (quadratic ease-in-out). */
+export function cameraEase(t: number): number {
+  const c = Math.max(0, Math.min(1, t))
+  return c < 0.5 ? 2 * c * c : 1 - Math.pow(-2 * c + 2, 2) / 2
+}
 
 let activeScene: SurfaceScene | null = null
 const readyListeners = new Set<(scene: SurfaceScene) => void>()

@@ -69,16 +69,18 @@ export function downloadRecordedBlob(blob: Blob, filename = RECORDING_FILENAME):
   a.remove()
   setTimeout(() => {
     URL.revokeObjectURL(url)
-  }, 1000)
+  }, 10_000)
 }
 
 export interface RecordingSession {
   stream: MediaStream
+  startCapture(): void
   stop(): Promise<Blob | null>
 }
 
 /**
- * Prompts user for tab display media and initiates MediaRecorder.
+ * Prompts user for tab display media and prepares MediaRecorder session.
+ * Does not start capturing frames until startCapture() is called.
  * Throws with 'unsupported' or 'declined' on expected user or environment boundaries.
  */
 export async function startRecordingSession(opts?: {
@@ -119,7 +121,14 @@ export async function startRecordingSession(opts?: {
     recorderOptions.mimeType = mimeType
   }
 
-  const recorder = new MediaRecorder(stream, recorderOptions)
+  let recorder: MediaRecorder
+  try {
+    recorder = new MediaRecorder(stream, recorderOptions)
+  } catch (err) {
+    stream.getTracks().forEach((track) => track.stop())
+    throw err
+  }
+
   const chunks: Blob[] = []
 
   recorder.ondataavailable = (e) => {
@@ -133,9 +142,20 @@ export async function startRecordingSession(opts?: {
     videoTrack.addEventListener('ended', opts.onEndedByBrowser, { once: true })
   }
 
-  recorder.start(1000)
-
+  let isCapturing = false
   let stopped = false
+
+  const startCapture = () => {
+    if (isCapturing || stopped) return
+    isCapturing = true
+    try {
+      recorder.start(1000)
+    } catch (err) {
+      stream.getTracks().forEach((track) => track.stop())
+      throw err
+    }
+  }
+
   const stop = (): Promise<Blob | null> => {
     if (stopped) return Promise.resolve(null)
     stopped = true
@@ -143,7 +163,7 @@ export async function startRecordingSession(opts?: {
     return new Promise<Blob | null>((resolve) => {
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop())
-        const recordedBlob = new Blob(chunks, { type: mimeType || 'video/webm' })
+        const recordedBlob = isCapturing ? new Blob(chunks, { type: mimeType || 'video/webm' }) : null
         resolve(recordedBlob)
       }
 
@@ -151,11 +171,13 @@ export async function startRecordingSession(opts?: {
         recorder.stop()
       } else {
         stream.getTracks().forEach((track) => track.stop())
-        const recordedBlob = new Blob(chunks, { type: mimeType || 'video/webm' })
+        const recordedBlob = isCapturing && chunks.length > 0
+          ? new Blob(chunks, { type: mimeType || 'video/webm' })
+          : null
         resolve(recordedBlob)
       }
     })
   }
 
-  return { stream, stop }
+  return { stream, startCapture, stop }
 }

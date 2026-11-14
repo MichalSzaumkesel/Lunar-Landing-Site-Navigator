@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { exportCardAsPng, type CardExportData } from '../../lib/exportPng'
 import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
 import { scenarioWindowMs } from '../../state/selectors'
@@ -28,9 +28,41 @@ export function ExportCardPngButton({
 }: ExportCardPngButtonProps): ReactElement {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isPolarActive, setIsPolarActive] = useState(true)
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+
+    const checkPolar = () => {
+      const polarTab = document.querySelector<HTMLButtonElement>(
+        `#sky-views-${scenario.id}-tab-polar`,
+      )
+      if (polarTab) {
+        setIsPolarActive(polarTab.getAttribute('aria-selected') === 'true')
+      } else {
+        const svgEl = document.querySelector<SVGSVGElement>(
+          `svg.sky__svg[data-scenario="${scenario.id}"]`,
+        )
+        const anyTab = document.querySelector(`[id^="sky-views-${scenario.id}-tab-"]`)
+        setIsPolarActive(!anyTab || Boolean(svgEl))
+      }
+    }
+
+    checkPolar()
+
+    if (typeof MutationObserver !== 'undefined') {
+      const observer = new MutationObserver(checkPolar)
+      observer.observe(document.body, {
+        attributes: true,
+        subtree: true,
+        attributeFilter: ['aria-selected'],
+      })
+      return () => observer.disconnect()
+    }
+  }, [scenario.id])
 
   const handleExport = async (): Promise<void> => {
-    if (loading) return
+    if (loading || !isPolarActive) return
     setLoading(true)
     setError(null)
 
@@ -63,19 +95,23 @@ export function ExportCardPngButton({
     }
   }
 
-  const tooltip = loading
-    ? 'Rendering scenario card to PNG…'
-    : 'Save card view, sky plot, and key metrics as a 1600x900 PNG image'
+  const isButtonDisabled = disabled || loading || !isPolarActive
+  const tooltip = !isPolarActive
+    ? 'Switch to the Polar view to save the card'
+    : loading
+      ? 'Rendering scenario card to PNG…'
+      : 'Save card view, sky plot, and key metrics as a 1600x900 PNG image'
 
   return (
     <div className="share-wrap">
       <button
         type="button"
         className={`ghost ${className}`.trim()}
-        disabled={disabled || loading}
+        disabled={isButtonDisabled}
         onClick={handleExport}
         title={tooltip}
         aria-label={`Save card as PNG for ${siteName}`}
+        aria-busy={loading}
       >
         {loading ? 'Saving PNG…' : 'Save card as PNG'}
       </button>

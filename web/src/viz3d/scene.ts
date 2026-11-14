@@ -1,10 +1,33 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { useAppStore } from '../state/store'
-import { buildLander, buildMarkerRing, disposeObject } from './lander'
+import { Decor } from './decor'
+import type { DecorHost } from './decor'
+import { buildLander, buildLanderEnvironment, buildMarkerRing, disposeObject, LANDER_SINK_M } from './lander'
 import type { OffsetM } from './landerHelpers'
-import { buildBodies, buildStars, MAGNIFY, placeBody, setEarthSun } from './skyBodies'
+import { BENCHMARK_MS, chooseTier, isLower, parseTierOverride, TIERS } from './quality'
+import type { QualityTier, TierSettings } from './quality'
+import { CASCADE_PATCH_OK, createSharedUniforms, installPatches } from './shaderPatches'
+import { SKIRT_SEGMENTS, skirtElevationAt, skirtProfile } from './skirt'
+import {
+  buildEarth,
+  buildMilkyWay,
+  buildSkirt,
+  buildStars,
+  buildSun,
+  faceSunGlow,
+  placeEarth,
+  placeSun,
+  setEarthLighting,
+  setSkirtProfile,
+  setSkirtSun,
+  setStarSun,
+  setSunGlare,
+} from './skyBodies'
+import type { BodyPlacement } from './skyBodies'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
+import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
+import { earthLitFraction, faceTarget } from './viewMath'
 
 /**
  * Frame mapping, the only place it is defined.
@@ -49,17 +72,27 @@ export interface SkyState {
   earth: { az: number; el: number } | null
   sunAngRadiusDeg: number
   earthAngRadiusDeg: number
-  magnify: boolean
+  /** Sun and Earth size slider: 1 is the true angular size. */
+  sizeScale: number
+  /** Cursor time, drives the (decorative) turn of the Earth picture. */
+  timeMs: number
 }
 
-const SUN_INTENSITY = 3.2 // about albedo * cos(incidence) with no tone mapping
-const EARTHSHINE = 0.02 // fraction of the full Sun, as a flat ambient term
-const SHADOW_MAP = 2048
+const SUN_INTENSITY = 3.2 // about albedo * cos(incidence) before tone mapping
+const EARTHSHINE_MAX = 0.3 // Earth light on the Moon at full Earth, relative units
+const AMBIENT = 0.035
 const FAR_M = 200_000
 const SURFACE_FOV = 60
 const OVERVIEW_FOV = 45
 const STAND_OFF_M = 14 // the camera stands this far from the lander so the lander is in view
 const PITCH_LIMIT = 80
+const FACE_MS = 800
+const HINT_RAISE_DEG = 0.9
+const DAY_MS = 86_400_000
+const DECOR_DEBOUNCE_MS = 140
+const REGOLITH_COLOR = 0x8d8c89
+const HAZE_MAX = 0.7
+const HAZE_DISPLAY = new THREE.Vector3(0.085, 0.088, 0.1)
 
 /** Three.js scene of one landing site. Renders on demand: call `invalidate()` after any change. */
 export interface ShadowUpdateDecisionInput {
@@ -92,6 +125,15 @@ export function cameraEase(t: number): number {
     : 1 - Math.pow(-2 * clamped + 2, 3) / 2
 }
 
+export interface SceneStats {
+  tier: QualityTier
+  /** Milliseconds spent generating procedural textures at startup. */
+  textureMs: number
+  decorInstances: number
+  geometries: number
+  textures: number
+}
+
 export class SurfaceScene {
   private readonly renderer: THREE.WebGLRenderer
   private readonly scene = new THREE.Scene()
@@ -99,16 +141,24 @@ export class SurfaceScene {
   private readonly controls: OrbitControls
   private readonly canvas: HTMLCanvasElement
   private readonly data: TerrainInput
-  private readonly sunLight = new THREE.DirectionalLight(0xffffff, 0)
+  private readonly sunFar = new THREE.DirectionalLight(0xfff2dc, 0)
+  private readonly sunNear = new THREE.DirectionalLight(0xfff2dc, 0)
+  private readonly earthLight = new THREE.DirectionalLight(0xa6c6ff, 0)
   private readonly sky = new THREE.Group()
-  private readonly lander = buildLander()
-  private readonly sunDisc: THREE.Mesh
-  private readonly earthDisc: THREE.Mesh
-  private readonly terrainMat = new THREE.MeshStandardMaterial({
-    color: 0x9a9892,
-    roughness: 1,
-    metalness: 0,
-  })
+  private readonly shared = createSharedUniforms()
+  private readonly envTarget: THREE.WebGLRenderTarget
+  private readonly lander: THREE.Group
+  private readonly sunRig = buildSun(true)
+  private readonly earthRig: ReturnType<typeof buildEarth>
+  private readonly skirt = buildSkirt(HAZE_DISPLAY.clone(), SKIRT_SEGMENTS)
+  private readonly terrainMat: THREE.MeshStandardMaterial
+  private readonly landerFoil: THREE.MeshStandardMaterial[] = []
+  private readonly decor: Decor
+  private readonly override: QualityTier | null
+  private tier: QualityTier
+  private stars: THREE.Points
+  private milkyWay: THREE.Mesh
+  private textureMs = 0
   private terrain: THREE.Mesh | null = null
   private ring: THREE.Mesh | null = null
   private bounds = new THREE.Box3()
@@ -123,9 +173,14 @@ export class SurfaceScene {
   private sunDir: THREE.Vector3 | null = null
   private lastShadowSunDir: THREE.Vector3 | null = null
   private lastShadowUpdateTime = 0
+  private lastSky: SkyState | null = null
+  private mask: readonly number[] = []
+  private maskStepDeg = 0.5
   private raf = 0
   private hoverRaf = 0
   private animationRaf = 0
+  private benchRaf = 0
+  private decorTimer = 0
   private cameraAnimationRaf = 0
   private cameraAnimationCancel: (() => void) | null = null
   private disposed = false
@@ -136,12 +191,19 @@ export class SurfaceScene {
   private readonly pointerVec = new THREE.Vector2()
   private onTerrainClick: ((coords: { eastM: number; northM: number; heightM: number }) => void) | null = null
   private onTerrainHover: ((coords: { eastM: number; northM: number; heightM: number } | null) => void) | null = null
+  private onUserLook: (() => void) | null = null
 
   constructor(container: HTMLElement, data: TerrainInput) {
     this.data = data
+    this.override = parseTierOverride(window.location.search, window.location.hash)
+    this.tier = this.override ?? 'high'
+    const tier = TIERS[this.tier]
+
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.pixelRatioCap))
     this.renderer.setClearColor(0x000000, 1)
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = 1.5
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
@@ -155,22 +217,68 @@ export class SurfaceScene {
     this.scene.background = new THREE.Color(0x000000)
     this.scene.add(this.camera)
 
-    // Light: the Sun, plus a flat earthshine term so shadows are not pitch black.
-    const sl = this.sunLight
-    sl.castShadow = true
-    sl.shadow.mapSize.set(SHADOW_MAP, SHADOW_MAP)
-    sl.shadow.bias = -0.0004
-    this.scene.add(sl, sl.target)
-    this.scene.add(new THREE.AmbientLight(0xffffff, EARTHSHINE * SUN_INTENSITY))
+    // Textures first: they are the startup cost we measure.
+    const t0 = performance.now()
+    this.shared.uDetail.value = makeRegolithTexture(tier.detailTexSize, tier.anisotropy)
+    const milkyTex = makeMilkyWayTexture(tier.milkyWay[0], tier.milkyWay[1])
+    this.textureMs = performance.now() - t0
 
-    // Sky: stars and the two discs follow the camera, so they stay at infinity.
-    const bodies = buildBodies()
-    this.sunDisc = bodies.sun
-    this.earthDisc = bodies.earth
-    this.sky.add(buildStars(), this.sunDisc, this.earthDisc)
+    // Materials with the shadow, regolith and haze patches.
+    const patch = (m: THREE.MeshStandardMaterial) => installPatches(m, this.shared, 'prop', CASCADE_PATCH_OK)
+    this.terrainMat = new THREE.MeshStandardMaterial({ color: REGOLITH_COLOR, roughness: 1, metalness: 0, dithering: true })
+    installPatches(this.terrainMat, this.shared, 'terrain', CASCADE_PATCH_OK)
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0 })
+    patch(rockMat)
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0x9a968f, roughness: 1, metalness: 0 })
+    patch(rimMat)
+
+    // Light: the Sun twice (a high-resolution zone around the lander and the whole patch), a faint
+    // Earth light and a flat ambient term so shadows are not pitch black.
+    for (const [light, size] of [
+      [this.sunNear, tier.nearShadowMap],
+      [this.sunFar, tier.farShadowMap],
+    ] as const) {
+      light.castShadow = CASCADE_PATCH_OK || light === this.sunFar
+      light.shadow.mapSize.set(size, size)
+      light.shadow.bias = -0.0004
+      light.shadow.radius = 1.6
+    }
+    this.scene.add(this.sunNear, this.sunNear.target, this.sunFar, this.sunFar.target, this.earthLight)
+    this.scene.add(new THREE.AmbientLight(0x9aa6c0, AMBIENT * SUN_INTENSITY))
+    this.shared.uNearR.value = tier.nearRadiusM
+
+    // Sky: everything here follows the camera, so it stays at infinity.
+    this.stars = buildStars(tier.stars, this.renderer.getPixelRatio())
+    this.milkyWay = buildMilkyWay(milkyTex)
+    this.earthRig = buildEarth({
+      baseUrl: import.meta.env.BASE_URL,
+      anisotropy: Math.min(8, this.renderer.capabilities.getMaxAnisotropy()),
+      onTexture: this.invalidate,
+      isDisposed: () => this.disposed,
+    })
+    setSunGlare(this.sunRig, tier.glare)
+    setSkirtProfile(this.skirt, skirtProfile([], 0.5))
+    this.sky.add(
+      this.milkyWay,
+      this.stars,
+      this.skirt.mesh,
+      this.sunRig.root,
+      this.sunRig.hint,
+      this.earthRig.root,
+      this.earthRig.hint,
+    )
     this.scene.add(this.sky)
 
+    this.envTarget = buildLanderEnvironment(this.renderer)
+    this.lander = buildLander({ env: this.envTarget.texture, patch })
     this.scene.add(this.lander)
+    this.lander.traverse((o) => {
+      const mat = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined
+      if (mat?.envMap) this.landerFoil.push(mat)
+    })
+
+    this.decor = new Decor(rockMat, rimMat)
+    this.scene.add(this.decor.group)
 
     this.controls = new OrbitControls(this.camera, this.canvas)
     this.controls.enableDamping = true
@@ -191,8 +299,10 @@ export class SurfaceScene {
     this.canvas.addEventListener('keydown', this.onKeyDown)
 
     this.rebuildTerrain()
+    this.rebuildDecor()
     this.applyMode()
     this.setSize(container.clientWidth || 640, container.clientHeight || 400)
+    if (!this.override) this.startBenchmark()
   }
 
   // Public API
@@ -216,8 +326,10 @@ export class SurfaceScene {
     if (k === this.exaggeration) return
     this.exaggeration = k
     this.rebuildTerrain()
+    this.rebuildDecor()
+    this.placeLander()
     this.applyCamera()
-    this.fitShadow()
+    this.fitShadows()
     this.renderer.shadowMap.needsUpdate = true
     this.invalidate()
   }
@@ -235,6 +347,24 @@ export class SurfaceScene {
     this.invalidate()
   }
 
+  /**
+   * Horizon mask of the site (elevation in degrees per azimuth step, index 0 at north, clockwise).
+   * It drives the far-horizon skirt and the Sun light. For a lander moved away from the site this
+   * is approximate; the terrain patch itself already occludes locally.
+   */
+  setHorizon(mask: readonly number[], azStepDeg: number): void {
+    this.mask = mask
+    this.maskStepDeg = azStepDeg
+    setSkirtProfile(this.skirt, skirtProfile(mask, azStepDeg))
+    if (this.lastSky) this.setSky(this.lastSky)
+    else this.invalidate()
+  }
+
+  /** Called when the user turns the view by hand (drag or arrow keys). */
+  setOnUserLook(cb: (() => void) | null): void {
+    this.onUserLook = cb
+  }
+
   /** Point the surface camera at an azimuth and stand off so that the lander is in view. */
   lookAtAzimuth(azDeg: number): void {
     const a = ((azDeg + 30) * Math.PI) / 180
@@ -249,10 +379,16 @@ export class SurfaceScene {
   /** Turn the surface camera towards a direction without moving it. */
   faceDirection(azDeg: number, elDeg: number): void {
     this.cancelCameraAnimation()
-    this.yawDeg = azDeg
-    this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, elDeg + 3))
+    const t = faceTarget(azDeg, elDeg)
+    this.yawDeg = t.azimuthDeg
+    this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, t.pitchDeg))
     this.applyCamera()
     this.invalidate()
+  }
+
+  /** Animated turn to show a body: see `faceTarget` for how the pitch is chosen. */
+  faceBody(target: { azimuthDeg: number; pitchDeg: number }): Promise<void> {
+    return this.cameraTo({ azimuthDeg: target.azimuthDeg, elevationDeg: target.pitchDeg, durationMs: FACE_MS })
   }
 
   /**
@@ -326,7 +462,7 @@ export class SurfaceScene {
   /** Force an unthrottled shadow update (e.g. on playback pause). */
   invalidateShadow(): void {
     if (!this.sunDir) return
-    this.fitShadow()
+    this.fitShadows()
     this.renderer.shadowMap.needsUpdate = true
     this.lastShadowSunDir = this.sunDir.clone()
     this.lastShadowUpdateTime = performance.now()
@@ -334,10 +470,21 @@ export class SurfaceScene {
   }
 
   setSky(s: SkyState): void {
-    const k = s.magnify ? MAGNIFY : 1
-    if (s.sun) {
-      this.sunDir = dirThree(s.sun.az, s.sun.el)
-      this.sunLight.intensity = s.sun.el < 0 ? 0 : SUN_INTENSITY
+    this.lastSky = s
+    const k = Math.max(1, s.sizeScale)
+    const sunP = this.placement(s.sun, s.sunAngRadiusDeg * k)
+    const earthP = this.placement(s.earth, s.earthAngRadiusDeg * k)
+
+    let sunShare = 0
+    if (s.sun && sunP.dir) {
+      this.sunDir = sunP.dir
+      // Light fades out as the disc sinks behind the horizon mask (visible share of the true disc).
+      const ang = Math.max(s.sunAngRadiusDeg, 1e-3)
+      const visible = Math.max(0, Math.min(1, (sunP.clearanceDeg + ang) / (2 * ang)))
+      sunShare = visible
+      const intensity = SUN_INTENSITY * visible
+      this.sunFar.intensity = intensity
+      this.sunNear.intensity = intensity
 
       const playing = useAppStore.getState().playing
       const now = performance.now()
@@ -355,7 +502,7 @@ export class SurfaceScene {
       })
 
       if (shouldUpdate) {
-        this.fitShadow()
+        this.fitShadows()
         this.renderer.shadowMap.needsUpdate = true
         this.lastShadowSunDir = this.sunDir.clone()
         this.lastShadowUpdateTime = now
@@ -363,17 +510,27 @@ export class SurfaceScene {
     } else {
       this.sunDir = null
       this.lastShadowSunDir = null
-      this.sunLight.intensity = 0
+      this.sunFar.intensity = 0
+      this.sunNear.intensity = 0
     }
-    setEarthSun(this.earthDisc, this.sunDir)
-    placeBody(this.sunDisc, this.sunDir, s.sun?.el ?? 0, s.sunAngRadiusDeg, k)
-    placeBody(
-      this.earthDisc,
-      s.earth ? dirThree(s.earth.az, s.earth.el) : null,
-      s.earth?.el ?? 0,
-      s.earthAngRadiusDeg,
-      k,
-    )
+    if (!CASCADE_PATCH_OK) this.sunNear.intensity = 0
+    // The foil's ground-bounce reflection follows the Sun: dark when the Sun is hidden.
+    for (const m of this.landerFoil) m.envMapIntensity = 0.08 + 0.92 * sunShare
+
+    // Earth light on the terrain: strongest for a full Earth, none while it is behind the horizon.
+    let earthShine = 0
+    if (s.sun && s.earth && earthP.clearanceDeg >= -s.earthAngRadiusDeg) {
+      const lit = earthLitFraction(directionEnu(s.sun.az, s.sun.el), directionEnu(s.earth.az, s.earth.el))
+      earthShine = EARTHSHINE_MAX * lit
+    }
+    this.earthLight.intensity = earthShine
+    if (earthP.dir) this.earthLight.position.copy(earthP.dir).multiplyScalar(1000)
+
+    setEarthLighting(this.earthRig, this.sunDir, (s.timeMs / DAY_MS) % 1)
+    setStarSun(this.stars, this.sunDir)
+    setSkirtSun(this.skirt, s.sun?.az ?? 0, s.sun?.el ?? null)
+    placeSun(this.sunRig, sunP)
+    placeEarth(this.earthRig, earthP)
     this.invalidate()
   }
 
@@ -394,13 +551,16 @@ export class SurfaceScene {
     this.landerOffset = { eastM, northM }
     const x = eastM
     const z = -northM
-    this.lander.position.set(x, this.groundY(x, z), z)
+    this.placeLander()
     this.updateMarkerRing()
+    this.scheduleDecor()
     if (this.mode === 'surface') {
       this.applyCamera()
     } else {
       this.controls.target.set(x, this.groundY(x, z), z)
     }
+    this.fitShadows()
+    this.renderer.shadowMap.needsUpdate = true
     this.invalidate()
   }
 
@@ -435,9 +595,7 @@ export class SurfaceScene {
       const step = (now: number) => {
         const elapsed = now - startTime
         const rawT = Math.min(1, elapsed / durationMs)
-        // ease in-out cubic
-        const ease =
-          rawT < 0.5 ? 4 * rawT * rawT * rawT : 1 - Math.pow(-2 * rawT + 2, 3) / 2
+        const ease = cameraEase(rawT)
 
         const curEast = startEast + dEast * ease
         const curNorth = startNorth + dNorth * ease
@@ -466,7 +624,7 @@ export class SurfaceScene {
       this.terrainMat.map = texture
       this.terrainMat.color.set(0xffffff)
     } else {
-      this.terrainMat.color.set(0x9a9892)
+      this.terrainMat.color.set(REGOLITH_COLOR)
     }
     this.terrainMat.needsUpdate = true
     this.invalidate()
@@ -491,6 +649,18 @@ export class SurfaceScene {
     return { eastM, northM, heightM }
   }
 
+  /** Quality tier in use, texture generation time, decoration count and GPU resource counts. */
+  stats(): SceneStats {
+    const mem = this.renderer.info.memory
+    return {
+      tier: this.tier,
+      textureMs: this.textureMs,
+      decorInstances: this.decor.instanceCount,
+      geometries: mem.geometries,
+      textures: mem.textures,
+    }
+  }
+
   dispose(): void {
     if (this.disposed) return
     this.disposed = true
@@ -501,6 +671,9 @@ export class SurfaceScene {
     this.hoverRaf = 0
     if (this.animationRaf) cancelAnimationFrame(this.animationRaf)
     this.animationRaf = 0
+    if (this.benchRaf) cancelAnimationFrame(this.benchRaf)
+    this.benchRaf = 0
+    window.clearTimeout(this.decorTimer)
     this.controls.removeEventListener('change', this.invalidate)
     this.controls.removeEventListener('start', this.onControlsStart)
     this.controls.dispose()
@@ -512,15 +685,86 @@ export class SurfaceScene {
     this.canvas.removeEventListener('wheel', this.onWheel)
     this.canvas.removeEventListener('keydown', this.onKeyDown)
     disposeObject(this.scene)
+    this.shared.uDetail.value?.dispose()
+    this.envTarget.dispose()
     if (this.terrainMat.map) {
       this.terrainMat.map.dispose()
       this.terrainMat.map = null
     }
     this.terrainMat.dispose()
-    this.sunLight.shadow.map?.dispose()
+    for (const l of [this.sunNear, this.sunFar]) {
+      l.shadow.map?.dispose()
+      l.shadow.dispose()
+    }
     this.renderer.dispose()
     this.renderer.forceContextLoss()
     this.canvas.remove()
+  }
+
+  // Quality
+
+  /**
+   * Measure the cost of one frame for about two seconds and lower the tier if the machine is slow.
+   * Reading a pixel waits for the GPU but also pays a fixed round trip, so a sample is the extra
+   * time of four more frames over a single one, with one shadow pass among them.
+   */
+  private startBenchmark(): void {
+    const samples: number[] = []
+    const gl = this.renderer.getContext()
+    const pixel = new Uint8Array(4)
+    const timed = (frames: number, shadow: boolean): number => {
+      if (shadow) this.renderer.shadowMap.needsUpdate = true
+      const t0 = performance.now()
+      for (let i = 0; i < frames; i++) this.renderOnce()
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel)
+      return performance.now() - t0
+    }
+    const start = performance.now()
+    const tick = () => {
+      this.benchRaf = 0
+      if (this.disposed) return
+      const one = timed(1, false)
+      const five = timed(5, true)
+      samples.push(Math.max(0, (five - one) / 4))
+      if (performance.now() - start < BENCHMARK_MS) {
+        this.benchRaf = requestAnimationFrame(tick)
+        return
+      }
+      // The first samples pay for shader compilation.
+      const next = chooseTier(null, samples.slice(2))
+      if (isLower(next, this.tier)) this.applyTier(next)
+    }
+    this.benchRaf = requestAnimationFrame(tick)
+  }
+
+  private applyTier(tier: QualityTier): void {
+    this.tier = tier
+    const t = TIERS[tier]
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, t.pixelRatioCap))
+    this.setSize(this.canvas.clientWidth, this.canvas.clientHeight)
+    for (const [light, size] of [
+      [this.sunNear, t.nearShadowMap],
+      [this.sunFar, t.farShadowMap],
+    ] as const) {
+      light.shadow.mapSize.set(size, size)
+      light.shadow.map?.dispose()
+      light.shadow.map = null
+    }
+    this.shared.uNearR.value = t.nearRadiusM
+    this.shared.uDetail.value?.dispose()
+    this.shared.uDetail.value = makeRegolithTexture(t.detailTexSize, t.anisotropy)
+    this.sky.remove(this.stars, this.milkyWay)
+    disposeObject(this.stars)
+    disposeObject(this.milkyWay)
+    this.stars = buildStars(t.stars, this.renderer.getPixelRatio())
+    this.milkyWay = buildMilkyWay(makeMilkyWayTexture(t.milkyWay[0], t.milkyWay[1]))
+    this.sky.add(this.stars, this.milkyWay)
+    setSunGlare(this.sunRig, t.glare)
+    this.rebuildDecor()
+    if (this.lastSky) this.setSky(this.lastSky)
+    this.fitShadows()
+    this.renderer.shadowMap.needsUpdate = true
+    this.invalidate()
   }
 
   // Terrain
@@ -558,12 +802,36 @@ export class SurfaceScene {
       new THREE.Vector3(half, m.zMax + 6, half),
     )
 
-    // Lander stands on the ground at current offset.
-    const lx = this.landerOffset.eastM
-    const lz = -this.landerOffset.northM
-    this.lander.position.set(lx, this.groundY(lx, lz), lz)
-
+    this.placeLander()
     this.updateMarkerRing()
+  }
+
+  /** Stand the lander on the ground at its offset, tilted to the local surface, feet sunk a little. */
+  private placeLander(): void {
+    const x = this.landerOffset.eastM
+    const z = -this.landerOffset.northM
+    const d = 1.5
+    const slopeX = (this.groundY(x + d, z) - this.groundY(x - d, z)) / (2 * d)
+    const slopeZ = (this.groundY(x, z + d) - this.groundY(x, z - d)) / (2 * d)
+    const normal = new THREE.Vector3(-slopeX, 1, -slopeZ).normalize()
+    this.lander.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal)
+    this.lander.position.set(x, this.groundY(x, z), z).addScaledVector(normal, -LANDER_SINK_M)
+    this.shared.uNearC.value.set(x, z)
+  }
+
+  private scheduleDecor(): void {
+    window.clearTimeout(this.decorTimer)
+    this.decorTimer = window.setTimeout(() => {
+      if (this.disposed) return
+      this.rebuildDecor()
+      this.invalidate()
+    }, DECOR_DEBOUNCE_MS)
+  }
+
+  private rebuildDecor(): void {
+    const { sizePx, spacingM } = this.data
+    const host: DecorHost = { groundY: (x, z) => this.groundY(x, z), halfExtentM: (sizePx / 2) * spacingM }
+    this.decor.update(this.landerOffset.eastM, this.landerOffset.northM, TIERS[this.tier], host)
   }
 
   private updateMarkerRing(): void {
@@ -581,13 +849,52 @@ export class SurfaceScene {
     this.scene.add(this.ring)
   }
 
-  // Sun shadow: orthographic frustum fitted to the terrain box in light space.
+  /** Body placement with its clearance over the horizon mask at its azimuth. */
+  private placement(pos: { az: number; el: number } | null, angRadiusDeg: number): BodyPlacement {
+    if (!pos) return { dir: null, elDeg: 0, hintDir: null, clearanceDeg: 0, angRadiusDeg }
+    const horizon = skirtElevationAt(this.mask, this.maskStepDeg, pos.az)
+    return {
+      dir: dirThree(pos.az, pos.el),
+      elDeg: pos.el,
+      hintDir: dirThree(pos.az, horizon + HINT_RAISE_DEG),
+      clearanceDeg: pos.el - horizon,
+      angRadiusDeg,
+    }
+  }
 
-  private fitShadow(): void {
+  // Sun shadow: orthographic frustums fitted in light space, one for the whole patch and one around the lander.
+
+  private fitShadows(): void {
     const dir = this.sunDir
     if (!dir) return
-    const light = this.sunLight
-    const center = this.bounds.getCenter(new THREE.Vector3())
+    this.fitLight(this.sunFar, this.bounds, this.tierSettings().farShadowMap)
+    if (!CASCADE_PATCH_OK) return
+    const r = this.shared.uNearR.value
+    const c = this.shared.uNearC.value
+    let lo = Infinity
+    let hi = -Infinity
+    for (let i = -4; i <= 4; i++) {
+      for (let j = -4; j <= 4; j++) {
+        const y = this.groundY(c.x + (i / 4) * r, c.y + (j / 4) * r)
+        lo = Math.min(lo, y)
+        hi = Math.max(hi, y)
+      }
+    }
+    const box = new THREE.Box3(
+      new THREE.Vector3(c.x - r, lo - 2, c.y - r),
+      new THREE.Vector3(c.x + r, hi + 8, c.y + r),
+    )
+    this.fitLight(this.sunNear, box, this.tierSettings().nearShadowMap)
+  }
+
+  private tierSettings(): TierSettings {
+    return TIERS[this.tier]
+  }
+
+  private fitLight(light: THREE.DirectionalLight, box: THREE.Box3, mapSize: number): void {
+    const dir = this.sunDir
+    if (!dir) return
+    const center = box.getCenter(new THREE.Vector3())
     light.position.copy(center).addScaledVector(dir, 30_000)
     light.target.position.copy(center)
     light.updateMatrixWorld()
@@ -598,7 +905,7 @@ export class SurfaceScene {
     cam.lookAt(center)
     cam.updateMatrixWorld()
 
-    const { min, max } = this.bounds
+    const { min, max } = box
     const v = new THREE.Vector3()
     let l = Infinity
     let r = -Infinity
@@ -626,7 +933,7 @@ export class SurfaceScene {
     cam.updateProjectionMatrix()
 
     // Bias scales with the texel size so grazing light (1 to 3 degrees) does not produce acne.
-    const texel = (cam.right - cam.left) / SHADOW_MAP
+    const texel = (cam.right - cam.left) / mapSize
     light.shadow.normalBias = texel * 0.8
   }
 
@@ -636,6 +943,10 @@ export class SurfaceScene {
     const surface = this.mode === 'surface'
     this.controls.enabled = !surface
     if (this.ring) this.ring.visible = !surface
+    // The skirt is a wall around the observer; seen from the overview camera it would be a curtain.
+    this.skirt.mesh.visible = surface
+    // Haze is for a low observer; from the overview camera it would flatten the whole patch.
+    this.shared.uHaze.value.z = surface ? HAZE_MAX : 0
     this.camera.fov = surface ? SURFACE_FOV : OVERVIEW_FOV
     this.camera.near = surface ? 0.5 : 5
     this.camera.updateProjectionMatrix()
@@ -668,6 +979,7 @@ export class SurfaceScene {
     this.yawDeg = (((this.yawDeg + dYaw) % 360) + 360) % 360
     this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, this.pitchDeg + dPitch))
     this.applyCamera()
+    this.onUserLook?.()
     this.invalidate()
   }
 
@@ -758,12 +1070,17 @@ export class SurfaceScene {
 
   // Render
 
-  private readonly frame = (): void => {
-    this.raf = 0
-    if (this.disposed) return
+  private renderOnce(): void {
     // OrbitControls damping: update() fires 'change' (and so schedules another frame) until it settles.
     if (this.mode === 'overview') this.controls.update()
     this.sky.position.copy(this.camera.position)
+    faceSunGlow(this.sunRig, this.camera.quaternion)
     this.renderer.render(this.scene, this.camera)
+  }
+
+  private readonly frame = (): void => {
+    this.raf = 0
+    if (this.disposed) return
+    this.renderOnce()
   }
 }

@@ -344,7 +344,7 @@ export function MissionRulesForm({ className = '' }: MissionRulesFormProps) {
             className="finder-form__label"
             title="Optional minimum elevation angle of the Sun above horizon at landing in degrees (contract §3: minSunElAtLandingDeg). Empty means no rule."
           >
-            <span>Minimum Sun elevation at landing</span>
+            <span>Minimum Sun elevation above the horizon at landing</span>
             <span className="finder-form__unit">degrees</span>
           </label>
           <input

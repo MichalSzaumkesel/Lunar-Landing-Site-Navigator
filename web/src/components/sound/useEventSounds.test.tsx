@@ -78,7 +78,11 @@ describe('useEventSounds', () => {
     approximate: false,
   }
 
-  function SoundTestComponent({ engine }: { engine: ReturnType<typeof createSoundEngine> }) {
+  function SoundTestComponent({
+    engine,
+  }: {
+    engine: ReturnType<typeof createSoundEngine>
+  }) {
     useEventSounds(engine)
     return null
   }
@@ -122,7 +126,7 @@ describe('useEventSounds', () => {
     vi.restoreAllMocks()
   })
 
-  it('does not trigger cues when paused or when sound is disabled', async () => {
+  it('does not trigger cues when paused or when sound is off', async () => {
     const engine = createSoundEngine()
     const cueSpy = vi.spyOn(engine, 'cue')
 
@@ -137,8 +141,8 @@ describe('useEventSounds', () => {
 
     expect(cueSpy).not.toHaveBeenCalled()
 
-    // Enable sound but keep playing false
-    engine.enable()
+    // Enable cues but keep playing false
+    engine.setMode('cues')
     act(() => {
       useAppStore.setState({ cursorH: 2 })
     })
@@ -146,9 +150,9 @@ describe('useEventSounds', () => {
     expect(cueSpy).not.toHaveBeenCalled()
   })
 
-  it('triggers cues when playing is true and sound is enabled', async () => {
+  it('triggers cues when playing is true and sound mode is "cues"', async () => {
     const engine = createSoundEngine()
-    engine.enable()
+    engine.setMode('cues')
     const cueSpy = vi.spyOn(engine, 'cue')
 
     await act(async () => {
@@ -168,9 +172,38 @@ describe('useEventSounds', () => {
     expect(cueSpy).toHaveBeenCalledWith('sunset')
   })
 
+  it('updates ambient sound in "ambient" mode and suppresses beeps', async () => {
+    const engine = createSoundEngine()
+    engine.setMode('ambient')
+    const cueSpy = vi.spyOn(engine, 'cue')
+    const updateAmbientSpy = vi.spyOn(engine, 'updateAmbient')
+
+    await act(async () => {
+      root.render(createElement(SoundTestComponent, { engine }))
+    })
+
+    // Initial mount pushes ambient update
+    expect(updateAmbientSpy).toHaveBeenCalled()
+
+    // Advance cursor while playing
+    act(() => {
+      useAppStore.setState({ playing: true, cursorH: 0.8 })
+    })
+
+    // Ambient mode does not trigger cue beeps
+    expect(cueSpy).not.toHaveBeenCalled()
+
+    // Ambient mode updates sound parameters based on Sun and Earth
+    expect(updateAmbientSpy).toHaveBeenCalled()
+    const lastCall = updateAmbientSpy.mock.calls.at(-1)?.[0]
+    expect(lastCall).toBeDefined()
+    expect(lastCall?.sun).toBeDefined()
+    expect(lastCall?.earth).toBeDefined()
+  })
+
   it('skips cues when playback speed exceeds 72 h/s', async () => {
     const engine = createSoundEngine()
-    engine.enable()
+    engine.setMode('cues')
     const cueSpy = vi.spyOn(engine, 'cue')
 
     await act(async () => {
@@ -190,7 +223,7 @@ describe('useEventSounds', () => {
 
   it('skips cues on seek forward > 12 h or backward jump', async () => {
     const engine = createSoundEngine()
-    engine.enable()
+    engine.setMode('cues')
     const cueSpy = vi.spyOn(engine, 'cue')
 
     await act(async () => {

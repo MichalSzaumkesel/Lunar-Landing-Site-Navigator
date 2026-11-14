@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createSoundEngine, SOUND_STORAGE_KEY } from '../../lib/sound'
+import { createSoundEngine, SOUND_STORAGE_KEY, SOUND_VOLUME_STORAGE_KEY } from '../../lib/sound'
 import { SoundToggle } from './SoundToggle'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -28,52 +28,128 @@ describe('SoundToggle', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders with default off state, aria-pressed=false, and contract tooltip', async () => {
+  it('renders with visible label "Sound:", three-state buttons (Off/Ambient/Cues) with default Off, and volume slider', async () => {
     const engine = createSoundEngine()
 
     await act(async () => {
       root.render(createElement(SoundToggle, { engine }))
     })
 
-    const button = container.querySelector('button')
-    expect(button?.textContent).toBe('Sound off')
-    expect(button?.getAttribute('aria-pressed')).toBe('false')
-    expect(button?.title).toBe(
-      'Short tones when the Sun or Earth rises or sets during Play',
+    const label = container.querySelector('#sound-mode-label')
+    expect(label?.textContent?.trim()).toBe('Sound:')
+
+    const buttons = container.querySelectorAll<HTMLButtonElement>('button')
+    expect(buttons.length).toBe(3)
+    expect(buttons[0].textContent?.trim()).toBe('Off')
+    expect(buttons[1].textContent?.trim()).toBe('Ambient')
+    expect(buttons[2].textContent?.trim()).toBe('Cues')
+
+    // Default Off is active
+    expect(buttons[0].getAttribute('aria-checked')).toBe('true')
+    expect(buttons[1].getAttribute('aria-checked')).toBe('false')
+    expect(buttons[2].getAttribute('aria-checked')).toBe('false')
+
+    // Volume slider defaults to 40%
+    const slider = container.querySelector<HTMLInputElement>('input[type="range"]')
+    expect(slider).not.toBeNull()
+    expect(slider?.value).toBe('40')
+    expect(slider?.getAttribute('aria-label')).toBe('Sound volume')
+
+    // No hint visible when Off
+    expect(container.querySelector('.sound-control__hint')).toBeNull()
+  })
+
+  it('switches to Ambient mode on click, displays one-line hint, and persists to localStorage', async () => {
+    const engine = createSoundEngine()
+    const setModeSpy = vi.spyOn(engine, 'setMode')
+
+    await act(async () => {
+      root.render(createElement(SoundToggle, { engine }))
+    })
+
+    const ambientBtn = container.querySelectorAll<HTMLButtonElement>('button')[1]
+
+    await act(async () => {
+      ambientBtn.click()
+    })
+
+    expect(setModeSpy).toHaveBeenCalledWith('ambient')
+    expect(engine.getMode()).toBe('ambient')
+    expect(engine.isEnabled()).toBe(true)
+    expect(ambientBtn.getAttribute('aria-checked')).toBe('true')
+    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('ambient')
+
+    // Hint appears when Ambient is selected
+    const hint = container.querySelector('.sound-control__hint')
+    expect(hint?.textContent?.trim()).toBe(
+      'Sun and Earth fade in and out with visibility.',
     )
   })
 
-  it('toggles engine state and updates localStorage on user click', async () => {
+  it('switches to Cues mode on click and hides the ambient hint', async () => {
     const engine = createSoundEngine()
-    const enableSpy = vi.spyOn(engine, 'enable')
-    const disableSpy = vi.spyOn(engine, 'disable')
+    const setModeSpy = vi.spyOn(engine, 'setMode')
 
     await act(async () => {
       root.render(createElement(SoundToggle, { engine }))
     })
 
-    const button = container.querySelector('button')!
+    const cuesBtn = container.querySelectorAll<HTMLButtonElement>('button')[2]
 
-    // Click 1: Turn ON
     await act(async () => {
-      button.click()
+      cuesBtn.click()
     })
 
-    expect(enableSpy).toHaveBeenCalled()
+    expect(setModeSpy).toHaveBeenCalledWith('cues')
+    expect(engine.getMode()).toBe('cues')
     expect(engine.isEnabled()).toBe(true)
-    expect(button.textContent).toBe('Sound on')
-    expect(button.getAttribute('aria-pressed')).toBe('true')
-    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('true')
+    expect(cuesBtn.getAttribute('aria-checked')).toBe('true')
+    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('cues')
+    expect(container.querySelector('.sound-control__hint')).toBeNull()
+  })
 
-    // Click 2: Turn OFF
+  it('switches back to Off mode on click', async () => {
+    const engine = createSoundEngine()
+    engine.setMode('ambient')
+
     await act(async () => {
-      button.click()
+      root.render(createElement(SoundToggle, { engine }))
     })
 
-    expect(disableSpy).toHaveBeenCalled()
+    const offBtn = container.querySelectorAll<HTMLButtonElement>('button')[0]
+
+    await act(async () => {
+      offBtn.click()
+    })
+
+    expect(engine.getMode()).toBe('off')
     expect(engine.isEnabled()).toBe(false)
-    expect(button.textContent).toBe('Sound off')
-    expect(button.getAttribute('aria-pressed')).toBe('false')
-    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('false')
+    expect(offBtn.getAttribute('aria-checked')).toBe('true')
+    expect(localStorage.getItem(SOUND_STORAGE_KEY)).toBe('off')
+  })
+
+  it('adjusts volume slider, updates engine, and persists to localStorage', async () => {
+    const engine = createSoundEngine()
+    const setVolSpy = vi.spyOn(engine, 'setVolume')
+
+    await act(async () => {
+      root.render(createElement(SoundToggle, { engine }))
+    })
+
+    const slider = container.querySelector<HTMLInputElement>('input[type="range"]')!
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set
+      valueSetter?.call(slider, '70')
+      slider.dispatchEvent(new Event('input', { bubbles: true }))
+      slider.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+
+    expect(setVolSpy).toHaveBeenCalledWith(0.7)
+    expect(slider.value).toBe('70')
+    expect(localStorage.getItem(SOUND_VOLUME_STORAGE_KEY)).toBe('0.7')
   })
 })

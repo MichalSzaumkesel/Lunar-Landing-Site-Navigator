@@ -220,4 +220,49 @@ describe('Timeline with Mission Bar', () => {
       slipDays: 0,
     })
   })
+
+  it('preserves intra-day hour offset when setting landing date', async () => {
+    const updateSpy = vi.spyOn(useAppStore.getState(), 'updateScenario')
+
+    await act(async () => {
+      root.render(createElement(Timeline, { scenarioId: 'sc1' }))
+    })
+
+    const missionSlider = container.querySelector(
+      '[aria-label="Mission bar, Apollo 11"]',
+    ) as SVGGElement
+
+    // Move start by 25 hours (+24 h and +1 h)
+    await act(async () => {
+      missionSlider.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          shiftKey: true,
+          bubbles: true,
+        }),
+      )
+    })
+    await act(async () => {
+      missionSlider.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowRight',
+          shiftKey: false,
+          bubbles: true,
+        }),
+      )
+    })
+    expect(missionSlider.getAttribute('aria-valuenow')).toBe('25')
+
+    const applyBtn = container.querySelector('.tl__apply-btn') as HTMLButtonElement
+    await act(async () => {
+      applyBtn.click()
+    })
+
+    expect(updateSpy).toHaveBeenCalledWith('sc1', {
+      startUtc: '2026-12-02T00:00:00Z',
+      slipDays: 0,
+    })
+    // Retains intra-day 1-hour offset instead of snapping back to 0
+    expect(missionSlider.getAttribute('aria-valuenow')).toBe('1')
+  })
 })

@@ -45,8 +45,8 @@ export const simpleSteps: TourStep[] = [
   {
     id: 'help-button',
     target: '[data-tour="help-button"]',
-    title: 'Tour',
-    text: 'Open this tour again here.',
+    title: 'Tutorial',
+    text: 'Open this tutorial again here.',
     placement: 'bottom',
   },
 ]
@@ -153,8 +153,8 @@ export const advancedSteps: TourStep[] = [
   {
     id: 'help-button',
     target: '[data-tour="help-button"]',
-    title: 'Tour button',
-    text: 'Open this tour again here.',
+    title: 'Tutorial button',
+    text: 'Open this tutorial again here.',
     placement: 'bottom',
   },
 ]

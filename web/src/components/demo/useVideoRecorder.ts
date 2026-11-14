@@ -25,6 +25,7 @@ export function useVideoRecorder(): VideoRecorderController {
   const sessionRef = useRef<RecordingSession | null>(null)
   const countdownTimerRef = useRef<number | null>(null)
   const isRecordingRef = useRef(false)
+  const startingRef = useRef(false)
 
   const isDemoActive = useDemoStore((s) => s.isActive)
   const startDemo = useDemoStore((s) => s.startDemo)
@@ -39,13 +40,14 @@ export function useVideoRecorder(): VideoRecorderController {
 
     const session = sessionRef.current
     sessionRef.current = null
+    const wasRecording = isRecordingRef.current
     isRecordingRef.current = false
     setIsRecording(false)
 
     if (session) {
       try {
         const blob = await session.stop()
-        if (blob && blob.size > 0) {
+        if (wasRecording && blob && blob.size > 0) {
           downloadRecordedBlob(blob, RECORDING_FILENAME)
         }
       } catch (err) {
@@ -66,6 +68,19 @@ export function useVideoRecorder(): VideoRecorderController {
     }
   }, [isDemoActive, finishSession])
 
+  // Escape listener during countdown before demo becomes active
+  useEffect(() => {
+    if (countdown === null) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        stopRecording()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [countdown, stopRecording])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -82,6 +97,10 @@ export function useVideoRecorder(): VideoRecorderController {
   }, [])
 
   const startRecording = useCallback(async () => {
+    if (startingRef.current || isRecordingRef.current || countdownTimerRef.current !== null) {
+      return
+    }
+    startingRef.current = true
     setRecorderError(null)
 
     let session: RecordingSession
@@ -95,6 +114,8 @@ export function useVideoRecorder(): VideoRecorderController {
       const msg = getRecorderErrorMessage(err)
       setRecorderError(msg)
       return
+    } finally {
+      startingRef.current = false
     }
 
     sessionRef.current = session
@@ -109,6 +130,8 @@ export function useVideoRecorder(): VideoRecorderController {
         countdownTimerRef.current = window.setTimeout(() => {
           setCountdown(null)
           countdownTimerRef.current = null
+          // Start actual media recording only after countdown finishes
+          session.startCapture()
           isRecordingRef.current = true
           setIsRecording(true)
           // Start the 30 second video script
