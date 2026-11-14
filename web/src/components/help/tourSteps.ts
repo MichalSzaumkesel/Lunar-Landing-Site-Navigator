@@ -61,9 +61,9 @@ export const advancedSteps: TourStep[] = [
   },
   {
     id: 'presets',
-    target: '[data-tour="presets"]',
+    target: '[data-tour="add-scenario"]',
     title: 'Presets',
-    text: "One-click setups. The first compares the Moon's equator with the south pole.",
+    text: 'Open the menu to load a ready-made comparison.',
     placement: 'bottom',
   },
   {

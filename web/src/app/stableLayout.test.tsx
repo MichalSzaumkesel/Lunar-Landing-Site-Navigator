@@ -44,15 +44,10 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       // In Advanced mode:
-      const presetBar = container.querySelector('[data-tour="presets"]')!
       const observerHeight = container.querySelector('[data-tour="observer-height"]')!
       const modeSwitch = container.querySelector('[data-tour="mode-switch"]')!
       const tutorialBtn = container.querySelector('[data-tour="help-button"]')!
       const demoBtn = container.querySelector('button[aria-label="Start demo"]')!
-
-      expect(presetBar).not.toBeNull()
-      expect(presetBar.classList.contains('toolbar-hidden')).toBe(false)
-      expect(presetBar.getAttribute('aria-hidden')).toBeNull()
 
       expect(observerHeight).not.toBeNull()
       expect(observerHeight.classList.contains('toolbar-hidden')).toBe(false)
@@ -68,21 +63,10 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       // Controls must NOT be removed from DOM, but hidden with toolbar-hidden (visibility:hidden)
-      const presetBarSimple = container.querySelector('[data-tour="presets"]')!
       const observerHeightSimple = container.querySelector('[data-tour="observer-height"]')!
       const modeSwitchSimple = container.querySelector('[data-tour="mode-switch"]')!
       const tutorialBtnSimple = container.querySelector('[data-tour="help-button"]')!
       const demoBtnSimple = container.querySelector('button[aria-label="Start demo"]')!
-
-      expect(presetBarSimple).toBe(presetBar)
-      expect(presetBarSimple.classList.contains('toolbar-hidden')).toBe(true)
-      expect(presetBarSimple.getAttribute('aria-hidden')).toBe('true')
-      // Preset buttons should be disabled and removed from tab order
-      const presetBtns = presetBarSimple.querySelectorAll('button')
-      presetBtns.forEach((btn) => {
-        expect(btn.disabled).toBe(true)
-        expect(btn.tabIndex).toBe(-1)
-      })
 
       expect(observerHeightSimple).toBe(observerHeight)
       expect(observerHeightSimple.classList.contains('toolbar-hidden')).toBe(true)
@@ -108,26 +92,16 @@ describe('Stable layout between Simple and Advanced modes', () => {
         root.render(createElement(TopBar))
       })
 
-      const presetBar = container.querySelector('[data-tour="presets"]')!
       const observerHeight = container.querySelector('[data-tour="observer-height"]')!
 
-      expect(presetBar.classList.contains('toolbar-hidden')).toBe(true)
       expect(observerHeight.classList.contains('toolbar-hidden')).toBe(true)
 
       act(() => {
         useAppStore.getState().setMode('advanced')
       })
 
-      expect(presetBar.classList.contains('toolbar-hidden')).toBe(false)
-      expect(presetBar.getAttribute('aria-hidden')).toBeNull()
       expect(observerHeight.classList.contains('toolbar-hidden')).toBe(false)
       expect(observerHeight.getAttribute('aria-hidden')).toBeNull()
-
-      const presetBtns = presetBar.querySelectorAll('button')
-      presetBtns.forEach((btn) => {
-        expect(btn.disabled).toBe(false)
-        expect(btn.tabIndex).toBe(0)
-      })
     })
   })
 

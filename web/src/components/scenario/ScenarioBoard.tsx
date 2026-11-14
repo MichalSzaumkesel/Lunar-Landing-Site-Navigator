@@ -1,5 +1,6 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
 import { memo, useMemo, useState } from 'react'
+import { AddScenarioMenu } from './AddScenarioMenu'
 import { createPortal } from 'react-dom'
 import { usePresence, usePresenceList } from '../../lib/usePresence'
 import type { MouseEvent } from 'react'
@@ -157,6 +158,7 @@ export function ScenarioBoard({ toolbarSlot }: ScenarioBoardProps) {
   const scenarios = useAppStore((s) => s.scenarios)
   const activeId = useAppStore((s) => s.activeScenarioId)
   const addScenario = useAppStore((s) => s.addScenario)
+  const applyPreset = useAppStore((s) => s.applyPreset)
   const full = scenarios.length >= MAX_SCENARIOS
   const compare = usePresence(compareOpen)
   const cards = usePresenceList(scenarios, (s) => s.id)
@@ -183,11 +185,7 @@ export function ScenarioBoard({ toolbarSlot }: ScenarioBoardProps) {
       >
         Compare table
       </button>
-      {!full && (
-        <button type="button" className="accent" onClick={onAdd}>
-          Add scenario
-        </button>
-      )}
+      <AddScenarioMenu full={full} onAdd={onAdd} onPreset={(p) => applyPreset(p)} />
     </>
   )
 
