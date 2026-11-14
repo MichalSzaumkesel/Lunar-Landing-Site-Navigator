@@ -54,6 +54,21 @@ describe('SoundToggle', () => {
     expect(container.textContent).not.toContain('fade in and out')
   })
 
+  it('stableLayout: reserves the slider slot whether Off or Ambient', async () => {
+    const engine = createSoundEngine()
+    await act(async () => {
+      root.render(createElement(SoundToggle, { engine }))
+    })
+    const slot = container.querySelector('.sound-control__slot')
+    expect(slot).not.toBeNull()
+    expect(slot?.querySelector('[role="slider"]')).toBeNull()
+    await act(async () => {
+      container.querySelectorAll<HTMLButtonElement>('button')[1].click()
+    })
+    expect(container.querySelector('.sound-control__slot')).toBe(slot)
+    expect(slot?.querySelector('[role="slider"]')).not.toBeNull()
+  })
+
   it('switches to Ambient mode on click and persists to localStorage', async () => {
     const engine = createSoundEngine()
     const setModeSpy = vi.spyOn(engine, 'setMode')
