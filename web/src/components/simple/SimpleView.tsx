@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 import { clampStartUtc, dateInputBounds, nextEventAfter, splitEvents } from '../scenario/cardLogic'
 import { DataBadges } from '../badges/DataBadges'
-import { FullscreenButton } from '../common/FullscreenButton'
+import { FullscreenStage } from '../common/FullscreenStage'
 import { chooseSkyZoom, describeBody, pickMask, skyCentreText } from '../sky/geometry'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { useScenarioEvents } from '../../lib/useScenarioEvents'
@@ -11,7 +11,6 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import { DiagramStage } from './DiagramStage'
 import { VIEW_OPTIONS, readDiagramView, writeDiagramView } from './diagramView'
-import { Transport } from '../../app/Transport'
 import { SkyHelp } from './SkyHelp'
 import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
@@ -40,8 +39,6 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const updateScenario = useAppStore((s) => s.updateScenario)
   const cursorH = useAppStore((s) => s.cursorH)
   const [view, setView] = useState<DiagramView>(readDiagramView)
-  const [fullscreen, setFullscreen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
   const heightM = useAppStore((s) => s.observerHeightM)
 
   const { status, bundle } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
@@ -128,16 +125,19 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               </button>
             ))}
           </div>
-          <div ref={wrapRef} className="simple-sky-wrap" data-tour="sky-plot">
-            <div className="simple-stage" data-view={view}>
-              <DiagramStage view={view} scenarioId={scenario.id} />
-            </div>
-            <div className="simple-tools">
-              <SkyHelp centreText={centreText} view={view} />
-              <FullscreenButton targetRef={wrapRef} onChange={setFullscreen} />
-            </div>
-            {fullscreen && <Transport />}
-          </div>
+          <FullscreenStage className="simple-sky-wrap" dataTour="sky-plot">
+            {(fsButton) => (
+              <>
+                <div className="simple-stage" data-view={view}>
+                  <DiagramStage view={view} scenarioId={scenario.id} />
+                </div>
+                <div className="simple-tools">
+                  <SkyHelp centreText={centreText} view={view} />
+                  {fsButton}
+                </div>
+              </>
+            )}
+          </FullscreenStage>
         </div>
 
         <article className="simple-card" aria-label={`Details for ${siteName}`}>

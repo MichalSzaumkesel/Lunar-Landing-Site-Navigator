@@ -144,3 +144,67 @@ describe('ScenarioBoard preset (demo hook #1)', () => {
     expect(toggles().map((t) => t.getAttribute('aria-expanded'))).toEqual(['false', 'false'])
   })
 })
+
+describe('ScenarioBoard full screen (mocked Fullscreen API)', () => {
+  let container: HTMLDivElement
+  let root: Root
+  let current: Element | null = null
+  const doc = document as unknown as Record<string, unknown>
+
+  beforeEach(async () => {
+    current = null
+    doc.fullscreenEnabled = true
+    Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => current })
+    doc.exitFullscreen = vi.fn(() => {
+      current = null
+      return Promise.resolve()
+    })
+    HTMLElement.prototype.requestFullscreen = vi.fn(function (this: HTMLElement) {
+      current = this
+      return Promise.resolve()
+    }) as never
+    useAppStore.setState({
+      observerHeightM: 2,
+      cursorH: 0,
+      playing: false,
+      scenarios: [{ id: 'sc1', siteId: 'apollo_11', startUtc: '2027-01-01T00:00:00Z', durationH: 3, slipDays: 0 }],
+      activeScenarioId: 'sc1',
+    })
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    await act(async () => root.render(createElement(ScenarioBoard)))
+    await act(async () => useAppStore.getState().applyPreset(PRESET_APOLLO_VS_ARTEMIS))
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    delete doc.fullscreenEnabled
+    delete doc.exitFullscreen
+    delete doc.fullscreenElement
+    delete (HTMLElement.prototype as Partial<HTMLElement>).requestFullscreen
+  })
+
+  it('the second card button enlarges its views, shows Transport and makes that scenario active', async () => {
+    const buttons = [...container.querySelectorAll('button[aria-label="Full screen"]')] as HTMLButtonElement[]
+    expect(buttons).toHaveLength(2)
+    expect(container.querySelector('.transport')).toBeNull()
+
+    await act(async () => buttons[1].click())
+    await act(async () => void document.dispatchEvent(new Event('fullscreenchange')))
+
+    const views = container.querySelectorAll('.views')[1]
+    expect(current).toBe(views)
+    expect(views.getAttribute('data-fullscreen')).toBe('true')
+    expect(views.querySelector('.transport')).not.toBeNull()
+    expect(views.querySelectorAll('[role="tab"]')).toHaveLength(3)
+    expect(useAppStore.getState().activeScenarioId).toBe(useAppStore.getState().scenarios[1].id)
+
+    await act(async () => {
+      current = null
+      document.dispatchEvent(new Event('fullscreenchange'))
+    })
+    expect(views.querySelector('.transport')).toBeNull()
+  })
+})
