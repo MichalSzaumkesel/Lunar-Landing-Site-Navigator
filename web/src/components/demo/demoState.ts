@@ -17,8 +17,6 @@ export interface DemoState {
   stepIndex: number
   variant: DemoVariant
   snapshot: PreDemoSnapshot | null
-  /** True while the current step wants the loupe open on the active card. */
-  loupeOpen: boolean
   startDemo: (variant?: DemoVariant) => void
   stopDemo: () => void
   setStepIndex: (stepIndex: number) => void
@@ -31,7 +29,6 @@ export const useDemoStore = create<DemoState>()((set, get) => ({
   stepIndex: 0,
   variant: 'normal',
   snapshot: null,
-  loupeOpen: false,
   startDemo: (variant = 'normal') => {
     const app = useAppStore.getState()
     const snapshot: PreDemoSnapshot = {
@@ -67,7 +64,7 @@ export const useDemoStore = create<DemoState>()((set, get) => ({
       }
     }
 
-    set({ isActive: false, stepIndex: 0, snapshot: null, loupeOpen: false })
+    set({ isActive: false, stepIndex: 0, snapshot: null })
   },
   setStepIndex: (stepIndex) => set({ stepIndex }),
   setVariant: (variant) => set({ variant, stepIndex: 0 }),

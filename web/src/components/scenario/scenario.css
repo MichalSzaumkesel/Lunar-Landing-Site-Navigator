@@ -192,25 +192,6 @@
   max-width: 16rem;
 }
 
-.views__loupe > div:last-child {
-  animation: loupe-pop var(--motion-duration-fast, 120ms) var(--motion-ease-out, ease-out);
-}
-
-@keyframes loupe-pop {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.views__loupe-toggle {
-  min-height: 2.5rem;
-}
-
 @container (min-width: 46rem) {
   .views__polar {
     grid-template-columns: minmax(0, 1fr) 16rem;
@@ -431,8 +412,7 @@
   .views__tab {
     transition: none !important;
   }
-  .views__panel,
-  .views__loupe > div:last-child {
+  .views__panel {
     animation: none !important;
   }
   .card__more::details-content,
