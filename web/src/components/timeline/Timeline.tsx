@@ -1,6 +1,7 @@
 import { memo, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import { HOUR_MS } from '../../config/dataRange'
+import { useHeldCursorKeys } from '../../lib/useHeldCursorKeys'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -241,7 +242,15 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) seek(e.clientX)
   }
 
+  const held = useHeldCursorKeys({
+    maxH: durationH,
+    read: () => useAppStore.getState().cursorH,
+    write: setCursorH,
+    onStart: () => setPlaying(false),
+  })
+
   const onKeyDown = (e: KeyboardEvent<Element>) => {
+    if (held.onKeyDown(e)) return
     const step = keyStepH(e.key, e.shiftKey)
     if (step === null) return
     e.preventDefault()
@@ -410,6 +419,8 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
               aria-valuenow={Math.round(shownH * 10) / 10}
               aria-valuetext={`${formatUtcMinute(startMs + shownH * HOUR_MS)}, ${shownH.toFixed(1)} h from window start`}
               onKeyDown={onKeyDown}
+              onKeyUp={held.onKeyUp}
+              onBlur={held.onBlur}
             >
               <line x1={cursorX} x2={cursorX} y1={TOP - 4} y2={TOP + BANDS_H + missionOffsetH + 4} />
               <polygon points={`${cursorX - 5},${TOP - 8} ${cursorX + 5},${TOP - 8} ${cursorX},${TOP - 1}`} />

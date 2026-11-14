@@ -7,8 +7,6 @@ export interface Offset2 {
 
 /** Moves of the lander on a click or search result. */
 export const MOVE_MS = 600
-/** Arrow-key nudges: short so repeated presses stay responsive. */
-export const NUDGE_MS = 120
 
 /** Ease-in-out cubic, input clamped to 0..1. */
 export function easeInOutCubic(t: number): number {

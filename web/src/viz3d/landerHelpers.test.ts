@@ -7,7 +7,6 @@ import {
   formatDeltaHours,
   formatOffset,
   legendRange,
-  nudgeOffset,
   viridisRgb,
 } from './landerHelpers'
 
@@ -63,47 +62,6 @@ describe('clampLanderOffset', () => {
     // 10240 - 100 = 10140
     expect(res.offset.eastM).toBe(10140)
     expect(res.clamped).toBe(true)
-  })
-})
-
-describe('nudgeOffset', () => {
-  const current = { eastM: 300, northM: 400 }
-
-  it('nudges left by 100 m without Shift', () => {
-    expect(nudgeOffset(current, 'ArrowLeft', false)).toEqual({ eastM: 200, northM: 400 })
-  })
-
-  it('nudges left by 500 m with Shift', () => {
-    expect(nudgeOffset(current, 'ArrowLeft', true)).toEqual({ eastM: -200, northM: 400 })
-  })
-
-  it('nudges right by 100 m without Shift', () => {
-    expect(nudgeOffset(current, 'ArrowRight', false)).toEqual({ eastM: 400, northM: 400 })
-  })
-
-  it('nudges right by 500 m with Shift', () => {
-    expect(nudgeOffset(current, 'ArrowRight', true)).toEqual({ eastM: 800, northM: 400 })
-  })
-
-  it('nudges up by 100 m North without Shift', () => {
-    expect(nudgeOffset(current, 'ArrowUp', false)).toEqual({ eastM: 300, northM: 500 })
-  })
-
-  it('nudges up by 500 m North with Shift', () => {
-    expect(nudgeOffset(current, 'ArrowUp', true)).toEqual({ eastM: 300, northM: 900 })
-  })
-
-  it('nudges down by 100 m North without Shift', () => {
-    expect(nudgeOffset(current, 'ArrowDown', false)).toEqual({ eastM: 300, northM: 300 })
-  })
-
-  it('nudges down by 500 m North with Shift', () => {
-    expect(nudgeOffset(current, 'ArrowDown', true)).toEqual({ eastM: 300, northM: -100 })
-  })
-
-  it('returns null for non-arrow keys', () => {
-    expect(nudgeOffset(current, 'Enter', false)).toBeNull()
-    expect(nudgeOffset(current, 'KeyW', false)).toBeNull()
   })
 })
 

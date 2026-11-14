@@ -70,32 +70,6 @@ export function clampLanderOffset(
 }
 
 /**
- * Arrow-key nudges for lander position:
- * ArrowLeft / ArrowRight: +/-100 m East (Shift +/-500 m)
- * ArrowUp / ArrowDown: +/-100 m North (Shift +/-500 m)
- * Returns null if key is not an arrow key.
- */
-export function nudgeOffset(
-  current: OffsetM,
-  key: string,
-  shiftKey: boolean,
-): OffsetM | null {
-  const step = shiftKey ? 500 : 100
-  switch (key) {
-    case 'ArrowLeft':
-      return { eastM: current.eastM - step, northM: current.northM }
-    case 'ArrowRight':
-      return { eastM: current.eastM + step, northM: current.northM }
-    case 'ArrowUp':
-      return { eastM: current.eastM, northM: current.northM + step }
-    case 'ArrowDown':
-      return { eastM: current.eastM, northM: current.northM - step }
-    default:
-      return null
-  }
-}
-
-/**
  * Formats delta hours with sign, exactly one decimal place, and 'h' unit.
  * E.g. '+1.5 h', '-0.8 h', '+0.0 h'.
  */

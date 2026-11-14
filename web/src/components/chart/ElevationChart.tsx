@@ -7,6 +7,7 @@ import {
   type ReactElement,
 } from 'react'
 import { line, scaleLinear } from 'd3'
+import { useHeldCursorKeys } from '../../lib/useHeldCursorKeys'
 import type { ObserverHeightM, SiteBundle } from '../../lib/types'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -152,7 +153,14 @@ export function ElevationLineChart({
     }
   }
 
+  const held = useHeldCursorKeys({
+    maxH: durationH,
+    read: () => cursorH,
+    write: (h) => onSeek(Math.max(0, Math.min(durationH, h))),
+  })
+
   const onKeyDown = (e: KeyboardEvent<SVGSVGElement>) => {
+    if (held.onKeyDown(e)) return
     let delta = 0
     if (e.key === 'ArrowLeft') delta = e.shiftKey ? -6 : -1
     else if (e.key === 'ArrowRight') delta = e.shiftKey ? 6 : 1
@@ -182,6 +190,8 @@ export function ElevationLineChart({
       aria-valuetext={`Cursor at ${cursorH.toFixed(1)} hours`}
       tabIndex={0}
       onKeyDown={onKeyDown}
+      onKeyUp={held.onKeyUp}
+      onBlur={held.onBlur}
     >
       <defs>
         <clipPath id="elevation-chart-clip">
