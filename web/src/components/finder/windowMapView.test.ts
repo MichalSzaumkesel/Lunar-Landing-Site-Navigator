@@ -14,6 +14,7 @@ import {
   getBestSiteSentence,
   getCellColor,
   getMonthTicks,
+  gridGeometry,
   isHatch,
   moveHighlight,
   slipBufferH,
@@ -262,16 +263,84 @@ describe('windowMapView pure helpers', () => {
   })
 
   describe('getMonthTicks', () => {
-    it('generates month ticks on boundaries', () => {
-      // 3 days per step starting 2027-01-25 UTC
-      const startMs = Date.parse('2027-01-25T00:00:00Z')
-      const stepMs = 3 * 86_400_000
-      const count = 15 // Covers Jan into Feb and Mar
+    // 760 daily columns from 2026-12-01 (about 25 months)
+    const startMs = Date.parse('2026-12-01T00:00:00Z')
+    const stepMs = 86_400_000
+    const count = 760
+    const charW = 7
 
-      const ticks = getMonthTicks(startMs, stepMs, count)
-      expect(ticks.length).toBeGreaterThanOrEqual(2)
-      expect(ticks[0].label).toBe('Jan 2027')
-      expect(ticks[1].label).toBe('Feb 2027')
+    it('prints the year on the first label and on each January', () => {
+      const ticks = getMonthTicks(startMs, stepMs, count, 1700)
+      const labels = ticks.map((t) => t.label)
+      expect(labels.slice(0, 4)).toEqual(['Dec 2026', 'Jan 2027', 'Feb', 'Mar'])
+      expect(labels).toContain('Jan 2028')
+    })
+
+    it('uses monthly labels only when each has at least 56 px', () => {
+      for (const width of [390, 768, 1366, 2000]) {
+        const labelled = getMonthTicks(startMs, stepMs, count, width).filter((t) => t.label !== null)
+        const monthly = labelled.length >= 24
+        if (monthly) {
+          for (let i = 1; i < labelled.length; i++) {
+            expect(labelled[i].x - labelled[i - 1].x).toBeGreaterThanOrEqual(56)
+          }
+        }
+      }
+      expect(getMonthTicks(startMs, stepMs, count, 2000).filter((t) => t.label !== null)).toHaveLength(25)
+      expect(getMonthTicks(startMs, stepMs, count, 768).filter((t) => t.label !== null).length).toBeLessThan(25)
+    })
+
+    it('never overlaps labels at any width and keeps minor ticks for every month', () => {
+      for (const width of [150, 190, 390, 600, 768, 1100, 1366, 2000, 2560]) {
+        const ticks = getMonthTicks(startMs, stepMs, count, width)
+        expect(ticks).toHaveLength(25)
+        let prevEnd = -Infinity
+        for (const t of ticks) {
+          if (t.label === null) continue
+          expect(t.x).toBeGreaterThanOrEqual(prevEnd)
+          const end = t.x + t.label.length * charW
+          expect(end).toBeLessThanOrEqual(width)
+          prevEnd = end
+        }
+      }
+    })
+
+    it('falls back to years on a very narrow axis and handles empty input', () => {
+      const labels = getMonthTicks(startMs, stepMs, count, 190)
+        .map((t) => t.label)
+        .filter((l) => l !== null)
+      expect(labels.every((l) => /^\d{4}$/.test(l as string))).toBe(true)
+      expect(getMonthTicks(startMs, stepMs, 0, 800)).toEqual([])
+      expect(getMonthTicks(startMs, stepMs, count, 0)).toEqual([])
+    })
+  })
+
+  describe('gridGeometry', () => {
+    it('clamps the label column to 160..280 px and fills the rest with the canvas', () => {
+      expect(gridGeometry(353, 7, 760, 40).labelWidth).toBe(160)
+      expect(gridGeometry(1000, 7, 760, 40).labelWidth).toBe(200)
+      expect(gridGeometry(1900, 7, 760, 40).labelWidth).toBe(280)
+      for (const w of [353, 731, 1329, 1963, 2523]) {
+        const g = gridGeometry(w, 7, 760, 40)
+        expect(g.labelWidth + g.canvasWidth).toBe(w)
+        expect(g.canvasHeight).toBe(280)
+        expect(g.colWidth).toBeCloseTo(g.canvasWidth / 760, 10)
+      }
+    })
+
+    it('agrees with cellFromPointer at the canvas edges', () => {
+      const g = gridGeometry(1963, 7, 760, 40)
+      expect(cellFromPointer(0, 0, g.canvasWidth, g.canvasHeight, 7, 760)).toEqual({ rowIndex: 0, colIndex: 0 })
+      expect(cellFromPointer(g.canvasWidth - 0.5, g.canvasHeight - 0.5, g.canvasWidth, g.canvasHeight, 7, 760)).toEqual({
+        rowIndex: 6,
+        colIndex: 759,
+      })
+      const mid = cellFromPointer(g.colWidth * 100.5, 60, g.canvasWidth, g.canvasHeight, 7, 760)
+      expect(mid).toEqual({ rowIndex: 1, colIndex: 100 })
+    })
+
+    it('handles zero sizes', () => {
+      expect(gridGeometry(0, 0, 0, 40)).toEqual({ labelWidth: 160, canvasWidth: 0, canvasHeight: 0, colWidth: 0 })
     })
   })
 

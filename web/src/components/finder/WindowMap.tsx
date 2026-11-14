@@ -18,6 +18,7 @@ import {
   getBestSiteSentence,
   getCellColor,
   getMonthTicks,
+  gridGeometry,
   customSiteIdsFromScenarios,
   siteRowLabel,
   isHatch,
@@ -30,8 +31,7 @@ export interface WindowMapProps {
   className?: string
 }
 
-const ROW_HEIGHT = 28
-const LABEL_COL_WIDTH = 260
+const ROW_HEIGHT = 40
 const BATCH_SIZE = 3
 
 export function WindowMap({ className = '' }: WindowMapProps) {
@@ -63,26 +63,28 @@ export function WindowMap({ className = '' }: WindowMapProps) {
   const [announcement, setAnnouncement] = useState<string>('')
 
   // Sizing
-  const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const [wrapperEl, setWrapperEl] = useState<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [containerWidth, setContainerWidth] = useState(800)
 
-  // Measure container width
+  // Measure container width. The element only exists after loading, so it is tracked as state.
   useLayoutEffect(() => {
-    const el = wrapperRef.current
+    const el = wrapperEl
     if (!el) return
 
-    setContainerWidth(Math.round(el.getBoundingClientRect().width))
-
+    let timer: number | undefined
     const ro = new ResizeObserver((entries) => {
       const w = entries[0]?.contentRect.width
-      if (w && w > 0) {
-        setContainerWidth(Math.round(w))
-      }
+      if (!w || w <= 0) return
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setContainerWidth(Math.round(w)), 60)
     })
     ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+    return () => {
+      window.clearTimeout(timer)
+      ro.disconnect()
+    }
+  }, [wrapperEl])
 
   // Lazy sequential batch loading of sites in batches of 3
   useEffect(() => {
@@ -208,10 +210,12 @@ export function WindowMap({ className = '' }: WindowMapProps) {
   // Dimensions
   const rowCount = bundles.length
   const colCount = rows[0]?.count ?? 760
-  const availableGridWidth = Math.max(100, containerWidth - LABEL_COL_WIDTH)
-  const canvasWidth = Math.max(colCount, availableGridWidth)
-  const canvasHeight = rowCount * ROW_HEIGHT
-  const colWidth = colCount > 0 ? canvasWidth / colCount : 1
+  const { labelWidth, canvasWidth, canvasHeight, colWidth } = gridGeometry(
+    containerWidth,
+    rowCount,
+    colCount,
+    ROW_HEIGHT
+  )
 
   // Draw grid on canvas
   useEffect(() => {
@@ -437,8 +441,8 @@ export function WindowMap({ className = '' }: WindowMapProps) {
   // Compute month ticks
   const monthTicks = useMemo(() => {
     if (!rows[0]) return []
-    return getMonthTicks(rows[0].startMs, rows[0].stepMs, rows[0].count)
-  }, [rows])
+    return getMonthTicks(rows[0].startMs, rows[0].stepMs, rows[0].count, canvasWidth)
+  }, [rows, canvasWidth])
 
   // Best site sentence
   const bestSiteSentence = useMemo(() => {
@@ -557,16 +561,16 @@ export function WindowMap({ className = '' }: WindowMapProps) {
       </div>
 
       {/* Grid container */}
-      <div className="finder__grid-container" ref={wrapperRef}>
+      <div className="finder__grid-container" ref={setWrapperEl}>
         {/* Month ticks on top */}
         <div className="finder__month-header" aria-hidden="true">
-          <div className="finder__month-spacer" style={{ width: LABEL_COL_WIDTH }} />
+          <div className="finder__month-spacer" style={{ width: labelWidth }} />
           <div className="finder__month-track">
             {monthTicks.map((tick) => (
               <span
-                key={`${tick.colIndex}-${tick.label}`}
-                className="finder__month-tick"
-                style={{ left: `${tick.pctX}%` }}
+                key={tick.colIndex}
+                className={`finder__month-tick${tick.label === null ? ' finder__month-tick--minor' : ''}`}
+                style={{ left: tick.x }}
               >
                 {tick.label}
               </span>
@@ -577,7 +581,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
         {/* Grid body */}
         <div className="finder__grid-body">
           {/* HTML Site Labels Column */}
-          <div className="finder__labels-col" style={{ width: LABEL_COL_WIDTH }}>
+          <div className="finder__labels-col" style={{ width: labelWidth }}>
             {bundles.map((b) => (
               <div
                 key={b.site.id}
@@ -585,7 +589,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
                 style={{ height: ROW_HEIGHT }}
                 title={`${siteRowLabel(b)} (${b.site.category})`}
               >
-                {siteRowLabel(b)}
+                <span>{siteRowLabel(b)}</span>
               </div>
             ))}
           </div>
