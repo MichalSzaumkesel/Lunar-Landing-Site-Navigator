@@ -1,21 +1,43 @@
-.fs-button {
+/* Shared by the full screen button and the (?) help marker: one size, shape and look. */
+:root {
+  --corner-btn-size: 28px;
+}
+
+.fs-button,
+.sky-help__marker {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  box-sizing: border-box;
+  width: var(--corner-btn-size);
+  height: var(--corner-btn-size);
   min-width: 0;
   min-height: 0;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 50%;
+  background: var(--panel);
   color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
 }
 
+.sky-help__marker {
+  cursor: help;
+}
+
 .fs-button:hover,
-.fs-button:focus-visible {
+.sky-help__marker:hover {
   color: var(--text);
+  border-color: var(--muted);
+}
+
+.fs-button:focus-visible,
+.sky-help__marker:focus-visible {
+  color: var(--text);
+  outline: 2px solid var(--earth);
+  outline-offset: 2px;
 }
 
 /* iOS fallback and native fullscreen share one rule: the target fills the screen. */
@@ -23,8 +45,6 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  width: 100vw;
-  height: 100dvh;
   box-sizing: border-box;
   border-radius: 0;
   background: var(--bg, #05070d);
