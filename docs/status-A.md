@@ -1,6 +1,6 @@
 # Status A (Data & Science)
 
-Lead: Claude (Opus). Last update: 2026-11-14, Phase 0 done on branch `a/phase0` (not merged yet).
+Lead: Claude (Opus). Last update: 2026-11-14 ~12:00 CET. Phase 0 merged. CP1 and CP2 data reached and validated on `a/pipeline` + `a/research` (awaiting merge). Team: `pipeline` (Sonnet), `research-validator` (Sonnet).
 
 ## Tasks
 
@@ -9,13 +9,13 @@ Lead: Claude (Opus). Last update: 2026-11-14, Phase 0 done on branch `a/phase0` 
 | A0 | `validation/fixtures/metrics_cases.json` | done | 11 hand-derived cases (≤ 24 samples). Schema note at the top. Builder: `validation/fixtures/build_metrics_cases.py` (assembles JSON only, never runs an implementation). |
 | A1 | `pipeline/` scaffold + `check_contract.py` | done | `requirements.txt`, `pytest.ini`, `common.py` (meta, compact writer), stub modules. B's mocks pass the checker (10 files, 0 errors). |
 | A2 | `metrics.py` passing fixtures | done | 27 pytest tests pass (11 fixture cases + unit tests + checker tests). |
-| A3 | `sites.json` with the 3 demo IDs, sourced | not started | Phase 1 |
-| A4 | `ephem/<id>.json` for the 3 demo sites | not started | Phase 1. Real count is 18288 (see request 1). |
-| A5 | `horizon/<id>.json` for the 3 demo sites | not started | Phase 1 |
-| A6 | `terrain/<id>.json + .bin` | not started | Phase 1 |
-| A7 | `validation.json` | not started | |
-| A8 | Full `sites.json` (~20) + ephem + horizon | not started | |
-| A9 | `method.md`, `explore-texts.md`, `sources.md` | not started | |
+| A3 | `sites.json` with the 3 demo IDs, sourced | done (a/pipeline) | apollo_11 (LROC), southpole_landed = IM-2 Athena, Mons Mouton (LROC), artemis_region_1 = Mons Mouton Plateau (LROC mosaic centre, labelled). elevation_m from DEM. |
+| A4 | `ephem/<id>.json` for the 3 demo sites | done (a/pipeline) | Horizons, 18288 hourly samples each. Re-queried at 50 random times (TLIST): max error 0.0006–0.0012° (pass, threshold 0.05°). |
+| A5 | `horizon/<id>.json` for the 3 demo sites | done (a/pipeline) | LDEM_1024 (Apollo 11, 100 km), LDEM_80S_20M (polar, 150 km). Polar orientation verified vs 3 IAU crater centres (0.3–1.7 km). PGDA illumination at both polar points within 2 pp. |
+| A6 | `terrain/<id>.json + .bin` | done (a/pipeline) | 256², 80 m. Direction consistent with horizon masks (corr 0.86–0.98). |
+| A7 | `validation.json` | done for demo sites (a/research) | 6 checks, all pass. Pending: horizon sensitivity (uncertainty_deg), full-library ephem spot checks. metrics.py vs metrics.ts not run (no Node on A's machine) — B to run fixtures. |
+| A8 | Full `sites.json` (~20) + ephem + horizon | in progress (pipeline) | 18 sourced sites (a/research `validation/sources/full_sites.json`). Date-only landings: landing_date_utc null, date in notes. |
+| A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
 | A10 | (stretch) `illum/<id>.json` | not started | |
 
 How to run:
@@ -59,12 +59,44 @@ For the humans to decide. Agents don't edit the contract.
 +  "count": 18288,
 ```
 
+## Key numbers (2-year window 2026-12..2028-12, observer 2 m, from metrics.py)
+
+| Site | pct_sunlit 2 m | 10 m | longest_dark_h | pct_earth |
+|---|---|---|---|---|
+| apollo_11 | 49.6 | 49.7 | 356 | 100 |
+| southpole_landed (IM-2) | 45.1 | 45.9 | 459 | 82.0 |
+| artemis_region_1 (Mons Mouton Plateau, ~15 km from IM-2) | 24.5 | 31.5 | 581 | 66.8 |
+
+## Open questions for the human
+
+- NASA re-scoped Artemis on 2026-02-27 (source: spacepolicyonline.com/news/nasa-makes-a-course-correction-for-the-artemis-program/): Artemis III is now an Earth-orbit test, the first crewed landing is Artemis IV. The nine regions are still the latest official list. Should B relabel "Artemis III region" → "Artemis candidate region"? (Draft notice below if yes.)
+
 ## Requests to other scope
 
 1. (Info for B) The fixtures are at `validation/fixtures/metrics_cases.json` once `a/phase0` is merged. Each case's `horizon`/`ephem` already have the `HorizonFile`/`EphemFile` field names, so a vitest can call `computeMetrics({horizon, ephem}, {observerHeightM, startMs: Date.parse(t0_utc), endMs: Date.parse(t1_utc), refMs: Date.parse(t_ref_utc)})` and compare against `expected` with `tolerance_abs`. A has only read `metrics.ts`, not run it (no Node on A's machine). Please run the fixtures and report any mismatch here.
 2. (For both humans) `docs/scope-A-data.md` and `docs/scope-B-web.md` exist on A's machine but are **not on `main`**, although CLAUDE.md refers to them. Please commit them as shared files.
 
 ## Draft CRITICAL notice
+
+(Only if the human agrees on the Artemis wording.)
+
+```
+### C-00X · "Artemis III" wording is outdated
+- Date (CET): <fill in>
+- From: scope A
+- Affects: scope B
+- Severity: must-fix-before-freeze
+- Contract: none
+- What changed / what's wrong: NASA re-scoped Artemis on 2026-02-27; Artemis III is no longer the first crewed landing
+  (source in docs/sources.md). The 9 south-pole regions remain the latest official candidate list. sites.json names
+  artemis_region_1 "Artemis III candidate region — Mons Mouton Plateau".
+- Action required: in UI copy and the preset label, say "Artemis candidate region" (or "Artemis III candidate region
+  (2024 list)"), never imply an Artemis III landing date.
+- Workaround until fixed: none needed.
+- Status: open
+```
+
+Earlier draft (Phase 0):
 
 Not sent. For A's human to review and commit to `main` if you agree. Agents never commit CRITICAL.md.
 
