@@ -39,7 +39,7 @@ import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { dampAngleDeg, dampFactor, dampValue, lockPitchDeg } from './cameraLock'
-import { earthLitFraction, faceTarget, overviewFaceTarget } from './viewMath'
+import { earthLitFraction, faceTarget, lookAnglesTo, overviewFaceTarget } from './viewMath'
 import { createKeyMotion } from './keyMotion'
 import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
 
@@ -102,6 +102,7 @@ const AMBIENT = 0.035
 const FAR_M = 200_000
 const SURFACE_FOV = 60
 const OVERVIEW_FOV = 45
+const LANDER_LOOK_HEIGHT_M = 1 // aim at the lander body, not its feet
 const STAND_OFF_M = 14 // the camera stands this far from the lander so the lander is in view
 /** Camera turn speed of a held arrow key. */
 const LOOK_DEG_PER_S = 90
@@ -432,6 +433,56 @@ export class SurfaceScene {
     if (this.mode !== 'overview') return
     this.cancelCameraAnimation()
     this.startLock('lander', !follow)
+  }
+
+  /**
+   * One-off "face the lander" move. Surface: turns the camera towards the lander it stands next to.
+   * Overview: re-centres the orbit target on the lander and returns to the default framing.
+   */
+  faceLander(durationMs = 600): Promise<void> {
+    this.cancelCameraAnimation()
+    this.breakLock()
+    const lx = this.landerOffset.eastM
+    const lz = -this.landerOffset.northM
+    const ly = this.groundY(lx, lz)
+    const reduced =
+      typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
+    if (this.mode === 'surface') {
+      const dx = lx - this.camera.position.x
+      const dz = lz - this.camera.position.z
+      const dy = ly + LANDER_LOOK_HEIGHT_M - this.camera.position.y
+      return this.cameraTo({ ...lookAnglesTo(dx, dz, dy), durationMs })
+    }
+    const t = this.controls.target
+    const from = { t: t.clone(), o: this.camera.position.clone().sub(t) }
+    const to = { t: new THREE.Vector3(lx, ly, lz), o: new THREE.Vector3(0, 6000, 8000) }
+    const place = (k: number) => {
+      t.lerpVectors(from.t, to.t, k)
+      this.camera.position.copy(t).add(new THREE.Vector3().lerpVectors(from.o, to.o, k))
+      this.camera.lookAt(t)
+      this.controls.update()
+      this.invalidate()
+    }
+    if (reduced || durationMs <= 0) {
+      place(1)
+      return Promise.resolve()
+    }
+    return new Promise<void>((resolve) => {
+      this.cameraAnimationCancel = () => resolve()
+      const start = performance.now()
+      const step = (now: number) => {
+        const raw = Math.min(1, (now - start) / durationMs)
+        place(cameraEase(raw))
+        if (raw < 1 && !this.disposed) {
+          this.cameraAnimationRaf = requestAnimationFrame(step)
+        } else {
+          this.cameraAnimationRaf = 0
+          this.cameraAnimationCancel = null
+          resolve()
+        }
+      }
+      this.cameraAnimationRaf = requestAnimationFrame(step)
+    })
   }
 
   clearLock(): void {

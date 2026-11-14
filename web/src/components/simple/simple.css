@@ -754,3 +754,11 @@
   align-self: stretch;
   margin: var(--space-3, 12px) calc(-1 * var(--space-3, 12px)) calc(-1 * var(--space-3, 12px));
 }
+
+.sky-help__para {
+  margin: 0;
+}
+
+.sky-help__para + .sky-help__para {
+  margin-top: var(--space-2, 8px);
+}

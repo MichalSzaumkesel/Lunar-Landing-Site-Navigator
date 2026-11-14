@@ -11,7 +11,7 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import { DiagramStage } from './DiagramStage'
 import { VIEW_OPTIONS, readDiagramView, writeDiagramView } from './diagramView'
-import { SkyHelp } from './SkyHelp'
+import { SkyHelp, dataSourcesText } from './SkyHelp'
 import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
 import { displayName } from './placeLabels'
@@ -129,7 +129,11 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                   <DiagramStage view={view} scenarioId={scenario.id} />
                 </div>
                 <div className="simple-tools">
-                  <SkyHelp centreText={centreText} view={view} />
+                  <SkyHelp
+                    centreText={centreText}
+                    view={view}
+                    sources={view === '3d' && bundle ? dataSourcesText(bundle.terrain?.dem?.product, bundle.synthetic) : undefined}
+                  />
                   {fsButton}
                 </div>
               </>

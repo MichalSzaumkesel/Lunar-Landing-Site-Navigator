@@ -29,8 +29,8 @@ const baseInput: SimpleStatusInput = {
 describe('formatHoursWithDays / formatCountdown', () => {
   it('adds days from 48 hours and uses singular for 1 hour', () => {
     expect(formatHoursWithDays(1)).toBe('1 hour')
-    expect(formatHoursWithDays(47.6)).toBe('48 hours, about 2 days')
-    expect(formatHoursWithDays(355.1)).toBe('355 hours, about 15 days')
+    expect(formatHoursWithDays(47.6)).toBe('48 hours (about 2 days)')
+    expect(formatHoursWithDays(355.1)).toBe('355 hours (about 15 days)')
   })
 
   it('says less than an hour under 30 minutes', () => {
@@ -76,8 +76,8 @@ describe('simpleStatus', () => {
       nextSunEvent: makeEvent('sunrise', 1_000_000 + 53 * HOUR_MS),
       nextEarthEvent: makeEvent('earthrise', 1_000_000 + 52 * HOUR_MS),
     })
-    expect(s.blocks[0]).toMatchObject({ on: false, headline: 'Sun below horizon', detail: 'It rises in 53 hours, about 2 days.' })
-    expect(s.blocks[1]).toMatchObject({ on: false, headline: 'Earth below horizon', detail: 'It rises in 52 hours, about 2 days.' })
+    expect(s.blocks[0]).toMatchObject({ on: false, headline: 'Sun below horizon', detail: 'It rises in 53 hours (about 2 days).' })
+    expect(s.blocks[1]).toMatchObject({ on: false, headline: 'Earth below horizon', detail: 'It rises in 52 hours (about 2 days).' })
   })
 
   it('says plainly when nothing changes in the data window', () => {

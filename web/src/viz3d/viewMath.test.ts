@@ -9,6 +9,7 @@ import {
   faceTarget,
   horizonGlowStrength,
   overviewFaceTarget,
+  lookAnglesTo,
   sizeLabel,
   sizeValueText,
 } from './viewMath'
@@ -125,5 +126,15 @@ describe('overviewFaceTarget', () => {
   it('keeps an already low elevation within the floor', () => {
     expect(overviewFaceTarget(10, 18).elevationDeg).toBe(18)
     expect(overviewFaceTarget(10, 2).elevationDeg).toBe(10)
+  })
+})
+
+describe('lookAnglesTo', () => {
+  it('looks north, east, south and down at the target', () => {
+    expect(lookAnglesTo(0, -10, 0).azimuthDeg).toBeCloseTo(0)
+    expect(lookAnglesTo(10, 0, 0).azimuthDeg).toBeCloseTo(90)
+    expect(lookAnglesTo(0, 10, 0).azimuthDeg).toBeCloseTo(180)
+    expect(lookAnglesTo(-10, 0, 0).azimuthDeg).toBeCloseTo(270)
+    expect(lookAnglesTo(0, -10, -10).elevationDeg).toBeCloseTo(-45)
   })
 })

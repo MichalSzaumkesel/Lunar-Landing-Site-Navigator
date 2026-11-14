@@ -41,6 +41,7 @@ vi.mock('./scene', () => {
       lockOnDirection = vi.fn()
       updateLockDirection = vi.fn()
       centerOnLander = vi.fn()
+      faceLander = vi.fn().mockResolvedValue(undefined)
       clearLock = vi.fn()
       setOnLockBreak = vi.fn()
       overviewElevationDeg = vi.fn().mockReturnValue(37)
@@ -204,23 +205,24 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(control?.getAttribute('aria-label')).toContain('Arrow keys nudge')
   })
 
-  it('Simple variant hides planner readouts and keeps the single search action', async () => {
+  it('Simple variant hides planner readouts, credits and the search action', async () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
     })
     const text = container.textContent ?? ''
-    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sunlight map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery']) {
+    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sunlight map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery', 'sunniest']) {
       expect(text).not.toContain(t)
     }
     const labels = Array.from(container.querySelectorAll('button')).map((b) => b.textContent)
-    expect(labels).toContain('Find the sunniest spot nearby')
-    expect(labels).toContain('Face the Sun')
-    expect(labels).not.toContain('Move back')
-    const info = container.querySelector('button[aria-label="Terrain and image credits"]') as HTMLButtonElement
+    expect(labels).toEqual(expect.arrayContaining(['Face the Sun', 'Face the Earth', 'Face the lander']))
+    expect(container.querySelector('button[aria-label="Terrain and image credits"]')).toBeNull()
+    const radios = Array.from(container.querySelectorAll('[role="radiogroup"] [role="radio"]'))
+    expect(radios.map((r) => r.textContent)).toEqual(['On the surface', 'Overview'])
+    expect(radios.map((r) => r.getAttribute('aria-checked'))).toEqual(['true', 'false'])
     await act(async () => {
-      info.click()
+      ;(radios[1] as HTMLButtonElement).click()
     })
-    expect(container.textContent).toContain('Earth imagery: NASA Blue Marble')
+    expect(radios[1].getAttribute('aria-checked')).toBe('true')
   })
 
   it('Face the Sun orbits the camera in Overview instead of being disabled', async () => {
@@ -284,22 +286,43 @@ describe('SurfaceView 3D View Fixes', () => {
     vi.useRealTimers()
   })
 
-  it('Face the lander is disabled on the surface and centres the lander in Overview', async () => {
+  it('arrow keys on the 3D view do not move the lander or seek time', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
+    })
+    const frame = container.querySelector('.surface__frame') as HTMLElement
+    expect(frame.hasAttribute('data-no-shortcuts')).toBe(true)
+    expect(frame.getAttribute('aria-label')).not.toContain('move the lander')
+    const { SurfaceScene } = await import('./scene')
+    const scene = (SurfaceScene as unknown as { last: Record<string, ReturnType<typeof vi.fn>> }).last
+    scene.setLanderOffset.mockClear()
+    await act(async () => {
+      frame.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
+      await new Promise((r) => setTimeout(r, 80))
+    })
+    expect(scene.setLanderOffset).not.toHaveBeenCalled()
+  })
+
+  it('Face the lander works on the surface and in Overview', async () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
     })
     const find = (t: string) =>
       Array.from(container.querySelectorAll('button')).find((b) => b.textContent === t) as HTMLButtonElement
-    expect(find('Face the lander').disabled).toBe(true)
+    const { SurfaceScene } = await import('./scene')
+    const scene = (SurfaceScene as unknown as { last: Record<string, ReturnType<typeof vi.fn>> }).last
+    expect(find('Face the lander').disabled).toBe(false)
+    await act(async () => {
+      find('Face the lander').click()
+    })
+    expect(scene.faceLander).toHaveBeenCalledTimes(1)
     await act(async () => {
       find('Overview').click()
     })
     await act(async () => {
       find('Face the lander').click()
     })
-    const { SurfaceScene } = await import('./scene')
-    const scene = (SurfaceScene as unknown as { last: Record<string, ReturnType<typeof vi.fn>> }).last
-    expect(scene.centerOnLander).toHaveBeenCalledWith(false)
+    expect(scene.faceLander).toHaveBeenCalledTimes(2)
   })
 
   it('renders badges in lander box (Approximate and Synthetic)', async () => {

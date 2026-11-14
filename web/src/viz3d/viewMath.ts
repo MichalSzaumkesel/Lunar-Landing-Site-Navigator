@@ -92,3 +92,14 @@ export function horizonGlowStrength(clearanceDeg: number, angRadiusDeg: number):
   const t = 1 - depth / GLOW_FADE_DEG
   return t * t
 }
+
+/**
+ * Camera angles (azimuth clockwise from north, elevation) that look from the camera to a point.
+ * `dx` is east and `dz` is south (scene axes), `dy` is up, all in metres.
+ */
+export function lookAnglesTo(dx: number, dz: number, dy: number): { azimuthDeg: number; elevationDeg: number } {
+  return {
+    azimuthDeg: (((Math.atan2(dx, -dz) * 180) / Math.PI) % 360 + 360) % 360,
+    elevationDeg: (Math.atan2(dy, Math.hypot(dx, dz)) * 180) / Math.PI,
+  }
+}

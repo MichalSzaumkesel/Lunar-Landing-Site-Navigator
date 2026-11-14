@@ -82,7 +82,7 @@ export function formatHoursWithDays(rawHours: number): string {
   if (h >= 48) {
     const days = Math.round(h / 24)
     const daysText = days === 1 ? 'about 1 day' : `about ${days} days`
-    return `${h} hours, ${daysText}`
+    return `${h} hours (${daysText})`
   }
   if (h === 1) {
     return '1 hour'
