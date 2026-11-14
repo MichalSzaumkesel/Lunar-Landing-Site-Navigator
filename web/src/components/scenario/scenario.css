@@ -533,3 +533,123 @@
     align-items: center;
   }
 }
+
+/* Full screen button: top right of the view area, same corner style as the (?) marker in Simple. */
+.views__stage {
+  position: relative;
+}
+
+.views__fs {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+/* Full screen: slim tab strip on top, the shown view fills the rest, Transport at the bottom. */
+.views[data-fullscreen='true'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) 0;
+  overflow: hidden;
+}
+
+.views[data-fullscreen='true'] .views__tabs {
+  flex: none;
+}
+
+.views[data-fullscreen='true'] .views__tab {
+  min-height: 2rem;
+  padding-block: 0;
+}
+
+.views[data-fullscreen='true'] .views__stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.views[data-fullscreen='true'] .views__panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.views[data-fullscreen='true'] .views__polar {
+  width: 100%;
+  height: 100%;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+}
+
+.views[data-fullscreen='true'] .views__sky {
+  max-width: none;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+.views[data-fullscreen='true'] .sky__frame {
+  max-width: none;
+  width: min(100cqw, 100cqh);
+}
+
+.views[data-fullscreen='true'] .sky__pano {
+  max-width: none;
+  width: min(100cqw, calc(100cqh * 776 / 224));
+}
+
+.views[data-fullscreen='true'] .views__panel > .sky__pano {
+  width: min(100cqw, calc(100cqh * 776 / 224));
+}
+
+.views[data-fullscreen='true'] .surface {
+  width: 100%;
+  height: 100%;
+}
+
+.views[data-fullscreen='true'] .surface__frame {
+  flex: 1;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.views[data-fullscreen='true'] .views__loupe {
+  order: -1;
+  align-self: start;
+  max-width: 16rem;
+}
+
+.views[data-fullscreen='true'] .transport {
+  position: static;
+  flex: none;
+  align-self: stretch;
+  margin: 0 calc(-1 * var(--space-3));
+}
+
+@media (max-width: 600px) {
+  .views[data-fullscreen='true'] .views__polar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .views[data-fullscreen='true'] .views__loupe {
+    display: none;
+  }
+}
+
+/* Keep the 3D badges clear of the full screen button. */
+.views__stage .surface__badges {
+  right: calc(var(--corner-btn-size, 28px) + var(--space-3));
+}
+
+/* Like Simple: only the 3D frame is shown in full screen, its extra controls stay in the card. */
+.views[data-fullscreen='true'] .surface > :not(.surface__frame) {
+  display: none;
+}

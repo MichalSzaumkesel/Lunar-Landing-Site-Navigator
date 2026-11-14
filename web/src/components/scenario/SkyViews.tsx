@@ -1,5 +1,6 @@
 import { Component, Suspense, lazy, useId, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
+import { FullscreenStage } from '../common/FullscreenStage'
 import { useTourStore } from '../help/tourState'
 import { Loupe } from '../sky/Loupe'
 import { Panorama } from '../sky/Panorama'
@@ -84,6 +85,7 @@ function PolarPanel({ scenarioId, siteName }: { scenarioId: string; siteName?: s
 }
 
 export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteName?: string }) {
+  const setActive = useAppStore((s) => s.setActiveScenario)
   const [view, setView] = useState<ViewKey>('polar')
   const baseId = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -99,50 +101,57 @@ export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteNam
   }
 
   return (
-    <div className="views">
-      <div
-        className="views__tabs"
-        data-tour="view-tabs"
-        role="tablist"
-        aria-label={siteName ? `Sky view, ${siteName}` : 'Sky view'}
-        onKeyDown={onKeyDown}
-      >
-        {TABS.map((t, i) => (
-          <button
-            key={t.key}
-            ref={(el) => {
-              tabRefs.current[i] = el
-            }}
-            type="button"
-            role="tab"
-            id={`${baseId}-tab-${t.key}`}
-            aria-selected={view === t.key}
-            aria-controls={`${baseId}-panel`}
-            tabIndex={view === t.key ? 0 : -1}
-            className="views__tab"
-            onClick={() => setView(t.key)}
+    <FullscreenStage className="views" onChange={(on) => on && setActive(scenarioId)}>
+      {(fsButton) => (
+        <>
+          <div
+            className="views__tabs"
+            data-tour="view-tabs"
+            role="tablist"
+            aria-label={siteName ? `Sky view, ${siteName}` : 'Sky view'}
+            onKeyDown={onKeyDown}
           >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${view}`} className="views__panel">
-        {view === 'polar' && <PolarPanel scenarioId={scenarioId} siteName={siteName} />}
-        {view === 'panorama' && <Panorama scenarioId={scenarioId} />}
-        {view === '3d' && (
-          <ViewBoundary>
-            <Suspense
-              fallback={
-                <div className="views__message" aria-busy="true">
-                  Loading 3D view
-                </div>
-              }
-            >
-              <SurfaceView scenarioId={scenarioId} />
-            </Suspense>
-          </ViewBoundary>
-        )}
-      </div>
-    </div>
+            {TABS.map((t, i) => (
+              <button
+                key={t.key}
+                ref={(el) => {
+                  tabRefs.current[i] = el
+                }}
+                type="button"
+                role="tab"
+                id={`${baseId}-tab-${t.key}`}
+                aria-selected={view === t.key}
+                aria-controls={`${baseId}-panel`}
+                tabIndex={view === t.key ? 0 : -1}
+                className="views__tab"
+                onClick={() => setView(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="views__stage">
+            <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${view}`} className="views__panel">
+              {view === 'polar' && <PolarPanel scenarioId={scenarioId} siteName={siteName} />}
+              {view === 'panorama' && <Panorama scenarioId={scenarioId} />}
+              {view === '3d' && (
+                <ViewBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="views__message" aria-busy="true">
+                        Loading 3D view
+                      </div>
+                    }
+                  >
+                    <SurfaceView scenarioId={scenarioId} />
+                  </Suspense>
+                </ViewBoundary>
+              )}
+            </div>
+            <div className="views__fs">{fsButton}</div>
+          </div>
+        </>
+      )}
+    </FullscreenStage>
   )
 }
