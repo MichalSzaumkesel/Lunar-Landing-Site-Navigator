@@ -159,10 +159,7 @@ describe('ScenarioBoard full screen (mocked Fullscreen API)', () => {
       current = null
       return Promise.resolve()
     })
-    HTMLElement.prototype.requestFullscreen = vi.fn(function (this: HTMLElement) {
-      current = this
-      return Promise.resolve()
-    }) as never
+    HTMLElement.prototype.requestFullscreen = vi.fn(() => Promise.resolve()) as never
     useAppStore.setState({
       observerHeightM: 2,
       cursorH: 0,
@@ -192,6 +189,7 @@ describe('ScenarioBoard full screen (mocked Fullscreen API)', () => {
     expect(container.querySelector('.transport')).toBeNull()
 
     await act(async () => buttons[1].click())
+    current = (HTMLElement.prototype.requestFullscreen as unknown as { mock: { contexts: Element[] } }).mock.contexts[0]
     await act(async () => void document.dispatchEvent(new Event('fullscreenchange')))
 
     const views = container.querySelectorAll('.views')[1]
