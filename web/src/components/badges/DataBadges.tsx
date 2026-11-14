@@ -4,9 +4,11 @@ import './badges.css'
 export interface DataBadgesProps {
   synthetic?: boolean
   approximate?: boolean
+  /** Site notes; shown as the tooltip of the Approximate badge when present. */
+  notes?: string
 }
 
-export const DataBadges: FC<DataBadgesProps> = ({ synthetic, approximate }) => {
+export const DataBadges: FC<DataBadgesProps> = ({ synthetic, approximate, notes }) => {
   if (!synthetic && !approximate) {
     return null
   }
@@ -24,7 +26,7 @@ export const DataBadges: FC<DataBadgesProps> = ({ synthetic, approximate }) => {
       {approximate && (
         <span
           className="badge badge--approximate"
-          title="Real-based data with a known simplification (see the data notes)."
+          title={notes || 'Real-based data with a known simplification (see the data notes).'}
         >
           Approximate
         </span>

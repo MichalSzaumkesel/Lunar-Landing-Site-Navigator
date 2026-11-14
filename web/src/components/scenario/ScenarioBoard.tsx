@@ -80,7 +80,7 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
         <div className="card__aside">
           {bundle && (
             <div className="card__badges">
-              <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} />
+              <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />
             </div>
           )}
           <ExportCardPngButton
