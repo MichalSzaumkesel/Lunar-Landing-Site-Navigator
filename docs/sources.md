@@ -13,7 +13,7 @@ Accessed 2026-11-14. Rows marked UNVERIFIED are not to be used.
 | southpole_landed | status | landed, on its side, mission ended ~12 h 45 min later | https://spacepolicyonline.com/news/im-2-mission-ends-one-day-after-lunar-landing/ | 2026-11-14 |
 | southpole_landed | closest to pole | "closer to the Moon's South Pole than any previous lunar lander" | https://www.nasa.gov/?p=839249 | 2026-11-14 |
 | artemis_region_1 (Mons Mouton Plateau) | lat, lon | -84.3, 30.6 (LROC NAC mosaic center) | https://data.lroc.im-ldi.com/lroc/view_rdr/NAC_ROI_MOUTNPLTLO1 | 2026-11-14 |
-| artemis_region_1 | region list (9) | Oct 28, 2024, no coordinates | https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/ | 2026-11-14 |
+| artemis_region_1 | Artemis candidate regions, 2024 NASA list (9) | Oct 28, 2024, no coordinates | https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/ | 2026-11-14 |
 | artemis_region_1 | list status | LPSC 2026 abstract confirms 9 regions | https://ntrs.nasa.gov/citations/20250011660 | 2026-11-14 |
 | artemis_region_1 | Artemis III now LEO test; landing is Artemis IV | Feb 27, 2026 | https://spacepolicyonline.com/news/nasa-makes-a-course-correction-for-the-artemis-program/ | 2026-11-14 |
 | artemis_region_1 | region_radius_km | no source for the 9-region set (2022 list: 15 x 15 km regions) | https://www.nasa.gov/news-release/nasa-identifies-candidate-regions-for-landing-next-americans-on-moon/ | 2026-11-14 |
@@ -60,7 +60,7 @@ Accessed 2026-11-14. Only numbers actually read on the cited page. Abstract-leve
 | V4 | PGDA LOLA Lunar Polar Illumination products (Mazarico et al. 2011 products) | Gridded average solar illumination, average Earth visibility (Earth counts as visible if any part of its disc is unobscured), permanent shadow, sky visibility; polar stereographic, R = 1737.4 km. Use to sample a numeric reference at our sites | hourly over one nutation cycle (~18.6 yr) | not specified on the page | 240 m/px (65-90 deg), 120 m/px (75-90), 60 m/px (85-90) | https://pgda.gsfc.nasa.gov/products/69 (files: https://pgda.gsfc.nasa.gov/data/MoonIllumination/ and http://imbrium.mit.edu/EXTRAS/ILLUMINATION/) |
 | V5 | Barker et al. 2021, Planet. Space Sci. 203, doi:10.1016/j.pss.2020.105119 | 5 m/px LOLA DEMs for 4 south-pole sites (16 x 16 km); RMS height uncertainty about 0.30-0.50 m, slope uncertainty about 1.5-2.5 deg; horizon/illumination sensitivity to height errors is analysed | n/a | n/a | 5 m/px | https://ntrs.nasa.gov/citations/20205009660 |
 | V6 | PGDA high-resolution LOLA south-pole site DEMs (Barker) | 5 m/px GeoTIFF DEMs, MOON_ME frame, DE421, south polar stereographic. Sites listed include Site01 Connecting ridge, Site04 Shackleton rim, Site06 Nobile rim 1, Site11 de Gerlache rim, Site23 Malapert massif, Haworth, DM2 Nobile rim 2, SL2 de Gerlache rim (page truncated in my read; Mons Mouton not seen) | n/a | n/a | 5 m/px | https://pgda.gsfc.nasa.gov/products/78 |
-| V7 | LPSC 2026 abstract George et al. (Artemis III downselection) | Qualitative only: Earth visibility preferred for direct-to-Earth; no per-region percentages in the abstract text read | n/a | n/a | n/a | https://ntrs.nasa.gov/citations/20250011660 |
+| V7 | LPSC 2026 abstract George et al. (2024 NASA candidate-region downselection, 13 to 9 regions) | Qualitative only: Earth visibility preferred for direct-to-Earth; no per-region percentages in the abstract text read | n/a | n/a | n/a | https://ntrs.nasa.gov/citations/20250011660 |
 
 ### Intended use
 
