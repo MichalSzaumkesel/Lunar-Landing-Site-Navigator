@@ -425,6 +425,9 @@ def check_illum(c: Checker, doc: dict, real: bool) -> None:
         return
     c.num_range(grid.get("center_lat"), -90, 90, "grid.center_lat")
     c.num_range(grid.get("center_lon"), -180, 180, "grid.center_lon")
+    sp = grid.get("spacing_m")
+    if not _is_num(sp) or sp <= 0:
+        c.err("grid.spacing_m must be a positive number")
     nx, ny = grid.get("nx"), grid.get("ny")
     if not (isinstance(nx, int) and isinstance(ny, int) and nx > 0 and ny > 0):
         c.err("grid.nx / grid.ny must be positive integers")
