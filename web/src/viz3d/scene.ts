@@ -187,6 +187,11 @@ export class SurfaceScene {
   private standN = -STAND_OFF_M
   private sunDir: THREE.Vector3 | null = null
   private lastShadowSunDir: THREE.Vector3 | null = null
+  // Scratch objects reused by the shadow fit, so the 60 Hz loop does not allocate.
+  private readonly shadowDirBuf = new THREE.Vector3()
+  private readonly scratchBox = new THREE.Box3()
+  private readonly scratchCenter = new THREE.Vector3()
+  private readonly scratchCorner = new THREE.Vector3()
   private lastShadowUpdateTime = 0
   private lastSky: SkyState | null = null
   private mask: readonly number[] = []
@@ -269,6 +274,7 @@ export class SurfaceScene {
     this.earthRig = buildEarth({
       baseUrl: import.meta.env.BASE_URL,
       anisotropy: Math.min(8, this.renderer.capabilities.getMaxAnisotropy()),
+      clouds: tier.earthClouds,
       onTexture: this.invalidate,
       isDisposed: () => this.disposed,
     })
@@ -492,7 +498,7 @@ export class SurfaceScene {
     if (!this.sunDir) return
     this.fitShadows()
     this.renderer.shadowMap.needsUpdate = true
-    this.lastShadowSunDir = this.sunDir.clone()
+    this.lastShadowSunDir = this.shadowDirBuf.copy(this.sunDir)
     this.lastShadowUpdateTime = performance.now()
     this.invalidate()
   }
@@ -532,7 +538,7 @@ export class SurfaceScene {
       if (shouldUpdate) {
         this.fitShadows()
         this.renderer.shadowMap.needsUpdate = true
-        this.lastShadowSunDir = this.sunDir.clone()
+        this.lastShadowSunDir = this.shadowDirBuf.copy(this.sunDir)
         this.lastShadowUpdateTime = now
       }
     } else {
@@ -937,10 +943,9 @@ export class SurfaceScene {
         hi = Math.max(hi, y)
       }
     }
-    const box = new THREE.Box3(
-      new THREE.Vector3(c.x - r, lo - 2, c.y - r),
-      new THREE.Vector3(c.x + r, hi + 8, c.y + r),
-    )
+    const box = this.scratchBox
+    box.min.set(c.x - r, lo - 2, c.y - r)
+    box.max.set(c.x + r, hi + 8, c.y + r)
     this.fitLight(this.sunNear, box, this.tierSettings().nearShadowMap)
   }
 
@@ -951,7 +956,7 @@ export class SurfaceScene {
   private fitLight(light: THREE.DirectionalLight, box: THREE.Box3, mapSize: number): void {
     const dir = this.sunDir
     if (!dir) return
-    const center = box.getCenter(new THREE.Vector3())
+    const center = box.getCenter(this.scratchCenter)
     light.position.copy(center).addScaledVector(dir, 30_000)
     light.target.position.copy(center)
     light.updateMatrixWorld()
@@ -963,7 +968,7 @@ export class SurfaceScene {
     cam.updateMatrixWorld()
 
     const { min, max } = box
-    const v = new THREE.Vector3()
+    const v = this.scratchCorner
     let l = Infinity
     let r = -Infinity
     let b = Infinity
