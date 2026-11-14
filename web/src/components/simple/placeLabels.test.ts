@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Site } from '../../lib/types'
-import { displayName, groupPlaces, placeDescription, placeHint } from './placeLabels'
+import { displayName, filterPlaces, groupPlaces, placeDescription, placeHint } from './placeLabels'
 
 function site(id: string, category: Site['category'], lat = 0, lon = 0): Site {
   return {
@@ -62,5 +62,19 @@ describe('placeDescription', () => {
 describe('displayName', () => {
   it('strips the mock prefix', () => {
     expect(displayName({ name: '[MOCK] Equatorial site' })).toBe('Equatorial site')
+  })
+})
+
+describe('filterPlaces', () => {
+  const mk = (name: string, category: Site['category'], lat: number): Site =>
+    ({ id: name, name, category, country: 'US', lat_deg: lat, lon_deg: 0 }) as Site
+  const sites = [mk('Alpha', 'apollo', 0), mk('Beta', 'artemis_region', -89), mk('Gamma', 'clps', -89)]
+
+  it('filters by group and by every query word over name and description', () => {
+    expect(filterPlaces(sites, '', 'all').map((s) => s.name)).toEqual(['Alpha', 'Beta', 'Gamma'])
+    expect(filterPlaces(sites, '', 'future').map((s) => s.name)).toEqual(['Beta'])
+    expect(filterPlaces(sites, 'south pole', 'all').map((s) => s.name)).toEqual(['Beta', 'Gamma'])
+    expect(filterPlaces(sites, 'gamma pole', 'missions').map((s) => s.name)).toEqual(['Gamma'])
+    expect(filterPlaces(sites, 'nothing', 'all')).toEqual([])
   })
 })
