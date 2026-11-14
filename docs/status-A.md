@@ -1,6 +1,6 @@
 # Status A (Data & Science)
 
-Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A12 done. A12 map UI is PR #60 (needs scope B review; merge a/basemap first).
+Lead: Claude (Opus). Last update: 2026-11-14 ~23:25 CET. A0–A13 done. Map follow-ups (C-005 update): PR #65 (fixes), then PR #68 (globe, stacked on #65). Both need scope B review; scope A does not merge them.
 
 ## Tasks
 
@@ -18,7 +18,8 @@ Lead: Claude (Opus). Last update: 2026-11-14 ~21:55 CET. A0–A12 done. A12 map 
 | A9 | `method.md`, `explore-texts.md`, `sources.md` | done, first version (a/research) | 7 Explore snippets with ids; numbers from our files or sourced references. |
 | A10 | (stretch) `illum/<id>.json` | done (southpole_landed, artemis_region_1) | 21×21, 200 m, ~36 s per site. vs PGDA: r 0.98 at both, median |Δ| 0.9 pp. meta.approximate = true. |
 | A11 | `basemap/` + `slope_deg` | done (a/basemap) | southpole.png 2048², ±304 km, LDEM_80S_40M hillshade, 1.77 MB; global.jpg 2048×1024 SVS CGI Moon Kit colour × hillshade, 0.66 MB (layout verified vs LOLA, r ≥ 0.98). slope_deg for 21 sites (Horn 3×3, horizon DEM). check_contract 0 errors (now checks basemaps), 43 tests pass. Contract PR #59 (1.3.0, not merged). |
-| A12 | Map UI (web/src/components/map/, C-005, until Sun 08:00) | done, PR #60 (open, not merged) | Only components/map/ touched. Global: SVS basemap, smooth night/Earth overlays, terminator, credits. South-pole view (default for lat ≤ −80°): LDEM hillshade, pan/zoom, scale bar, north arrow, lat circles, pick-a-point via inverse projection. Illum heatmap toggle (C-004 orientation, approximate badge). build ok, 1063 web tests pass, screenshots checked by lead. Limits: no live night overlay on the pole view; heatmaps only 4 km wide. Requests to B: none. Merge order: a/basemap → PR #60. |
+| A12 | Map UI (web/src/components/map/, C-005, until Sun 08:00) | done, PR #60 merged | Only components/map/ touched. Global: SVS basemap, smooth night/Earth overlays, terminator, credits. South-pole view (default for lat ≤ −80°): LDEM hillshade, pan/zoom, scale bar, north arrow, lat circles, pick-a-point via inverse projection. Illum heatmap toggle (C-004 orientation, approximate badge). build ok, 1063 web tests pass, screenshots checked by lead. Limits: no live night overlay on the pole view; heatmaps only 4 km wide. Requests to B: none. Merge order: a/basemap → PR #60. |
+| A13 | Map follow-ups (a/ui-map2, C-005 update) | done: PR #65 + PR #68 (open, not merged) | **#65:** marker hover drift fixed (transform-box: fill-box; Playwright: 31 markers, max centre shift 0.000 px; 305 px with the old origin); hover/focus tooltip (name, category, status, 2-decimal °N/S °E/W), clamped, never blocks clicks; night 0.45 / far side 0.25, legend "Far side (Earth not in view)"; registration measured in browser: Apollo 11 and 15 within 0.05° of their coordinates, on the mare edge / Apennine front, no offset. **#68 (merge after #65):** three.js Globe as the default Global view, Flat toggle; Sun light from the subsolar point at the time cursor; Earth-facing chip instead of far-side tint; raycast tooltip, click, pick; focus south pole / active site; on-demand render, dispose, lazy 9 kB chunk. 1058 web tests pass, build ok, oxlint clean. Requests to B: none. |
 
 How to run:
 

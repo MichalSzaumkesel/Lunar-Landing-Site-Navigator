@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { createHoldTimer, HOLD_MS, holdHint, lockedLabel } from './cameraLock'
+import { createHoldTimer, HOLD_MS, HOLD_VISUAL_DELAY_MS, holdHint, lockedLabel } from './cameraLock'
 import type { HoldTimer, LockBody } from './cameraLock'
 
 const HINT_KEY = 'lunar.lockHintSeen'
@@ -58,7 +58,8 @@ interface Props {
 /** A button that moves the camera on click and locks it on its target when held. */
 export function LockButton({ body, children, title, disabled, locked, onClick, onLock, onUnlock }: Props) {
   const [holding, setHolding] = useState(false)
-    const swallowClick = useRef(false)
+  const swallowClick = useRef(false)
+  const showHold = useEffectEvent(() => setHolding(true))
   const fireLock = useEffectEvent(() => {
     swallowClick.current = true
     setHolding(false)
@@ -68,7 +69,7 @@ export function LockButton({ body, children, title, disabled, locked, onClick, o
 
   const timerRef = useRef<HoldTimer | null>(null)
   useEffect(() => {
-    const t = createHoldTimer({ holdMs: HOLD_MS, onLock: () => fireLock() })
+    const t = createHoldTimer({ holdMs: HOLD_MS, onShow: () => showHold(), onLock: () => fireLock() })
     timerRef.current = t
     return () => {
       t.cancel()
@@ -78,7 +79,6 @@ export function LockButton({ body, children, title, disabled, locked, onClick, o
 
   const begin = () => {
     if (disabled || locked) return
-    setHolding(true)
     timerRef.current?.start()
   }
   const end = (): boolean => {
@@ -99,7 +99,7 @@ export function LockButton({ body, children, title, disabled, locked, onClick, o
       aria-description={hint}
       disabled={disabled}
       title={tip}
-      style={{ '--hold-ms': `${HOLD_MS}ms` } as React.CSSProperties}
+      style={{ '--hold-ms': `${HOLD_MS - HOLD_VISUAL_DELAY_MS}ms` } as React.CSSProperties}
       onPointerDown={(e) => {
         if (e.button !== 0) return
         swallowClick.current = false
