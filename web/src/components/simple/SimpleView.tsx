@@ -15,6 +15,7 @@ import { SkyHelp } from './SkyHelp'
 import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
 import { displayName } from './placeLabels'
+import { computeWindowDetails } from './windowDetails'
 import { formatWindowPlain, outOfRangeMessage, simpleStatus } from './simpleSummary'
 import './simple.css'
 
@@ -46,6 +47,11 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const events = useScenarioEvents(bundle, heightM)
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
 
+  const details = useMemo(
+    () => (bundle ? computeWindowDetails(bundle, heightM, startMs, endMs) : null),
+    [bundle, heightM, startMs, endMs],
+  )
+
   const cursorMs = scenario ? scenarioCursorMs(scenario, cursorH) : 0
   const split = useMemo(() => (events ? splitEvents(events) : null), [events])
   const mask = useMemo(() => (bundle ? pickMask(bundle, heightM) : null), [bundle, heightM])
@@ -74,9 +80,10 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
       cursorMs,
       durationH,
       metrics,
+      details,
       synthetic: bundle.synthetic,
     })
-  }, [bundle, metrics, cursorMs, mask, split, durationH])
+  }, [bundle, metrics, details, cursorMs, mask, split, durationH])
 
   if (!scenario) {
     return null
@@ -195,6 +202,26 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                   </div>
                 ))}
               </dl>
+              {readout.details.map((group) => (
+                <section key={group.title} className="simple-detail" aria-label={`${group.title} details`}>
+                  <h3 className="simple-detail__title">{group.title}</h3>
+                  <dl className="simple-rows simple-rows--detail">
+                    {group.rows.map((row) => (
+                      <div
+                        key={row.id}
+                        className={row.child ? 'simple-row simple-row--child' : 'simple-row'}
+                        title={row.hint}
+                      >
+                        <dt>
+                          {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
+                          {row.label}
+                        </dt>
+                        <dd>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              ))}
               {readout.note && <p className="simple-summary__note">{readout.note}</p>}
             </div>
           )}

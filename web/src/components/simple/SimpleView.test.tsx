@@ -195,8 +195,17 @@ describe('SimpleView component', () => {
     expect(blocks[0].querySelector('.simple-block__headline')?.textContent).toMatch(/^Sun (visible|below horizon)$/)
     expect(blocks[1].querySelector('.simple-block__headline')?.textContent).toMatch(/^Earth (in view|below horizon)$/)
     expect(container.querySelectorAll('.simple-chip')).toHaveLength(0)
-    expect(container.querySelectorAll('.simple-row')).toHaveLength(4)
-    expect(container.querySelectorAll('.simple-row--child')).toHaveLength(2)
+    const window = container.querySelector('[aria-label="Over the whole window"]')
+    expect(window?.querySelectorAll('.simple-row')).toHaveLength(4)
+    expect(window?.querySelectorAll('.simple-row--child')).toHaveLength(2)
+
+    // Extra details: grouped under Sun, Earth and Site, each row with a plain definition
+    expect([...container.querySelectorAll('.simple-detail__title')].map((e) => e.textContent)).toEqual(['Sun', 'Earth', 'Site'])
+    const detailRows = container.querySelectorAll('.simple-detail .simple-row')
+    expect(detailRows.length).toBeGreaterThanOrEqual(5)
+    detailRows.forEach((r) => expect(r.getAttribute('title')).toBeTruthy())
+    expect(container.textContent).toContain('Highest Sun above the horizon')
+    expect(container.textContent).toContain('Highest hill on the horizon')
     expect(container.textContent).not.toMatch(/CLPS|disc/)
   })
 
