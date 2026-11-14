@@ -132,35 +132,28 @@ describe('Stable layout between Simple and Advanced modes', () => {
   })
 
   describe('Tools toolbar', () => {
-    it('renders Share, Export and Sound in both modes, reserving Export space in simple', () => {
+    it('keeps one Share and export button in place across modes; extra items disable in simple', () => {
       act(() => {
         root.render(createElement(Tools))
       })
 
-      // In Advanced:
-      const shareBtn = container.querySelector('button[title*="Copy scenario link"]')!
-      const exportBtn = container.querySelector('button[title*="Export scenarios"]')!
+      const trigger = container.querySelector('button[aria-haspopup="menu"]')!
       const soundBtn = container.querySelector('button[title*="Short tones"]')!
-
-      expect(shareBtn).not.toBeNull()
-      expect(exportBtn).not.toBeNull()
+      expect(trigger).not.toBeNull()
       expect(soundBtn).not.toBeNull()
-      expect(exportBtn.closest('.toolbar-hidden')).toBeNull()
+      expect(trigger.textContent).toContain('Share and export')
 
-      // Switch to Simple mode
       act(() => {
         useAppStore.getState().setMode('simple')
       })
 
-      // Share and Sound stay visible; Export is hidden in place
-      const exportHiddenWrapper = exportBtn.closest('.toolbar-hidden')
-      expect(exportHiddenWrapper).not.toBeNull()
-      expect(exportHiddenWrapper?.getAttribute('aria-hidden')).toBe('true')
-      expect((exportBtn as HTMLButtonElement).disabled).toBe(true)
-
-      // Share button stays interactive and visible
-      expect(shareBtn.closest('.toolbar-hidden')).toBeNull()
-      expect((shareBtn as HTMLButtonElement).disabled).toBe(false)
+      expect(container.querySelector('button[aria-haspopup="menu"]')).toBe(trigger)
+      expect((trigger as HTMLButtonElement).disabled).toBe(false)
+      act(() => {
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      })
+      const items = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
+      expect(items.map((i) => i.disabled)).toEqual([false, true, true])
     })
   })
 
@@ -237,7 +230,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       const advPlay = container.querySelector('[data-tour="transport-play"] button.primary')!
-      const advShare = container.querySelector('.tools button[title*="Copy scenario link"]')!
+      const advShare = container.querySelector('.tools button[aria-haspopup="menu"]')!
       const advTutorial = container.querySelector('[data-tour="help-button"]')!
       const advDemo = container.querySelector('button[aria-label="Start demo"]')!
       const advMode = container.querySelector('[data-tour="mode-switch"]')!
@@ -248,7 +241,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       expect(container.querySelector('[data-tour="transport-play"] button.primary')).toBe(advPlay)
-      expect(container.querySelector('.tools button[title*="Copy scenario link"]')).toBe(advShare)
+      expect(container.querySelector('.tools button[aria-haspopup="menu"]')).toBe(advShare)
       expect(container.querySelector('[data-tour="help-button"]')).toBe(advTutorial)
       expect(container.querySelector('button[aria-label="Start demo"]')).toBe(advDemo)
       expect(container.querySelector('[data-tour="mode-switch"]')).toBe(advMode)
@@ -263,7 +256,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       const mAdvPlay = container.querySelector('[data-tour="transport-play"] button.primary')!
-      const mAdvShare = container.querySelector('.tools button[title*="Copy scenario link"]')!
+      const mAdvShare = container.querySelector('.tools button[aria-haspopup="menu"]')!
       const mAdvTutorial = container.querySelector('[data-tour="help-button"]')!
       const mAdvDemo = container.querySelector('button[aria-label="Start demo"]')!
       const mAdvMode = container.querySelector('[data-tour="mode-switch"]')!
@@ -273,7 +266,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
 
       expect(container.querySelector('[data-tour="transport-play"] button.primary')).toBe(mAdvPlay)
-      expect(container.querySelector('.tools button[title*="Copy scenario link"]')).toBe(mAdvShare)
+      expect(container.querySelector('.tools button[aria-haspopup="menu"]')).toBe(mAdvShare)
       expect(container.querySelector('[data-tour="help-button"]')).toBe(mAdvTutorial)
       expect(container.querySelector('button[aria-label="Start demo"]')).toBe(mAdvDemo)
       expect(container.querySelector('[data-tour="mode-switch"]')).toBe(mAdvMode)

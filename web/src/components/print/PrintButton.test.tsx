@@ -74,7 +74,7 @@ describe('PrintButton component', () => {
       root.render(createElement(PrintButton))
     })
 
-    const brief = container.querySelector('.print-brief-container')
+    const brief = document.body.querySelector('.print-brief-container')
     expect(brief).toBeTruthy()
   })
 
@@ -83,7 +83,7 @@ describe('PrintButton component', () => {
       root.render(createElement(PrintButton, { renderBrief: false }))
     })
 
-    const brief = container.querySelector('.print-brief-container')
+    const brief = document.body.querySelector('.print-brief-container')
     expect(brief).toBeNull()
   })
 
