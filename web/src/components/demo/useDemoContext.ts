@@ -55,11 +55,8 @@ export function useDemoContext(): DemoStepContext {
   }, [bundles, heightM]) as (SkyEvent[] | null)[]
 
   const isSynthetic = useMemo(() => {
-    return (
-      scenarios.some((s) => s.siteId.includes('mock') || s.siteId === 'artemis_region_1') ||
-      bundles.some((b) => b?.synthetic || b?.provenance === 'mock')
-    )
-  }, [scenarios, bundles])
+    return bundles.some((b) => b?.synthetic || b?.provenance === 'mock')
+  }, [bundles])
 
   return {
     scenarios,
