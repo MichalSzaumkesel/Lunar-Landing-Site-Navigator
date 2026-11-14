@@ -35,15 +35,16 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   )
   const updateScenario = useAppStore((s) => s.updateScenario)
   const cursorH = useAppStore((s) => s.cursorH)
+  const heightM = useAppStore((s) => s.observerHeightM)
 
   const { status, bundle } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
   const { startMs, endMs } = scenario ? scenarioWindowMs(scenario) : { startMs: 0, endMs: 0 }
-  const events = useScenarioEvents(bundle, 2)
-  const metrics = useScenarioMetrics(bundle, 2, startMs, endMs)
+  const events = useScenarioEvents(bundle, heightM)
+  const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
 
   const cursorMs = scenario ? scenarioCursorMs(scenario, cursorH) : 0
   const split = useMemo(() => (events ? splitEvents(events) : null), [events])
-  const mask = useMemo(() => (bundle ? pickMask(bundle, 2) : null), [bundle])
+  const mask = useMemo(() => (bundle ? pickMask(bundle, heightM) : null), [bundle, heightM])
 
   const durationH = scenario?.durationH ?? 0
   const readout = useMemo(() => {

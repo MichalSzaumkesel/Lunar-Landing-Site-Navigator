@@ -522,11 +522,13 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     return Array.from(movedMask)
   }, [isAtOrigin, bundle, observerHeightM, movedMask])
 
+  // A moved lander uses a local mask with its own ray count, so its step differs from the site mask.
+  const activeStepDeg = isAtOrigin ? bundle.horizon.az_step_deg : 360 / activeMask.length
   const sunRead = sample
     ? describeBody(
         sample.sun,
         activeMask,
-        bundle.horizon.az_step_deg,
+        activeStepDeg,
         bundle.ephem.sun_ang_radius_deg,
       )
     : null

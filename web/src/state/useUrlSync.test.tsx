@@ -5,6 +5,7 @@ import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from './store'
 import { useUrlSync } from './useUrlSync'
+import { decodeState, encodeState } from './urlState'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
@@ -98,9 +99,30 @@ describe('useUrlSync', () => {
     expect(useAppStore.getState().observerHeightM).toBe(2)
   })
 
-  // Known bug (review R12 #2): encodeState keeps only the date part of startUtc,
-  // so a start time such as 20:17:40Z is reset to 00:00:00Z on reload.
-  it.todo(
-    'keeps the intra-day start time (20:17:40Z) through the URL round trip (encodeState slices to the date)',
-  )
+  it('keeps the intra-day start time (20:17:40Z) through the URL round trip', () => {
+    const scenarios = [
+      { siteId: 'southpole_landed', startUtc: '2027-08-30T20:17:40Z', durationH: 240, slipDays: 0 },
+    ]
+    const hash = encodeState({
+      mode: 'advanced',
+      observerHeightM: 2,
+      scenarios,
+      cursorH: 0,
+      speedHPerSec: 1,
+    })
+
+    expect(decodeState(hash).scenarios).toEqual(scenarios)
+    expect(hash).toContain('2027-08-30T20:17:40Z')
+  })
+
+  it('applies an intra-day start time from the hash to the store', () => {
+    act(() => root.render(createElement(Harness)))
+
+    window.location.hash = '#s=southpole_landed~2027-08-30T20:17:40Z~240~0'
+    act(() => {
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    })
+
+    expect(useAppStore.getState().scenarios[0].startUtc).toBe('2027-08-30T20:17:40Z')
+  })
 })

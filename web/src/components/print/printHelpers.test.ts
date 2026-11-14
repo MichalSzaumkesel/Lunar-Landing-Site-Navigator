@@ -251,6 +251,14 @@ describe('printHelpers', () => {
       }
     })
 
+    it('rejects a landing when the Sun is above 0 deg but below the terrain horizon', () => {
+      const ridge = new Array(360).fill(3)
+      const result = evaluateMissionRules(rules, passingMetrics, passingSample, ridge, 1, 240)
+      const sunRule = result.rules.find((r) => r.key === 'minSunElAtLanding')
+      expect(sunRule?.met).toBe(false)
+      expect(result.allMet).toBe(false)
+    })
+
     it('evaluates as not met when sunlit percentage is below threshold', () => {
       const lowSunMetrics = { ...passingMetrics, pct_sunlit: 65.0 }
       const result = evaluateMissionRules(

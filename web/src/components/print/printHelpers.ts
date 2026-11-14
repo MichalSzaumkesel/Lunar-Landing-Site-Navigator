@@ -252,15 +252,18 @@ export function evaluateMissionRules(
     })
   }
 
-  // 6. Minimum Sun elevation at landing
+  // 6. Minimum Sun clearance above the terrain horizon at landing (contract section 3)
   if (rules.minSunElAtLandingDeg !== undefined) {
-    const sunElMet = sampleAtStart ? sampleAtStart.sun.el >= rules.minSunElAtLandingDeg : false
+    const canMeasure = sampleAtStart && horizonMask && horizonMask.length > 0 && azStepDeg
+    const clearance = canMeasure
+      ? sampleAtStart.sun.el - horizonAt(horizonMask, azStepDeg, sampleAtStart.sun.az)
+      : null
     evaluations.push({
       key: 'minSunElAtLanding',
-      label: 'Sun el at landing',
+      label: 'Sun clearance at landing',
       target: `≥ ${rules.minSunElAtLandingDeg} deg`,
-      actual: sampleAtStart ? formatUnitValue(sampleAtStart.sun.el, 'deg', 1, true) : OUTSIDE_RANGE,
-      met: sunElMet,
+      actual: clearance === null ? OUTSIDE_RANGE : formatUnitValue(clearance, 'deg', 1, true),
+      met: clearance !== null && clearance >= rules.minSunElAtLandingDeg,
     })
   }
 

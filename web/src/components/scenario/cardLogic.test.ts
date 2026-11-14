@@ -81,9 +81,11 @@ describe('countdowns', () => {
 
   it('finds the next event after a time by binary search', () => {
     expect(nextEventAfter(list, 5 * H)?.ms).toBe(10 * H)
-    expect(nextEventAfter(list, 10 * H)?.ms).toBe(20 * H)
+    expect(nextEventAfter(list, 10 * H)?.ms).toBe(10 * H)
+    expect(nextEventAfter(list, 10.1 * H)?.ms).toBe(20 * H)
     expect(nextEventAfter(list, 29.9 * H)?.ms).toBe(30 * H)
-    expect(nextEventAfter(list, 30 * H)).toBeUndefined()
+    expect(nextEventAfter(list, 30 * H)?.ms).toBe(30 * H)
+    expect(nextEventAfter(list, 30.1 * H)).toBeUndefined()
     expect(nextEventAfter([], 0)).toBeUndefined()
   })
 
@@ -96,6 +98,7 @@ describe('countdowns', () => {
   it('words the next event', () => {
     expect(bodyCountdown('sun', list, 0, true, true).text).toBe('Sun sets in 10 h')
     expect(bodyCountdown('sun', list, 12 * H, true, false).text).toBe('Sun rises in 8.0 h')
+    expect(bodyCountdown('sun', list, 30 * H, true, true).text).toMatch(/^Sun sets in /)
     expect(bodyCountdown('earth', [ev('earthrise', 100 * H)], 0, true, false).text).toBe('Earth rises in 4 d 4 h')
   })
 

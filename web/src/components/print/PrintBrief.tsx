@@ -77,6 +77,11 @@ function useScenarioRenderData(
   const computedMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, endMs)
   const metrics = metricsOverride !== undefined ? metricsOverride : computedMetrics
 
+  // Rules apply to the mission interval from landing, not to the whole scenario window (contract section 3).
+  const missionEndMs = startMs + missionRules.missionDurationH * 3_600_000
+  const missionMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, missionEndMs)
+  const ruleMetrics = metricsOverride !== undefined ? metricsOverride : missionMetrics
+
   const mastResult = useMemo(() => {
     if (!bundle || !scenario) return null
     return mastDelta(bundle, startMs, endMs)
@@ -109,13 +114,13 @@ function useScenarioRenderData(
     const azStep = bundle?.horizon?.az_step_deg
     return evaluateMissionRules(
       missionRules,
-      metrics,
+      ruleMetrics,
       sampleAtStart,
       mask,
       azStep,
       scenario.durationH,
     )
-  }, [missionRules, metrics, sampleAtStart, bundle, observerHeightM, scenario])
+  }, [missionRules, ruleMetrics, sampleAtStart, bundle, observerHeightM, scenario])
 
   const provenance = useMemo(() => (scenario ? formatProvenance(bundle) : ''), [bundle, scenario])
   const dateRangeText = useMemo(
