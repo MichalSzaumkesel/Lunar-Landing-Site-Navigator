@@ -207,3 +207,49 @@ describe('store tick and scenario duration clamping (Item 1 & 2)', async () => {
     expect(utc2).not.toContain('.')
   })
 })
+
+describe('mission rules in the share link', () => {
+  const base: UrlState = {
+    mode: 'advanced',
+    observerHeightM: 2,
+    scenarios: [],
+    cursorH: 0,
+    speedHPerSec: 1,
+  }
+  const rules = {
+    missionDurationH: 240,
+    minPctSunlit: 70,
+    maxLongestDarkH: 48,
+    earthAtLandingRequired: true,
+    minPctEarth: 50,
+  }
+
+  it('round-trips rules without a sun elevation', () => {
+    const out = decodeState(encodeState({ ...base, missionRules: rules }))
+    expect(out.missionRules).toEqual(rules)
+  })
+
+  it('round-trips rules with a sun elevation and Earth not required', () => {
+    const r = { ...rules, earthAtLandingRequired: false, minSunElAtLandingDeg: 5.5 }
+    expect(decodeState(encodeState({ ...base, missionRules: r })).missionRules).toEqual(r)
+  })
+
+  it('omits rules when absent', () => {
+    expect(encodeState(base)).not.toContain('r=')
+    expect(decodeState(encodeState(base)).missionRules).toBeUndefined()
+  })
+
+  it('drops an invalid rule group but keeps the rest', () => {
+    const out = decodeState('m=s&r=240~150~48~1~50')
+    expect(out.missionRules).toBeUndefined()
+    expect(out.mode).toBe('simple')
+    expect(decodeState('r=240~70~48~2~50').missionRules).toBeUndefined()
+    expect(decodeState('r=240~70~48~1').missionRules).toBeUndefined()
+    expect(decodeState('r=abc').missionRules).toBeUndefined()
+  })
+
+  it('round-trips a custom site scenario', () => {
+    const sc = { siteId: 'custom_-89p500_12p000', startUtc: '2027-01-01T00:00:00Z', durationH: 240, slipDays: 0 }
+    expect(decodeState(encodeState({ ...base, scenarios: [sc] })).scenarios).toEqual([sc])
+  })
+})

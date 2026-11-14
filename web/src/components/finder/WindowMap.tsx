@@ -5,6 +5,7 @@ import { windowsFromRow } from '../../lib/windowMap'
 import type { WindowMapRow } from '../../lib/windowMap'
 import * as windowMapClient from '../../lib/windowMapClient'
 import { dataSource } from '../../lib/loader'
+import { parseCustomSiteId } from '../../lib/customSite'
 import { useAppStore } from '../../state/store'
 import { MissionRulesForm } from './MissionRulesForm'
 import {
@@ -17,6 +18,8 @@ import {
   getBestSiteSentence,
   getCellColor,
   getMonthTicks,
+  customSiteIdsFromScenarios,
+  siteRowLabel,
   isHatch,
   moveHighlight,
   slipBufferH,
@@ -35,6 +38,8 @@ export function WindowMap({ className = '' }: WindowMapProps) {
   // Store values
   const missionRules = useAppStore((s) => s.missionRules)
   const observerHeightM = useAppStore((s) => s.observerHeightM)
+  // Joined string keeps the selector stable while Play moves the cursor.
+  const customIdsKey = useAppStore((s) => customSiteIdsFromScenarios(s.scenarios).join(','))
   const addScenario = useAppStore((s) => s.addScenario)
   const updateScenario = useAppStore((s) => s.updateScenario)
 
@@ -88,8 +93,17 @@ export function WindowMap({ className = '' }: WindowMapProps) {
         const sitesFile = await dataSource.loadSites()
         if (!active) return
 
-        // Custom sites are not included in the comparison grid
-        const curatedSites = sitesFile.sites.filter((s) => s.category !== 'custom')
+        // Custom sites used by scenarios join the grid as approximate rows.
+        const customSites = customIdsKey
+          ? customIdsKey.split(',').flatMap((id) => {
+              const c = parseCustomSiteId(id)
+              return c ? [{ id, name: id }] : []
+            })
+          : []
+        const curatedSites = [
+          ...sitesFile.sites.filter((s) => s.category !== 'custom'),
+          ...customSites,
+        ]
         if (curatedSites.length === 0) {
           setLoading(false)
           return
@@ -133,7 +147,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
     return () => {
       active = false
     }
-  }, [retryKey])
+  }, [retryKey, customIdsKey])
 
   function handleRetry() {
     setLoading(true)
@@ -449,7 +463,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
     const longestDarkH = row.longestDarkH[hoveredCell.colIndex]
 
     return {
-      siteName: bundle.site.name,
+      siteName: siteRowLabel(bundle),
       dateStr,
       valid,
       pctSunlit: pctSunlit.toFixed(1),
@@ -569,9 +583,9 @@ export function WindowMap({ className = '' }: WindowMapProps) {
                 key={b.site.id}
                 className="finder__row-label"
                 style={{ height: ROW_HEIGHT }}
-                title={`${b.site.name} (${b.site.category})`}
+                title={`${siteRowLabel(b)} (${b.site.category})`}
               >
-                {b.site.name}
+                {siteRowLabel(b)}
               </div>
             ))}
           </div>
@@ -652,7 +666,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
 
             return (
               <div key={bundle.site.id} className="finder__site-card">
-                <h4 className="finder__site-name">{bundle.site.name}</h4>
+                <h4 className="finder__site-name">{siteRowLabel(bundle)}</h4>
                 {siteWindows === null ? (
                   <p className="finder__no-windows">Computing landing windows.</p>
                 ) : displayedWindows.length === 0 ? (

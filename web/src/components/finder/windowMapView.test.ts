@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { LandingWindow, MissionRules } from '../../lib/types'
 import {
   cellFromPointer,
+  customSiteIdsFromScenarios,
+  siteRowLabel,
   findBestSite,
   formatCellAnnouncement,
   formatDateIso,
@@ -344,5 +346,23 @@ describe('windowMapView pure helpers', () => {
         })
       ).toBe(0)
     })
+  })
+})
+
+describe('custom site rows', () => {
+  it('lists unique custom ids in order and ignores curated ids', () => {
+    expect(
+      customSiteIdsFromScenarios([
+        { siteId: 'shackleton' },
+        { siteId: 'custom_-89p500_12p000' },
+        { siteId: 'custom_-89p500_12p000' },
+        { siteId: 'custom_1p000_2p000' },
+      ]),
+    ).toEqual(['custom_-89p500_12p000', 'custom_1p000_2p000'])
+  })
+
+  it('labels approximate bundles', () => {
+    expect(siteRowLabel({ site: { name: 'Custom site' }, approximate: true })).toBe('Custom site, approximate')
+    expect(siteRowLabel({ site: { name: 'Site A' }, approximate: false })).toBe('Site A')
   })
 })

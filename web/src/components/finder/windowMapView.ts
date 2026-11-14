@@ -1,3 +1,4 @@
+import { parseCustomSiteId } from '../../lib/customSite'
 import type { LandingWindow, MissionRules } from '../../lib/types'
 import type { WindowMapRow } from '../../lib/windowMap'
 
@@ -311,4 +312,18 @@ export function formatCellAnnouncement(
   const darkText = Math.round(longestDarkH)
 
   return `${siteName}, ${dateStr}: ${validText}. Sun visible ${sunText}%, Earth in view ${earthText}%, longest dark ${darkText} hours.`
+}
+
+/** Unique custom site ids used by scenarios, in first-use order. */
+export function customSiteIdsFromScenarios(scenarios: ReadonlyArray<{ siteId: string }>): string[] {
+  const ids: string[] = []
+  for (const { siteId } of scenarios) {
+    if (parseCustomSiteId(siteId) && !ids.includes(siteId)) ids.push(siteId)
+  }
+  return ids
+}
+
+/** Row label; approximate bundles (custom coordinates) say so. */
+export function siteRowLabel(bundle: { site: { name: string }; approximate: boolean }): string {
+  return bundle.approximate ? `${bundle.site.name}, approximate` : bundle.site.name
 }
