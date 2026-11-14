@@ -58,35 +58,39 @@ describe('date helpers', () => {
 })
 
 describe('simpleStatus', () => {
-  it('shows Sunlit with countdown, two chips and three window rows', () => {
+  it('shows two matching blocks with countdowns and three window rows', () => {
     const s = simpleStatus(baseInput)
-    expect(s.headline).toBe('Sunlit')
-    expect(s.detail).toBe('The Sun is above the horizon. It sets in 31 hours.')
-    expect(s.chips.map((c) => c.text)).toEqual(['Sun visible', 'Earth in view · sets in 31 hours'])
+    expect(s.blocks).toEqual([
+      { id: 'sun', on: true, headline: 'Sun visible', detail: 'It sets in 31 hours.' },
+      { id: 'earth', on: true, headline: 'Earth in view', detail: 'It sets in 31 hours.' },
+    ])
     expect(s.rows.map((r) => r.value)).toEqual(['49% of 30 days', '15 days', '36% of 30 days'])
     expect(s.note).toBeNull()
   })
 
-  it('shows Dark with sunrise and Earth below the horizon', () => {
+  it('shows sunrise and Earth rise when both are below the horizon', () => {
     const s = simpleStatus({
       ...baseInput,
       sunVisible: false,
       earthVisible: false,
-      nextSunEvent: makeEvent('sunrise', 1_000_000 + 2 * HOUR_MS),
-      nextEarthEvent: makeEvent('earthrise', 1_000_000 + 49 * HOUR_MS),
+      nextSunEvent: makeEvent('sunrise', 1_000_000 + 53 * HOUR_MS),
+      nextEarthEvent: makeEvent('earthrise', 1_000_000 + 52 * HOUR_MS),
     })
-    expect(s.headline).toBe('Dark')
-    expect(s.detail).toContain('It rises in 2 hours.')
-    expect(s.chips[0]).toEqual({ id: 'sun', on: false, text: 'Sun below horizon' })
-    expect(s.chips[1].text).toBe('Earth below horizon · rises in 49 hours, about 2 days')
+    expect(s.blocks[0]).toMatchObject({ on: false, headline: 'Sun below the horizon', detail: 'It rises in 53 hours, about 2 days.' })
+    expect(s.blocks[1]).toMatchObject({ on: false, headline: 'Earth below the horizon', detail: 'It rises in 52 hours, about 2 days.' })
   })
 
-  it('handles bodies that never change in the data', () => {
+  it('says plainly when nothing changes in the data window', () => {
     const lit = simpleStatus({ ...baseInput, nextSunEvent: null, nextEarthEvent: null })
-    expect(lit.detail).toContain('It does not set in the data.')
-    expect(lit.chips[1].text).toBe('Earth in view')
-    const dark = simpleStatus({ ...baseInput, sunVisible: false, nextSunEvent: null })
-    expect(dark.detail).toContain('It does not rise in the data.')
+    expect(lit.blocks.map((b) => b.detail)).toEqual([
+      'No sunset in the data window.',
+      'No Earthset in the data window.',
+    ])
+    const dark = simpleStatus({ ...baseInput, sunVisible: false, earthVisible: false, nextSunEvent: null, nextEarthEvent: null })
+    expect(dark.blocks.map((b) => b.detail)).toEqual([
+      'No sunrise in the data window.',
+      'No Earthrise in the data window.',
+    ])
   })
 
   it('uses plain window and dark spans for short windows', () => {
@@ -110,7 +114,7 @@ describe('simpleStatus', () => {
   it('never claims power, energy, signal, link or radio contact', () => {
     const texts = [true, false].flatMap((v) => {
       const s = simpleStatus({ ...baseInput, sunVisible: v, earthVisible: v })
-      return [s.headline, s.detail, ...s.chips.map((c) => c.text), ...s.rows.map((r) => `${r.label} ${r.value}`)]
+      return [...s.blocks.flatMap((b) => [b.headline, b.detail]), ...s.rows.map((r) => `${r.label} ${r.value}`)]
     })
     expect(texts.join(' ')).not.toMatch(/power|energy|signal|link|radio|CLPS|UTC/i)
   })

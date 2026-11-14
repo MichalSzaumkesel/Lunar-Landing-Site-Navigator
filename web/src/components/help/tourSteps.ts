@@ -77,7 +77,7 @@ export const advancedSteps: TourStep[] = [
     id: 'tools',
     target: '[data-tour="tools"]',
     title: 'Tools',
-    text: 'Copy link shares exactly this view. Export CSV saves the numbers. Sound plays short tones at sunrise and sunset; it is off by default.',
+    text: 'Share and export holds Copy link (this exact view), Export CSV (the numbers) and Export dossier. Sound plays short tones at sunrise and sunset; it is off by default.',
     placement: 'left',
   },
   {

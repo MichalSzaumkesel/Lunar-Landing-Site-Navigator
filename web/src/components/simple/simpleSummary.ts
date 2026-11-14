@@ -13,11 +13,13 @@ export interface SimpleStatusInput {
   synthetic?: boolean
 }
 
-export interface SimpleChip {
+export interface SimpleBlock {
   id: 'sun' | 'earth'
   /** True when the body is above the local horizon. */
   on: boolean
-  text: string
+  headline: string
+  /** The next change, in the same format for both bodies. */
+  detail: string
 }
 
 export interface SimpleRow {
@@ -27,9 +29,7 @@ export interface SimpleRow {
 }
 
 export interface SimpleStatus {
-  headline: 'Sunlit' | 'Dark'
-  detail: string
-  chips: SimpleChip[]
+  blocks: [SimpleBlock, SimpleBlock]
   rows: SimpleRow[]
   note: string | null
 }
@@ -107,41 +107,33 @@ function nextChange(
   visible: boolean,
   next: SkyEvent | null | undefined,
   cursorMs: number,
-): string | null {
-  if (!next) return null
+  none: string,
+): string {
+  if (!next) return `${none} in the data window.`
   const diffH = Math.max(0, (next.ms - cursorMs) / HOUR_MS)
-  return `${visible ? 'sets' : 'rises'} in ${formatCountdown(diffH)}`
+  return `It ${visible ? 'sets' : 'rises'} in ${formatCountdown(diffH)}.`
 }
 
 /**
- * Builds the Simple mode readout: one headline (Sunlit or Dark), two chips and three window rows.
+ * Builds the Simple mode readout: a Sun block and an Earth block of the same shape, and three window rows.
  * Wording only says what is visible in the sky, never power or a communication link.
  */
 export function simpleStatus(input: SimpleStatusInput): SimpleStatus {
-  const sunChange = nextChange(input.sunVisible, input.nextSunEvent, input.cursorMs)
-  const earthChange = nextChange(input.earthVisible, input.nextEarthEvent, input.cursorMs)
-
-  const state = input.sunVisible
-    ? 'The Sun is above the horizon.'
-    : "The Sun is below the horizon: the terrain or the Moon's curve hides it."
-  const sunTail = sunChange
-    ? `It ${sunChange}.`
-    : input.sunVisible
-      ? 'It does not set in the data.'
-      : 'It does not rise in the data.'
-
-  const earthText = input.earthVisible ? 'Earth in view' : 'Earth below horizon'
   const span = windowPhrase(input.durationH)
 
   return {
-    headline: input.sunVisible ? 'Sunlit' : 'Dark',
-    detail: `${state} ${sunTail}`,
-    chips: [
-      { id: 'sun', on: input.sunVisible, text: input.sunVisible ? 'Sun visible' : 'Sun below horizon' },
+    blocks: [
+      {
+        id: 'sun',
+        on: input.sunVisible,
+        headline: input.sunVisible ? 'Sun visible' : 'Sun below the horizon',
+        detail: nextChange(input.sunVisible, input.nextSunEvent, input.cursorMs, input.sunVisible ? 'No sunset' : 'No sunrise'),
+      },
       {
         id: 'earth',
         on: input.earthVisible,
-        text: earthChange ? `${earthText} · ${earthChange}` : earthText,
+        headline: input.earthVisible ? 'Earth in view' : 'Earth below the horizon',
+        detail: nextChange(input.earthVisible, input.nextEarthEvent, input.cursorMs, input.earthVisible ? 'No Earthset' : 'No Earthrise'),
       },
     ],
     rows: [

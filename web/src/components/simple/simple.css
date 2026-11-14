@@ -7,79 +7,89 @@
 }
 
 .simple-places {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.1fr);
-  align-items: stretch;
-  gap: var(--space-3, 12px);
   width: 100%;
 }
 
-.simple-place-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
+.simple-place-loading {
+  display: block;
   padding: var(--space-3, 12px) var(--space-4, 16px);
-  min-height: 3.5rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* About five rows tall, then it scrolls natively. */
+.simple-place-list {
+  --place-heading-h: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 17rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius, 10px);
+}
+
+.simple-place-group,
+.simple-place-group__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.simple-place-group__heading {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--place-heading-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-4, 16px);
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.simple-place-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  padding: var(--space-2, 8px) var(--space-4, 16px);
+  min-height: 2.75rem;
+  scroll-margin-top: var(--place-heading-h);
+  border-left: 3px solid transparent;
   cursor: pointer;
-  text-align: left;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition: background-color var(--motion-duration-fast, 120ms) ease;
 }
 
-.simple-place-btn:hover:not(:disabled) {
-  border-color: var(--control-border);
+.simple-place-row:hover {
   background: var(--panel-2);
 }
 
-.simple-place-btn--pressed,
-.simple-place-btn[aria-pressed='true'] {
-  border-color: var(--earth);
+.simple-place-row--selected {
   background: var(--panel-2);
-  box-shadow: inset 0 0 0 1px var(--earth);
+  border-left-color: var(--earth);
 }
 
-.simple-place-btn__title {
+.simple-place-row:focus-visible {
+  outline: 2px solid var(--earth);
+  outline-offset: -2px;
+}
+
+.simple-place-row__title {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text);
   line-height: 1.25;
 }
 
-.simple-place-btn__caption {
+.simple-place-row__desc {
   font-size: 0.875rem;
   color: var(--muted);
-  margin-top: var(--space-1, 4px);
-  line-height: 1.2;
-}
-
-.simple-place-select {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-1, 4px);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.simple-place-select select {
-  min-height: 2.5rem;
-  background: var(--panel-2);
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 0.875rem;
-  padding: 0 var(--space-2, 8px);
-  width: 100%;
-}
-
-.simple-place-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  line-height: 1.3;
 }
 
 .simple-grid {
@@ -90,9 +100,6 @@
 }
 
 @media (max-width: 900px) {
-  .simple-places {
-    grid-template-columns: 1fr;
-  }
   .simple-grid {
     grid-template-columns: 1fr;
   }
@@ -205,63 +212,66 @@
   padding-top: var(--space-4, 16px);
 }
 
-.simple-headline {
-  margin: 0;
+.simple-status {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-3, 12px);
-  font-size: 2rem;
-  font-weight: 600;
-  line-height: 1.1;
-  color: var(--text);
 }
 
-/* Shape, not only colour: a filled disc for sunlit, a ring for dark. */
-.simple-headline::before {
-  content: '';
+.simple-block {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 10px);
+  animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.simple-block__dot {
+  flex: none;
   width: 1.25rem;
   height: 1.25rem;
+  margin-top: 0.25rem;
   border-radius: 50%;
   box-sizing: border-box;
+  background: var(--body-color);
 }
 
-.simple-headline--sun::before {
-  background: var(--sun);
+.simple-block--sun {
+  --body-color: var(--sun);
 }
 
-.simple-headline--dark::before {
-  border: 3px solid var(--muted);
+.simple-block--earth {
+  --body-color: var(--earth);
 }
 
-.simple-chips {
+/* Shape as well as colour: a filled dot when in view, a ring when below the horizon. */
+.simple-block--off .simple-block__dot {
+  background: transparent;
+  border: 3px solid var(--body-color);
+}
+
+.simple-block__text {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 8px);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
 }
 
-.simple-chip {
-  padding: var(--space-1, 4px) var(--space-3, 12px);
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--panel-2);
-  font-size: 0.875rem;
+.simple-block__headline {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--text);
 }
 
-.simple-chip--on.simple-chip--sun {
-  border-color: var(--sun);
-}
-
-.simple-chip--on.simple-chip--earth {
-  border-color: var(--earth);
-}
-
-.simple-chip--off {
+.simple-block__detail {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
   color: var(--muted);
-  border-style: dashed;
 }
 
 .simple-rows {

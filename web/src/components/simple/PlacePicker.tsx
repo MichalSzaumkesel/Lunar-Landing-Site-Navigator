@@ -1,11 +1,8 @@
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { dataSource } from '../../lib/loader'
 import type { Site } from '../../lib/types'
 import { useAppStore } from '../../state/store'
-import { displayName, groupPlaces, placeHint, quickPlaces } from './placeLabels'
-
-// Contrasting examples first: equator, south pole, far side. Missing ids are skipped.
-const QUICK_IDS = ['apollo_11', 'southpole_landed', 'change_4', 'artemis_region_1'] as const
+import { displayName, groupPlaces, placeDescription } from './placeLabels'
 
 export interface PlacePickerProps {
   activeSiteId: string
@@ -15,6 +12,7 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
   const [sites, setSites] = useState<Site[] | null>(null)
   const [hasError, setHasError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const listRef = useRef<HTMLUListElement>(null)
   const updateScenario = useAppStore((s) => s.updateScenario)
   const activeScenarioId = useAppStore((s) => s.activeScenarioId)
 
@@ -43,9 +41,30 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
     }
   }, [retryCount])
 
+  // Keeps the selected row in view inside the list; no motion for people who ask for less.
+  useEffect(() => {
+    if (!sites) return
+    const row = listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    row?.scrollIntoView?.({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' })
+  }, [sites, activeSiteId])
+
   // Keeps the chosen start date and time position: only the site changes.
   const selectSite = (siteId: string) => {
     updateScenario(activeScenarioId, { siteId })
+  }
+
+  const onKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
+    const options = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="option"]'))
+    const at = options.indexOf(document.activeElement as HTMLElement)
+    let next = -1
+    if (e.key === 'ArrowDown') next = Math.min(options.length - 1, at + 1)
+    else if (e.key === 'ArrowUp') next = Math.max(0, at - 1)
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = options.length - 1
+    if (next < 0) return
+    e.preventDefault()
+    options[next]?.focus()
   }
 
   if (hasError) {
@@ -62,48 +81,56 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
   if (!sites) {
     return (
       <div className="simple-places" role="group" aria-label="Choose a place" data-tour="simple-places" aria-busy="true">
-        <span className="simple-place-btn simple-place-btn--loading">Loading places…</span>
+        <span className="simple-place-loading">Loading places…</span>
       </div>
     )
   }
 
-  const quick = quickPlaces(sites, QUICK_IDS)
   const groups = groupPlaces(sites)
+  // Roving tabindex: one tab stop, on the selected row (or the first when none matches).
+  const tabStopId = sites.some((s) => s.id === activeSiteId) ? activeSiteId : sites[0]?.id
 
   return (
-    <div className="simple-places" role="group" aria-label="Choose a place" data-tour="simple-places">
-      {quick.map((site) => {
-        const isSelected = activeSiteId === site.id
-        return (
-          <button
-            key={site.id}
-            type="button"
-            className={`simple-place-btn ${isSelected ? 'simple-place-btn--pressed' : ''}`}
-            aria-pressed={isSelected}
-            onClick={() => selectSite(site.id)}
-          >
-            <span className="simple-place-btn__title">{displayName(site)}</span>
-            <span className="simple-place-btn__caption">{placeHint(site)}</span>
-          </button>
-        )
-      })}
-      <label className="simple-place-select">
-        <span className="simple-place-select__label">All places ({sites.length})</span>
-        <select
-          value={activeSiteId}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) => selectSite(e.target.value)}
-        >
-          {groups.map((g) => (
-            <optgroup key={g.id} label={g.label}>
-              {g.sites.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {displayName(s)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
+    <div className="simple-places" data-tour="simple-places">
+      <ul
+        ref={listRef}
+        className="simple-place-list"
+        role="listbox"
+        aria-label="Choose a place"
+        onKeyDown={onKeyDown}
+      >
+        {groups.map((g) => (
+          <li key={g.id} role="presentation" className="simple-place-group">
+            <ul role="group" aria-labelledby={`place-group-${g.id}`} className="simple-place-group__list">
+              <li role="presentation" id={`place-group-${g.id}`} className="simple-place-group__heading">
+                {g.label}
+              </li>
+              {g.sites.map((site) => {
+                const isSelected = activeSiteId === site.id
+                return (
+                  <li
+                    key={site.id}
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={site.id === tabStopId ? 0 : -1}
+                    className={`simple-place-row ${isSelected ? 'simple-place-row--selected' : ''}`}
+                    onClick={() => selectSite(site.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        selectSite(site.id)
+                      }
+                    }}
+                  >
+                    <span className="simple-place-row__title">{displayName(site)}</span>
+                    <span className="simple-place-row__desc">{placeDescription(site)}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
