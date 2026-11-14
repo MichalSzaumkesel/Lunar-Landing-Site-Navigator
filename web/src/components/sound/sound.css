@@ -63,38 +63,73 @@
   box-shadow: inset 0 0 0 1px var(--control-border);
 }
 
+.sound-control {
+  position: relative;
+}
+
+/* Floats under the row so showing it moves no other control */
 .sound-control__volume {
-  display: inline-flex;
-  align-items: center;
-}
-
-.sound-volume-slider {
-  width: 4.5rem;
-  height: 1.5rem;
-  cursor: pointer;
-  accent-color: var(--sun);
-}
-
-.sound-volume-slider:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.sound-control__hint {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.25;
-  white-space: nowrap;
-}
-
-.sound-sr-only {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
+  top: calc(100% + var(--space-1, 4px));
+  right: 0;
+  z-index: 5;
+  opacity: 0;
+  transform: translateX(var(--space-4, 16px));
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.sound-control__volume--in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.volume-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  width: 10rem;
+  min-height: 2.25rem;
+  padding: 0 var(--space-2, 8px);
+  box-sizing: border-box;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius, 8px);
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.volume-slider:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.volume-slider__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--line, #2a3550);
+  box-shadow: inset -1px 0 0 var(--control-border);
+  pointer-events: none;
+}
+
+.volume-slider__icon,
+.volume-slider__text {
+  position: relative;
+  pointer-events: none;
+}
+
+.volume-slider__text {
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-control__volume {
+    transition: none;
+  }
 }
