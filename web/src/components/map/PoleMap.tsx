@@ -12,6 +12,7 @@ import {
 import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay } from './coords'
+import { HEAT_GRADIENT, heatColor } from './heatScale'
 import { renderMarkerGlyph } from './markerGlyphs'
 import {
   gridImageMatrix,
@@ -31,6 +32,8 @@ export interface PoleMapProps {
   basemap: BasemapInfo | null
   onSelectSite(id: string, shiftKey?: boolean): void
   onPickPoint(lat: number, lon: number): void
+  onShowTip?(site: Site, markerEl: Element): void
+  onHideTip?(): void
 }
 
 interface View {
@@ -47,31 +50,6 @@ const DEFAULT_HALF = 90000
 const HEAT_HALF = 3200
 const LAT_CIRCLES = [-80, -85, -89]
 const MERIDIANS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
-
-const STOPS: Array<[number, [number, number, number]]> = [
-  [0, [13, 8, 41]],
-  [0.25, [91, 26, 109]],
-  [0.5, [182, 57, 79]],
-  [0.75, [241, 128, 31]],
-  [1, [252, 220, 74]],
-]
-
-export function heatColor(t: number): [number, number, number] {
-  const x = Math.max(0, Math.min(1, t))
-  for (let i = 1; i < STOPS.length; i++) {
-    if (x <= STOPS[i][0]) {
-      const [t0, c0] = STOPS[i - 1]
-      const [t1, c1] = STOPS[i]
-      const f = (x - t0) / (t1 - t0)
-      return [0, 1, 2].map((k) => Math.round(c0[k] + (c1[k] - c0[k]) * f)) as [number, number, number]
-    }
-  }
-  return STOPS[STOPS.length - 1][1]
-}
-
-export const HEAT_GRADIENT = `linear-gradient(to right, ${STOPS.map(
-  ([t, c]) => `rgb(${c.join(',')}) ${t * 100}%`,
-).join(', ')})`
 
 function heatScaleMax(g: IllumGrid): number {
   let m = 0
@@ -127,6 +105,8 @@ export const PoleMap: FC<PoleMapProps> = ({
   basemap,
   onSelectSite,
   onPickPoint,
+  onShowTip,
+  onHideTip,
 }) => {
   const poleSites = useMemo(() => sites.filter((s) => s.lat_deg <= -80), [sites])
   const activeSite = useMemo(() => poleSites.find((s) => s.id === activeSiteId), [poleSites, activeSiteId])
@@ -209,6 +189,11 @@ export const PoleMap: FC<PoleMapProps> = ({
     }
   }, [])
 
+  const onHideTipRef = useRef(onHideTip)
+  useEffect(() => {
+    onHideTipRef.current = onHideTip
+  }, [onHideTip])
+
   const zoomAt = useCallback((factor: number, px?: { x: number; y: number }) => {
     setView((v) => {
       const half = clamp(v.half * factor, MIN_HALF, MAX_HALF)
@@ -224,6 +209,7 @@ export const PoleMap: FC<PoleMapProps> = ({
     if (!svg) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      onHideTipRef.current?.()
       const p = toProjected(e.clientX, e.clientY)
       zoomAt(e.deltaY > 0 ? 1.25 : 0.8, p ?? undefined)
     }
@@ -243,6 +229,7 @@ export const PoleMap: FC<PoleMapProps> = ({
       const dy = e.clientY - d.y
       if (!d.moved && Math.hypot(dx, dy) > 4) {
         d.moved = true
+        onHideTip?.()
         svg.setPointerCapture?.(d.id)
       }
       if (d.moved) {
@@ -423,8 +410,11 @@ export const PoleMap: FC<PoleMapProps> = ({
                   onSelectSite(site.id, e.shiftKey)
                 }}
                 onKeyDown={(e) => onMarkerKey(e, site.id)}
+                onMouseEnter={(e) => onShowTip?.(site, e.currentTarget)}
+                onMouseLeave={() => onHideTip?.()}
+                onFocus={(e) => onShowTip?.(site, e.currentTarget)}
+                onBlur={() => onHideTip?.()}
               >
-                <title>{site.name}</title>
                 <circle cx={0} cy={0} r={14} fill="transparent" className="map-marker__target" />
                 {isSel && (
                   <circle

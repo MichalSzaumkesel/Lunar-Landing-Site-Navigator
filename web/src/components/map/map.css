@@ -177,7 +177,19 @@
 }
 
 .map-marker__core {
+  /* Scale around the glyph's own centre, not the SVG origin (markers drifted away from the cursor and flickered) */
+  transform-box: fill-box;
+  transform-origin: center;
   transition: transform 0.15s ease, fill 0.15s ease;
+}
+
+/* The hit circle keeps the hover area fixed while the glyph grows */
+.map-marker__target {
+  pointer-events: all;
+}
+
+.map-marker:focus-visible .map-marker__core {
+  transform: scale(1.3);
 }
 
 .map-marker:hover .map-marker__core {
@@ -402,6 +414,11 @@
   text-align: right;
 }
 
+.map-credit--top {
+  top: 4px;
+  bottom: auto;
+}
+
 .map-credit a {
   color: inherit;
 }
@@ -543,10 +560,38 @@
 .pole-map__readout {
   position: absolute;
   left: 8px;
-  bottom: 30px;
+  bottom: 4px;
   z-index: 4;
   font-size: 0.6875rem;
   color: #e6ebf7;
   text-shadow: 0 0 3px #000;
   pointer-events: none;
+}
+
+/* Marker tooltip (hover + keyboard focus); never intercepts the pointer */
+.map-tooltip {
+  position: absolute;
+  z-index: 5;
+  max-width: 260px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel, var(--bg));
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.map-tooltip__name {
+  font-weight: 600;
+}
+
+.map-tooltip__row {
+  color: var(--muted);
+}
+
+.map-tooltip__coords {
+  font-variant-numeric: tabular-nums;
 }

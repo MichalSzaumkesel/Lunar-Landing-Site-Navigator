@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { nightAlpha, noEarthAlpha, renderShading, sampleGrid } from './shadingRaster'
+import { NIGHT_MAX_ALPHA, NO_EARTH_MAX_ALPHA, nightAlpha, noEarthAlpha, renderShading, sampleGrid } from './shadingRaster'
 
 describe('shadingRaster', () => {
   it('night alpha is monotone, half-strength at the terminator', () => {
     expect(nightAlpha(10)).toBe(0)
-    expect(nightAlpha(-10)).toBeCloseTo(0.72)
-    expect(nightAlpha(0)).toBeCloseTo(0.36)
+    expect(nightAlpha(-10)).toBeCloseTo(NIGHT_MAX_ALPHA)
+    expect(nightAlpha(0)).toBeCloseTo(NIGHT_MAX_ALPHA / 2)
     expect(nightAlpha(1)).toBeLessThan(nightAlpha(-1))
   })
   it('no-Earth tint only when Earth is below the horizon', () => {
     expect(noEarthAlpha(20)).toBe(0)
-    expect(noEarthAlpha(-20)).toBeCloseTo(0.22)
+    expect(noEarthAlpha(-20)).toBeCloseTo(NO_EARTH_MAX_ALPHA)
   })
   it('wraps longitude when sampling', () => {
     const g = new Float32Array([1, 2, 3, 4]) // 1 row x 4 cols

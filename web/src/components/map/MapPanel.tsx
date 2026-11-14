@@ -18,6 +18,7 @@ import { formatCoordDisplay, validateCoordInputs } from './coords'
 import './map.css'
 import { shouldRecomputeShading } from './mapThrottling'
 import { MoonMap, type MoonMapShading } from './MoonMap'
+import { NIGHT_MAX_ALPHA, NO_EARTH_MAX_ALPHA } from './shadingRaster'
 import { LegendShape } from './SiteMarkerShape'
 
 export interface MapPanelProps {
@@ -383,13 +384,16 @@ export const MapPanel: FC<MapPanelProps> = ({ className }) => {
         <span className="map-legend__item">
           <span
             className="map-legend__swatch map-legend__swatch--rect"
-            style={{ background: 'rgba(5, 8, 16, 0.8)' }}
+            style={{ background: `linear-gradient(rgba(5, 8, 16, ${NIGHT_MAX_ALPHA}), rgba(5, 8, 16, ${NIGHT_MAX_ALPHA})), #8f8a84` }}
           />
           Night shading
         </span>
         <span className="map-legend__item">
-          <span className="map-legend__swatch map-legend__swatch--rect map-legend__swatch--hatch" />
-          Earth not in view
+          <span
+            className="map-legend__swatch map-legend__swatch--rect"
+            style={{ background: `linear-gradient(rgba(70, 140, 230, ${NO_EARTH_MAX_ALPHA}), rgba(70, 140, 230, ${NO_EARTH_MAX_ALPHA})), #8f8a84` }}
+          />
+          Far side (Earth not in view)
         </span>
         <span className="map-legend__item">
           <span className="map-legend__swatch--terminator" />

@@ -3,6 +3,8 @@ import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay, round1 } from './coords'
 import { renderMarkerGlyph } from './markerGlyphs'
+import { MarkerTooltip, type MarkerTip } from './MarkerTooltip'
+import { markerAnchor } from './tooltipText'
 import './map.css'
 import { PoleMap } from './PoleMap'
 import { renderShading, SHADE_H, SHADE_W } from './shadingRaster'
@@ -58,9 +60,9 @@ function getCategoryColorVar(category: Site['category']): string {
   }
 }
 
-function BasemapCredit({ info }: { info: { credit: string; creditUrl: string | null } }) {
+function BasemapCredit({ info, top = false }: { info: { credit: string; creditUrl: string | null }; top?: boolean }) {
   return (
-    <div className="map-credit">
+    <div className={top ? 'map-credit map-credit--top' : 'map-credit'}>
       {info.creditUrl ? (
         <a href={info.creditUrl} target="_blank" rel="noreferrer">
           {info.credit}
@@ -86,6 +88,13 @@ export const MoonMap: FC<MoonMapProps> = ({
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const imgDataRef = useRef<ImageData | null>(null)
   const svgRef = useRef<SVGSVGElement | null>(null)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+  const [tip, setTip] = useState<MarkerTip | null>(null)
+  const showTip = useCallback((site: Site, el: Element) => {
+    const a = markerAnchor(el, viewportRef.current)
+    if (a) setTip({ site, x: a.x, y: a.y })
+  }, [])
+  const hideTip = useCallback(() => setTip(null), [])
   const scaleRef = useSvgTextScale()
   const setSvg = useCallback(
     (el: SVGSVGElement | null) => {
@@ -106,6 +115,11 @@ export const MoonMap: FC<MoonMapProps> = ({
   if (lastPolar !== activeIsPolar) {
     setLastPolar(activeIsPolar)
     setView(activeIsPolar ? 'pole' : 'global')
+  }
+  const [tipView, setTipView] = useState(view)
+  if (tipView !== view) {
+    setTipView(view)
+    setTip(null)
   }
 
   // Redraw canvas shading only when shading changes, reusing one ImageData and canvas context
@@ -212,6 +226,10 @@ export const MoonMap: FC<MoonMapProps> = ({
               onSelectSite(site.id, e.shiftKey)
             }}
             onKeyDown={(e) => handleMarkerKeyDown(e, site.id)}
+            onMouseEnter={(e) => showTip(site, e.currentTarget)}
+            onMouseLeave={hideTip}
+            onFocus={(e) => showTip(site, e.currentTarget)}
+            onBlur={hideTip}
           >
             {/* Invisible larger target for touch and easy mouse click */}
             <circle cx={x} cy={y} r={14} fill="transparent" className="map-marker__target" />
@@ -234,7 +252,7 @@ export const MoonMap: FC<MoonMapProps> = ({
           </g>
         )
       }),
-    [sites, selectedSiteIds, activeSiteId, pickMode, onSelectSite, handleMarkerKeyDown],
+    [sites, selectedSiteIds, activeSiteId, pickMode, onSelectSite, handleMarkerKeyDown, showTip, hideTip],
   )
 
   // Memoised polar inset markers
@@ -268,6 +286,10 @@ export const MoonMap: FC<MoonMapProps> = ({
               onSelectSite(site.id, e.shiftKey)
             }}
             onKeyDown={(e) => handleMarkerKeyDown(e, site.id)}
+            onMouseEnter={(e) => showTip(site, e.currentTarget)}
+            onMouseLeave={hideTip}
+            onFocus={(e) => showTip(site, e.currentTarget)}
+            onBlur={hideTip}
           >
             <circle cx={x} cy={y} r={12} fill="transparent" className="map-marker__target" />
             {isSelected && (
@@ -289,7 +311,7 @@ export const MoonMap: FC<MoonMapProps> = ({
           </g>
         )
       }),
-    [polarSites, selectedSiteIds, activeSiteId, pickMode, onSelectSite, handleMarkerKeyDown],
+    [polarSites, selectedSiteIds, activeSiteId, pickMode, onSelectSite, handleMarkerKeyDown, showTip, hideTip],
   )
 
   if (sites.length === 0) {
@@ -301,7 +323,7 @@ export const MoonMap: FC<MoonMapProps> = ({
   }
 
   return (
-    <div className={`moon-map-viewport ${pickMode ? 'moon-map-viewport--picking' : ''}`}>
+    <div ref={viewportRef} className={`moon-map-viewport ${pickMode ? 'moon-map-viewport--picking' : ''}`}>
       <div className="map-viewswitch" role="group" aria-label="Map view">
         <button type="button" aria-pressed={view === 'global'} onClick={() => setView('global')}>
           Global
@@ -319,13 +341,16 @@ export const MoonMap: FC<MoonMapProps> = ({
           basemap={poleBasemap}
           onSelectSite={onSelectSite}
           onPickPoint={onPickPoint}
+          onShowTip={showTip}
+          onHideTip={hideTip}
         />
       )}
       {view === 'pole' && poleBasemap?.credit && <BasemapCredit info={poleBasemap} />}
       {view === 'global' && globalBasemap && (
         <img className="moon-map-basemap" src={globalBasemap.imageUrl} alt="" aria-hidden="true" draggable={false} />
       )}
-      {view === 'global' && globalBasemap?.credit && <BasemapCredit info={globalBasemap} />}
+      {/* Top-right on the global map: the bottom edge holds the clamped south-pole markers */}
+      {view === 'global' && globalBasemap?.credit && <BasemapCredit info={globalBasemap} top />}
       <canvas
         ref={canvasRef}
         className="moon-map-canvas"
@@ -494,6 +519,7 @@ export const MoonMap: FC<MoonMapProps> = ({
           {polarMarkers}
         </g>
       </svg>
+      <MarkerTooltip tip={tip} containerRef={viewportRef} />
     </div>
   )
 }
