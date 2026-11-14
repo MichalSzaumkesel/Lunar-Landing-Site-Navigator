@@ -157,22 +157,29 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
     [bundle.ephem, origMask, startMs, endMs],
   )
 
+  // The horizon is rebuilt only once the lander rests, so dragging stays smooth.
+  const [maskOffset, setMaskOffset] = useState<OffsetM>(landerOffset)
+  useEffect(() => {
+    const t = setTimeout(() => setMaskOffset(landerOffset), 120)
+    return () => clearTimeout(t)
+  }, [landerOffset])
+
   const movedMask = useMemo(() => {
-    if (landerOffset.eastM === 0 && landerOffset.northM === 0) return origMask
+    if (maskOffset.eastM === 0 && maskOffset.northM === 0) return origMask
     try {
       return horizonFromTerrain(
         heights,
         terrain.size_px,
         terrain.spacing_m,
-        landerOffset.eastM,
-        landerOffset.northM,
+        maskOffset.eastM,
+        maskOffset.northM,
         observerHeightM,
         { rays: 360 },
       )
     } catch {
       return origMask
     }
-  }, [heights, terrain.size_px, terrain.spacing_m, landerOffset, observerHeightM, origMask])
+  }, [heights, terrain.size_px, terrain.spacing_m, maskOffset, observerHeightM, origMask])
 
   const movedSunHours = useMemo(
     () => computeSunVisibleHours(bundle.ephem, movedMask, 1.0, startMs, endMs),
