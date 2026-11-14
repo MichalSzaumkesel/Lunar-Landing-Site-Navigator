@@ -29,7 +29,8 @@ ISO_Z = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$")
 SNAKE = re.compile(r"^[a-z0-9]+(_[a-z0-9]+)*$")
 CATEGORIES = {"apollo", "clps", "commercial", "international", "artemis_region", "custom"}
 STATUSES = {"landed", "crashed", "planned", "candidate_region"}
-KINDS = ("sites", "validation", "horizon", "ephem", "terrain", "illum", "earth_orientation")
+KINDS = ("sites", "validation", "horizon", "ephem", "terrain", "illum", "earth_orientation", "basemap")
+BASEMAP_MAX_BYTES = {"southpole": 2_000_000, "global": 1_500_000}
 
 
 @dataclass
@@ -438,6 +439,65 @@ def check_illum(c: Checker, doc: dict, real: bool) -> None:
         c.num_array(row, nx, 0, 100, f"pct_sunlit[{r}]")
 
 
+def image_size(path: Path) -> tuple[int, int] | None:
+    """(width, height) from a PNG IHDR or a JPEG SOFn header, without extra dependencies."""
+    b = path.read_bytes()
+    if b[:8] == b"\x89PNG\r\n\x1a\n":
+        return int.from_bytes(b[16:20], "big"), int.from_bytes(b[20:24], "big")
+    if b[:2] == b"\xff\xd8":
+        i = 2
+        while i + 9 < len(b):
+            if b[i] != 0xFF:
+                return None
+            marker, seg = b[i + 1], int.from_bytes(b[i + 2:i + 4], "big")
+            if marker in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                return int.from_bytes(b[i + 7:i + 9], "big"), int.from_bytes(b[i + 5:i + 7], "big")
+            i += 2 + seg
+    return None
+
+
+def check_basemap(c: Checker, doc: dict, real: bool, data_root: Path) -> None:
+    """basemap/<name>.json + image (proposed contract section, branch contract/basemap)."""
+    name = c.path.stem
+    img = c.require(doc, "image", str, "$")
+    w, h = c.require(doc, "width", int, "$"), c.require(doc, "height", int, "$")
+    c.require(doc, "credit", str, "$")
+    if doc.get("row0") != "top":
+        c.err("row0 must be 'top'")
+    if name == "southpole":
+        proj = c.require(doc, "projection", str, "$")
+        if proj is not None and ("+proj=stere" not in proj or "+lat_0=-90" not in proj or "+R=1737400" not in proj):
+            c.err("projection must be the Moon-sphere south polar stereographic proj string")
+        ext = c.require(doc, "extent_m", list, "$")
+        if ext is not None and not (len(ext) == 4 and all(_is_num(v) for v in ext) and ext[0] < ext[1] and ext[2] < ext[3]):
+            c.err("extent_m must be [xmin, xmax, ymin, ymax] with xmin < xmax, ymin < ymax")
+    elif name == "global":
+        if doc.get("projection") != "equirectangular":
+            c.err("projection must be 'equirectangular'")
+        if doc.get("lon_range") != [-180.0, 180.0] and doc.get("lon_range") != [-180, 180]:
+            c.err("lon_range must be [-180, 180]")
+        if doc.get("lat_range") not in ([-90.0, 90.0], [-90, 90]):
+            c.err("lat_range must be [-90, 90]")
+    else:
+        c.warn("unknown basemap name")
+    if img is None:
+        return
+    ip = data_root / img
+    if not ip.is_file():
+        c.err(f"image {img} not found")
+        return
+    size = image_size(ip)
+    if size is None:
+        c.err(f"{img}: not a readable PNG/JPEG")
+    elif w is not None and h is not None and size != (w, h):
+        c.err(f"{img} is {size[0]}x{size[1]}, json says {w}x{h}")
+    lim = BASEMAP_MAX_BYTES.get(name)
+    if lim and ip.stat().st_size > lim:
+        c.err(f"{img} is {ip.stat().st_size / 1e6:.2f} MB > {lim / 1e6:.1f} MB budget")
+    if real and not (doc.get("meta", {}).get("inputs")):
+        c.err("real basemap needs meta.inputs with source URLs")
+
+
 # -- driver -----------------------------------------------------------------
 
 def kind_of(path: Path) -> str | None:
@@ -447,7 +507,7 @@ def kind_of(path: Path) -> str | None:
         return "validation"
     if path.name == "earth_orientation.json":
         return "earth_orientation"
-    if path.parent.name in ("horizon", "ephem", "terrain", "illum") and path.suffix == ".json":
+    if path.parent.name in ("horizon", "ephem", "terrain", "illum", "basemap") and path.suffix == ".json":
         return path.parent.name
     return None
 
@@ -493,6 +553,8 @@ def check_file(path: Path) -> list[Issue]:
         check_illum(c, doc, real)
     elif kind == "earth_orientation":
         check_earth_orientation(c, doc, real)
+    elif kind == "basemap":
+        check_basemap(c, doc, real, data_root)
     return c.issues
 
 

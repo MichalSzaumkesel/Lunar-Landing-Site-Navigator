@@ -99,3 +99,19 @@ ACK scope A 2026-11-14 13:36 — web/public/data/earth_orientation.json is on ma
   package.json) stay scope B's; scope A requests changes there via scope B.
 - Action required: scope B — don't touch components/map/; review and merge PR from a/ui-map.
 - Status: open
+
+### C-006 · New data: basemap/ (map backgrounds) + sites[].slope_deg
+- Date (CET): 2026-11-14 <fill in>
+- From: scope A
+- Affects: scope B
+- Severity: must-fix-before-freeze (only if B shows the map or slope)
+- Contract: v1.3.0 PR #59 (pending; §2.9 basemap, optional sites[].slope_deg)
+- What changed: on main: web/public/data/basemap/southpole.png + southpole.json (LOLA LDEM_80S_40M hillshade,
+  Moon-sphere south polar stereographic, extent_m ±304000 m, 2048², row 0 = top = +y, lon 0 up, lon 90E right;
+  covers all |lat| ≥ 80° sites) and basemap/global.jpg + global.json (equirectangular, lon −180..180 left→right,
+  lat 90..−90 top→bottom, 2048×1024, NASA SVS CGI Moon Kit). Each json has a `credit` string. sites.json rows gain
+  `slope_deg` (Horn 3×3 on the horizon DEM, terrain scale, not lander-footprint scale); extra field, nothing removed.
+- Action required: show the `credit` string while a basemap is visible (the a/ui-map PR does this); if slope is shown,
+  label it "terrain slope (DEM scale)". Approve or comment on PR #59.
+- Workaround until fixed: none needed; files are additive.
+- Status: open
