@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type FC, type KeyboardEvent, type MouseEvent } from 'react'
+import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import type { Site } from '../../lib/types'
 import { formatCoordDisplay, round1 } from './coords'
 import { renderMarkerGlyph } from './markerGlyphs'
@@ -103,6 +104,14 @@ export const MoonMap: FC<MoonMapProps> = ({
     if (a) setTip({ site, x: a.x, y: a.y })
   }, [])
   const hideTip = useCallback(() => setTip(null), [])
+  const scaleRef = useSvgTextScale()
+  const setSvg = useCallback(
+    (el: SVGSVGElement | null) => {
+      svgRef.current = el
+      scaleRef(el)
+    },
+    [scaleRef],
+  )
   const globalBasemap = useBasemap('global')
   const poleBasemap = useBasemap('southpole')
   const activeIsPolar = useMemo(
@@ -390,8 +399,8 @@ export const MoonMap: FC<MoonMapProps> = ({
         hidden={!flat}
       />
       <svg
-        ref={svgRef}
-        className="moon-map-svg"
+        ref={setSvg}
+        className="moon-map-svg svg-scaled"
         style={!flat ? { display: 'none' } : undefined}
         viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
         onClick={handleSvgClick}

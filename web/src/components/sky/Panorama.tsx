@@ -2,6 +2,7 @@ import { memo, useId, useMemo } from 'react'
 import { sampleAt } from '../../lib/ephem'
 import type { SkySample } from '../../lib/ephem'
 import type { SiteBundle } from '../../lib/types'
+import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -143,6 +144,7 @@ function PanoramaFrame({ scenario, bundle, model, cursorMs }: {
   model: PanoramaModel
   cursorMs: number
 }) {
+  const textScaleRef = useSvgTextScale()
   const clipId = 'pano-clip-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const sample = sampleAt(bundle.ephem, cursorMs)
   const readout = sample ? describeSky(sample, model, bundle.ephem) : null
@@ -154,7 +156,8 @@ function PanoramaFrame({ scenario, bundle, model, cursorMs }: {
   return (
     <div className="sky__pano">
       <svg
-        className="sky__svg"
+        ref={textScaleRef}
+        className="sky__svg svg-scaled"
         viewBox={`0 0 ${PANO_VIEW_W} ${PANO_VIEW_H}`}
         role="img"
         aria-label={label}

@@ -132,22 +132,22 @@
 
 .sky__cardinal {
   fill: var(--text);
-  font: 700 20px var(--font);
+  font: 700 var(--fs-title, 13px) var(--font);
   text-anchor: middle;
   dominant-baseline: central;
 }
 
 .sky__ring-label {
   fill: var(--muted);
-  font: 600 15px var(--font);
+  font: 600 var(--fs-tick, 11px) var(--font);
   paint-order: stroke;
   stroke: var(--sky-bg);
-  stroke-width: 4px;
+  stroke-width: var(--fs-halo, 3px);
 }
 
 .sky__scale {
   fill: var(--muted);
-  font: 600 15px var(--font);
+  font: 600 var(--fs-tick, 11px) var(--font);
 }
 
 .sky__zoom {
@@ -172,7 +172,7 @@
 
 .sky__outside text {
   fill: var(--text);
-  font: 700 20px var(--font);
+  font: 700 var(--fs-title, 13px) var(--font);
   text-anchor: middle;
   dominant-baseline: central;
 }
@@ -317,7 +317,7 @@
 
 .sky__pano-label {
   fill: var(--muted);
-  font: 600 17px var(--font);
+  font: 600 var(--fs-tick, 11px) var(--font);
   dominant-baseline: central;
 }
 
@@ -328,13 +328,13 @@
 .sky__pano-label--x {
   fill: var(--text);
   font-weight: 700;
+  font-size: var(--fs-label, 12px);
 }
 
 .sky__pano .sky__scale {
-  font-size: 17px;
   paint-order: stroke;
   stroke: var(--sky-bg);
-  stroke-width: 4px;
+  stroke-width: var(--fs-halo, 3px);
 }
 
 /* Loupe */

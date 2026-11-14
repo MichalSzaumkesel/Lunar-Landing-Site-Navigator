@@ -4,6 +4,8 @@ export type LockBody = 'sun' | 'earth' | 'lander'
 
 /** How long a button must be held before the camera locks. */
 export const HOLD_MS = 600
+/** A press shows the hold visuals (padlock, fill, progress) only after this long, so a plain click stays quiet. */
+export const HOLD_VISUAL_DELAY_MS = 220
 /** Time constant of the tracking damping: the remaining error shrinks by 1/e every TRACK_TAU_MS. */
 export const TRACK_TAU_MS = 140
 
@@ -39,6 +41,10 @@ export function lockPitchDeg(elDeg: number, limitDeg = 89): number {
 
 export interface HoldTimerOptions {
   holdMs?: number
+  /** Delay after which `onShow` fires while the press continues. */
+  showAfterMs?: number
+  /** The press lasted long enough to show hold visuals; never fires for a quick click. */
+  onShow?: () => void
   onLock: () => void
   setTimer?: (cb: () => void, ms: number) => number
   clearTimer?: (id: number) => void
@@ -55,6 +61,8 @@ export function createHoldTimer(o: HoldTimerOptions): HoldTimer {
   const set = o.setTimer ?? ((cb, ms) => globalThis.setTimeout(cb, ms) as unknown as number)
   const clear = o.clearTimer ?? ((id) => globalThis.clearTimeout(id))
   let id = 0
+  let showId = 0
+  let showPending = false
   let pending = false
   let fired = false
   return {
@@ -62,7 +70,19 @@ export function createHoldTimer(o: HoldTimerOptions): HoldTimer {
       if (pending) return
       fired = false
       pending = true
+      if (o.onShow) {
+        showPending = true
+        showId = set(() => {
+          showPending = false
+          o.onShow?.()
+        }, o.showAfterMs ?? HOLD_VISUAL_DELAY_MS)
+      }
       id = set(() => {
+        if (showPending) {
+          clear(showId)
+          showPending = false
+          o.onShow?.()
+        }
         pending = false
         fired = true
         o.onLock()
@@ -70,6 +90,8 @@ export function createHoldTimer(o: HoldTimerOptions): HoldTimer {
     },
     cancel() {
       if (pending) clear(id)
+      if (showPending) clear(showId)
+      showPending = false
       pending = false
       const wasFired = fired
       fired = false
