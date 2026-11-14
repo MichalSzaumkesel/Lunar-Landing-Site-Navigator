@@ -253,3 +253,25 @@ describe('mission rules in the share link', () => {
     expect(decodeState(encodeState({ ...base, scenarios: [sc] })).scenarios).toEqual([sc])
   })
 })
+
+describe('mode in the share link', () => {
+  const base: UrlState = {
+    mode: 'advanced',
+    observerHeightM: 2,
+    scenarios: [{ siteId: 'apollo_11', startUtc: '1969-07-20T00:00:00Z', durationH: 240, slipDays: 0 }],
+    cursorH: 0,
+    speedHPerSec: 1,
+  }
+
+  it('always writes m= and round-trips both modes', () => {
+    for (const mode of ['simple', 'advanced'] as const) {
+      const hash = encodeState({ ...base, mode })
+      expect(hash).toContain(mode === 'simple' ? 'm=s' : 'm=a')
+      expect(decodeState(hash).mode).toBe(mode)
+    }
+  })
+
+  it('leaves the mode undefined when the link has no m=', () => {
+    expect(decodeState('h=2&c=0').mode).toBeUndefined()
+  })
+})

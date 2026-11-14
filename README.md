@@ -66,6 +66,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Keyboard operation for all controls; visible focus outlines; controls have accessible names.
 - Colour is never the only carrier of status: text labels and shapes are used as well.
 - `prefers-reduced-motion` is respected; demo mode and playback start only on a user action.
+- Opening: a plain link starts in Simple mode; use `?m=a` (or the mode switch) for Advanced, which the presets need.
 - Simple mode: one sky plot and plain-language summaries for teaching and public demonstrations.
 - Guided tour (`Tour` button) and a demo narration (`Demo` button).
 
