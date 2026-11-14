@@ -36,6 +36,8 @@ import { useTerrainHeights } from './useTerrainHeights'
 import {
   belowHorizonText,
   faceTarget,
+  OVERVIEW_FACE_MS,
+  overviewFaceTarget,
   SIZE_MAX,
   SIZE_MIN,
   SIZE_STEP,
@@ -48,7 +50,7 @@ const MAX_EXAGGERATION = 5
 
 function faceTitle(body: 'Sun' | 'Earth', mode: ViewMode, hasSample: boolean): string {
   if (!hasSample) return `${body} direction is not available at this time`
-  if (mode !== 'surface') return `Switch to On the surface to turn the camera towards the ${body}`
+  if (mode === 'overview') return `Orbit the camera to look towards the ${body}`
   return `Turn the camera towards the ${body}`
 }
 
@@ -291,6 +293,11 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
   const faceBody = (body: 'sun' | 'earth') => {
     const pos = body === 'sun' ? sample?.sun : sample?.earth
     if (!pos || !scene) return
+    if (mode === 'overview') {
+      const t = overviewFaceTarget(pos.az, scene.overviewElevationDeg())
+      void scene.cameraTo({ ...t, durationMs: OVERVIEW_FACE_MS })
+      return
+    }
     setFacing(body)
     void scene.faceBody(faceTarget(pos.az, pos.el, horizonAt(mask, azStepDeg, pos.az)))
   }
@@ -616,7 +623,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         </div>
         <button
           type="button"
-          disabled={mode !== 'surface' || !sample}
+          disabled={!sample}
           title={faceTitle('Sun', mode, Boolean(sample))}
           onClick={() => faceBody('sun')}
         >
@@ -624,7 +631,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         </button>
         <button
           type="button"
-          disabled={mode !== 'surface' || !sample}
+          disabled={!sample}
           title={faceTitle('Earth', mode, Boolean(sample))}
           onClick={() => faceBody('earth')}
         >
