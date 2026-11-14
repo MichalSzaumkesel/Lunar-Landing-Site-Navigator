@@ -178,6 +178,8 @@ A local heatmap of `pct_sunlit` for a grid around the site, over a stated period
   "grid": { "center_lat": 0, "center_lon": 0, "spacing_m": 200, "nx": 41, "ny": 41 },
   "pct_sunlit": [[...], ...] }
 ```
+- `pct_sunlit[row][col]`: row 0 = NORTH edge, col 0 = WEST edge (same as terrain), `ny` rows × `nx` columns; the centre cell `(ny//2, nx//2)` is the site. East offset = `(col − nx//2)·spacing_m`, north offset = `(ny//2 − row)·spacing_m`.
+- Optional top-level `notes` (string) lists approximations; such files set `meta.approximate = true`.
 
 ### 2.7 Mocks (owner: scope B)
 
@@ -203,7 +205,7 @@ Lets the 3D view draw the Earth with the correct side facing the Moon. The Earth
 
 - Same time grid as `ephem/` (sample `k` at `start_utc + k * step_minutes`).
 - `sub_lunar_lat_deg`, `sub_lunar_lon_deg`: the point on Earth that sees the Moon at the zenith (sub-observer point of Earth for an observer at the Moon). Longitude east-positive, -180..180.
-- `pole_pa_deg`: position angle of Earth's north pole as seen from the Moon, degrees east of celestial north.
+- `pole_pa_deg`: position angle of Earth's north pole as seen from the Moon, measured from the Moon's north pole direction (lunar spin axis, about 1.5° from ecliptic north) toward east, 0..360, wrapping through 0. It swings about ±23° over a month and is not measured from Earth's celestial north.
 - Source: JPL Horizons. Scope A verifies which observer-table quantities give these values and records the exact query in `meta.inputs`.
 
 ---
@@ -271,6 +273,6 @@ Written by scope A **first**, before anything else. `validation/fixtures/metrics
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-14 | Initial |
-| 1.2.0 | 2026-11-14 | Optional `earth_orientation.json` (§2.8); §2.3 example `count` fixed to 18288 (762 days, includes the 2028 leap day) |
-| 1.1.1 | 2026-11-14 | Link to CRITICAL.md; every contract change needs a CRITICAL notice |
 | 1.1.0 | 2026-11-14 | Compact JSON + lazy load; Horizons fetch rules; terrain heightmaps (§2.5); fixed demo site IDs; mocks owned by scope B |
+| 1.1.1 | 2026-11-14 | Link to CRITICAL.md; every contract change needs a CRITICAL notice |
+| 1.2.0 | 2026-11-14 | Optional `earth_orientation.json` (§2.8); §2.3 example `count` fixed to 18288 (762 days, includes the 2028 leap day) |
