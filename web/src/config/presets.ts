@@ -23,6 +23,13 @@ export interface Preset {
  * Re-scan when the data changes.
  */
 export const DEFAULT_START_UTC = '2027-10-06T00:00:00Z'
+/**
+ * Simple mode opens here instead of at DEFAULT_START_UTC (which starts in the dark at southpole_landed).
+ * Chosen by scanning the real files (2 m, 30-day windows, daily starts, all candidate sites): at the first
+ * instant the Sun is visible and Earth is in view, the Sun is visible 47.5% and Earth in view 77.2% of the
+ * window, the Sun sets after 51 h and Earth sets after 35 h. Re-scan when the data changes.
+ */
+export const SIMPLE_DEFAULT_START_UTC = '2027-01-26T00:00:00Z'
 /** One lunar day is about 29.5 Earth days; a 30-day window shows a full Sun circuit. */
 export const DEFAULT_DURATION_H = 30 * 24
 

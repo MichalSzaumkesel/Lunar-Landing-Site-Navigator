@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
+import { DEFAULT_PRESET, DEFAULT_START_UTC, SIMPLE_DEFAULT_START_UTC } from '../config/presets';
 import { useAppStore, generateScenarioId, assignScenarioIds } from './store';
 import { scenarioCursorUtc, scenarioCursorMs, scenarioWindowMs } from './selectors';
 import { decodeState } from './urlState';
@@ -216,3 +217,15 @@ describe('urlState - speed validation (L3 #6)', () => {
     expect(decodeState('v=-12').speedHPerSec).toBeUndefined();
   });
 });
+
+describe('store - Simple default start', () => {
+  it('moves the untouched default start when entering Simple, keeps a changed scenario', () => {
+    useAppStore.setState({ mode: 'advanced', scenarios: assignScenarioIds(DEFAULT_PRESET.scenarios) })
+    useAppStore.getState().setMode('simple')
+    expect(useAppStore.getState().scenarios[0].startUtc).toBe(SIMPLE_DEFAULT_START_UTC)
+
+    useAppStore.setState({ mode: 'advanced', scenarios: assignScenarioIds([{ siteId: 'apollo_11' }]) })
+    useAppStore.getState().setMode('simple')
+    expect(useAppStore.getState().scenarios[0].startUtc).toBe(DEFAULT_START_UTC)
+  })
+})

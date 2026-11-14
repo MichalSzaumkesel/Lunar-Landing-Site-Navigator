@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { MAX_SCENARIOS } from '../config/dataRange'
 import type { MissionRules } from '../lib/types'
 import type { AppState, Scenario } from './types'
-import { useAppStore, generateScenarioId } from './store'
+import { useAppStore, generateScenarioId, withSimpleDefault } from './store'
 import { decodeState, encodeState, type UrlState } from './urlState'
 
 function sharedRules(r: MissionRules): NonNullable<UrlState['missionRules']> {
@@ -119,6 +119,11 @@ export function useUrlSync(): void {
     // On mount: read the query mode, then window.location.hash, and apply to store
     applyQueryModeToStore()
     applyHashToStore()
+    // A link that names no scenario and opens in Simple starts from the Simple default.
+    const st = useAppStore.getState()
+    if (st.mode === 'simple' && !decodeState(window.location.hash).scenarios) {
+      useAppStore.setState({ scenarios: withSimpleDefault(st.scenarios) })
+    }
 
     const onHashChange = () => {
       applyHashToStore()
