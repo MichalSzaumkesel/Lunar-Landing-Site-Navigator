@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { registerActiveScene } from '../components/demo/cameraControl'
 import { describeBody, fmtNum, fmtUtc, pickMask, sunStateText } from '../components/sky/geometry'
 import { sampleAt } from '../lib/ephem'
 import { earthIlluminatedFraction } from '../lib/earthPhase'
@@ -195,6 +196,12 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       setScene(null)
     }
   }, [heights, terrain.size_px, terrain.spacing_m])
+
+  // Camera control hook for cinematic demo mode
+  useEffect(() => {
+    if (!scene) return
+    return registerActiveScene(scene)
+  }, [scene])
 
   useEffect(() => scene?.setMode(mode), [scene, mode])
   useEffect(() => scene?.setExaggeration(exaggeration), [scene, exaggeration])

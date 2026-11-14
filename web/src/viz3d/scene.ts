@@ -84,6 +84,14 @@ export function shouldUpdateShadow(input: ShadowUpdateDecisionInput): boolean {
   return input.angleDeg >= 0.1 && input.timeSinceLastUpdateMs >= 100
 }
 
+/** Pure easing function (ease-in-out cubic) for cinematic camera panning. */
+export function cameraEase(t: number): number {
+  const clamped = Math.max(0, Math.min(1, t))
+  return clamped < 0.5
+    ? 4 * clamped * clamped * clamped
+    : 1 - Math.pow(-2 * clamped + 2, 3) / 2
+}
+
 export class SurfaceScene {
   private readonly renderer: THREE.WebGLRenderer
   private readonly scene = new THREE.Scene()
@@ -118,6 +126,8 @@ export class SurfaceScene {
   private raf = 0
   private hoverRaf = 0
   private animationRaf = 0
+  private cameraAnimationRaf = 0
+  private cameraAnimationCancel: (() => void) | null = null
   private disposed = false
   private drag: { id: number; x: number; y: number } | null = null
   private pointerDownPos: { x: number; y: number; time: number } | null = null
@@ -170,12 +180,14 @@ export class SurfaceScene {
     this.controls.maxDistance = 60_000
     this.controls.enabled = false
     this.controls.addEventListener('change', this.invalidate)
+    this.controls.addEventListener('start', this.onControlsStart)
 
     this.canvas.addEventListener('pointerdown', this.onPointerDown)
     this.canvas.addEventListener('pointermove', this.onPointerMove)
     this.canvas.addEventListener('pointerup', this.onPointerUp)
     this.canvas.addEventListener('pointercancel', this.onPointerUp)
     this.canvas.addEventListener('pointerleave', this.onPointerLeave)
+    this.canvas.addEventListener('wheel', this.onWheel, { passive: true })
     this.canvas.addEventListener('keydown', this.onKeyDown)
 
     this.rebuildTerrain()
@@ -236,10 +248,79 @@ export class SurfaceScene {
 
   /** Turn the surface camera towards a direction without moving it. */
   faceDirection(azDeg: number, elDeg: number): void {
+    this.cancelCameraAnimation()
     this.yawDeg = azDeg
     this.pitchDeg = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, elDeg + 3))
     this.applyCamera()
     this.invalidate()
+  }
+
+  /**
+   * Smoothly pans the camera to target azimuth and elevation.
+   * Eased, cancelled by any user input, no animation under prefers-reduced-motion.
+   */
+  cameraTo(target: { azimuthDeg: number; elevationDeg: number; durationMs: number }): Promise<void> {
+    this.cancelCameraAnimation()
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches
+
+    const targetYaw = (((target.azimuthDeg % 360) + 360) % 360)
+    const targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, target.elevationDeg))
+
+    if (prefersReducedMotion || target.durationMs <= 0) {
+      this.yawDeg = targetYaw
+      this.pitchDeg = targetPitch
+      this.applyCamera()
+      this.invalidate()
+      return Promise.resolve()
+    }
+
+    const startYaw = (((this.yawDeg % 360) + 360) % 360)
+    const dYaw = ((((targetYaw - startYaw) % 360) + 540) % 360) - 180
+    const startPitch = this.pitchDeg
+    const dPitch = targetPitch - startPitch
+
+    return new Promise<void>((resolve) => {
+      this.cameraAnimationCancel = () => {
+        resolve()
+      }
+
+      const startTime = performance.now()
+      const step = (now: number) => {
+        const elapsed = now - startTime
+        const rawT = Math.min(1, elapsed / target.durationMs)
+        const ease = cameraEase(rawT)
+
+        this.yawDeg = (((startYaw + dYaw * ease) % 360) + 360) % 360
+        this.pitchDeg = startPitch + dPitch * ease
+        this.applyCamera()
+        this.invalidate()
+
+        if (rawT < 1 && !this.disposed) {
+          this.cameraAnimationRaf = requestAnimationFrame(step)
+        } else {
+          this.cameraAnimationRaf = 0
+          this.cameraAnimationCancel = null
+          resolve()
+        }
+      }
+
+      this.cameraAnimationRaf = requestAnimationFrame(step)
+    })
+  }
+
+  cancelCameraAnimation(): void {
+    if (this.cameraAnimationRaf) {
+      cancelAnimationFrame(this.cameraAnimationRaf)
+      this.cameraAnimationRaf = 0
+    }
+    if (this.cameraAnimationCancel) {
+      const cb = this.cameraAnimationCancel
+      this.cameraAnimationCancel = null
+      cb()
+    }
   }
 
   /** Force an unthrottled shadow update (e.g. on playback pause). */
@@ -413,6 +494,7 @@ export class SurfaceScene {
   dispose(): void {
     if (this.disposed) return
     this.disposed = true
+    this.cancelCameraAnimation()
     if (this.raf) cancelAnimationFrame(this.raf)
     this.raf = 0
     if (this.hoverRaf) cancelAnimationFrame(this.hoverRaf)
@@ -420,12 +502,14 @@ export class SurfaceScene {
     if (this.animationRaf) cancelAnimationFrame(this.animationRaf)
     this.animationRaf = 0
     this.controls.removeEventListener('change', this.invalidate)
+    this.controls.removeEventListener('start', this.onControlsStart)
     this.controls.dispose()
     this.canvas.removeEventListener('pointerdown', this.onPointerDown)
     this.canvas.removeEventListener('pointermove', this.onPointerMove)
     this.canvas.removeEventListener('pointerup', this.onPointerUp)
     this.canvas.removeEventListener('pointercancel', this.onPointerUp)
     this.canvas.removeEventListener('pointerleave', this.onPointerLeave)
+    this.canvas.removeEventListener('wheel', this.onWheel)
     this.canvas.removeEventListener('keydown', this.onKeyDown)
     disposeObject(this.scene)
     if (this.terrainMat.map) {
@@ -587,7 +671,12 @@ export class SurfaceScene {
     this.invalidate()
   }
 
+  private readonly onControlsStart = (): void => {
+    this.cancelCameraAnimation()
+  }
+
   private readonly onPointerDown = (e: PointerEvent): void => {
+    this.cancelCameraAnimation()
     this.pointerDownPos = { x: e.clientX, y: e.clientY, time: performance.now() }
     if (this.mode !== 'surface') return
     this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY }
@@ -597,6 +686,7 @@ export class SurfaceScene {
   private readonly onPointerMove = (e: PointerEvent): void => {
     const d = this.drag
     if (d && d.id === e.pointerId) {
+      this.cancelCameraAnimation()
       // Grab-style drag: the world follows the pointer.
       const degPerPx = SURFACE_FOV / Math.max(1, this.canvas.clientHeight)
       this.look(-(e.clientX - d.x) * degPerPx, (e.clientY - d.y) * degPerPx)
@@ -646,7 +736,12 @@ export class SurfaceScene {
     }
   }
 
+  private readonly onWheel = (): void => {
+    this.cancelCameraAnimation()
+  }
+
   private readonly onKeyDown = (e: KeyboardEvent): void => {
+    this.cancelCameraAnimation()
     if (this.mode !== 'surface') return
     const step = e.shiftKey ? 15 : 5
     const moves: Record<string, [number, number]> = {
