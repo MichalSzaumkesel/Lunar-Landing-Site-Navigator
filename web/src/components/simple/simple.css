@@ -630,7 +630,7 @@
   left: var(--space-2, 8px);
   z-index: 2;
   display: flex;
-  height: var(--corner-btn-size, 28px);
+  height: var(--corner-btn-size, 32px);
   padding: 2px;
   gap: 2px;
   box-sizing: border-box;
@@ -674,7 +674,7 @@
   overflow: auto;
   /* The stage scrollbar must not sit under the corner buttons: they get their own row above. */
   scrollbar-gutter: stable;
-  margin-top: calc(var(--corner-btn-size, 28px) + var(--space-1, 4px));
+  margin-top: calc(var(--corner-btn-size, 32px) + var(--space-1, 4px));
   container-type: size;
 }
 

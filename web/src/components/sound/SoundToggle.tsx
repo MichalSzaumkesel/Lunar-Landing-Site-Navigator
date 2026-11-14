@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from 'react'
 import { VolumeSlider } from './VolumeSlider'
 import {
   getSoundEngine,
@@ -11,6 +11,12 @@ import {
 import './sound.css'
 
 const SLIDE_MS = 200
+
+const MODES: { id: SoundMode; label: string; title: string }[] = [
+  { id: 'off', label: 'Off', title: 'Turn sound off' },
+  { id: 'ambient', label: 'Ambient', title: 'Calm ambient tone that follows Sun and Earth visibility' },
+  { id: 'cues', label: 'Cues', title: 'Short tones when the Sun or Earth rises or sets during Play' },
+]
 
 export interface SoundToggleProps {
   className?: string
@@ -64,6 +70,23 @@ export function SoundToggle({
     engine.setMode(newMode)
   }
 
+  const radioRefs = useRef<Partial<Record<SoundMode, HTMLButtonElement | null>>>({})
+
+  // WAI-ARIA radio group: one tab stop, arrows move focus and selection.
+  const onRadioKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
+    const idx = MODES.findIndex((m) => m.id === mode)
+    let next: number
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % MODES.length
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + MODES.length) % MODES.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = MODES.length - 1
+    else return
+    e.preventDefault()
+    const id = MODES[next].id
+    handleModeClick(id)
+    radioRefs.current[id]?.focus()
+  }
+
   const handleVolumeChange = (percent: number): void => {
     const val = percent / 100
     setVolume(val)
@@ -110,39 +133,25 @@ export function SoundToggle({
           role="radiogroup"
           aria-labelledby="sound-mode-label"
         >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === 'off'}
-            className={`sound-btn ${mode === 'off' ? 'sound-btn--active' : ''}`}
-            aria-label="Sound: Off"
-            title="Turn sound off"
-            onClick={() => handleModeClick('off')}
-          >
-            Off
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === 'ambient'}
-            className={`sound-btn ${mode === 'ambient' ? 'sound-btn--active' : ''}`}
-            aria-label="Sound: Ambient"
-            title="Calm ambient tone that follows Sun and Earth visibility"
-            onClick={() => handleModeClick('ambient')}
-          >
-            Ambient
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={mode === 'cues'}
-            className={`sound-btn ${mode === 'cues' ? 'sound-btn--active' : ''}`}
-            aria-label="Sound: Cues"
-            title="Short tones when the Sun or Earth rises or sets during Play"
-            onClick={() => handleModeClick('cues')}
-          >
-            Cues
-          </button>
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              role="radio"
+              ref={(el) => {
+                radioRefs.current[m.id] = el
+              }}
+              aria-checked={mode === m.id}
+              tabIndex={mode === m.id ? 0 : -1}
+              className={`sound-btn ${mode === m.id ? 'sound-btn--active' : ''}`}
+              aria-label={`Sound: ${m.label}`}
+              title={m.title}
+              onClick={() => handleModeClick(m.id)}
+              onKeyDown={onRadioKeyDown}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
       </div>
 

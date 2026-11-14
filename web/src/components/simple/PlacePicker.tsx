@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { dataSource } from '../../lib/loader'
 import type { Site } from '../../lib/types'
+import { useFocusTrap } from '../../lib/useFocusTrap'
 import { usePresence } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
 import { GROUP_LABEL, displayName, filterPlaces, groupPlaces, placeDescription, type PlaceGroup } from './placeLabels'
@@ -39,10 +40,13 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const listId = useId()
   const updateScenario = useAppStore((s) => s.updateScenario)
   const activeScenarioId = useAppStore((s) => s.activeScenarioId)
   const { mounted, state } = usePresence(open)
+  // Focus return is handled by closePanel / the outside-press handler below.
+  useFocusTrap(panelRef, open && mounted, { restoreFocus: false })
 
   const reloadSites = () => {
     setHasError(false)
@@ -90,7 +94,13 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
   useEffect(() => {
     if (!open) return
     const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
+      if (rootRef.current?.contains(e.target as Node)) return
+      setOpen(false)
+      // Give focus back unless the press landed on something else that took it.
+      window.setTimeout(() => {
+        const a = document.activeElement
+        if (!a || a === document.body) triggerRef.current?.focus()
+      }, 0)
     }
     document.addEventListener('pointerdown', onDown)
     return () => document.removeEventListener('pointerdown', onDown)
@@ -184,7 +194,7 @@ export function PlacePicker({ activeSiteId }: PlacePickerProps) {
       {mounted && (
         <>
           <div className="place-backdrop" data-state={state} onClick={() => closePanel(true)} aria-hidden="true" />
-          <div id={`${listId}-panel`} className="place-panel" data-state={state} role="dialog" aria-label="Choose a place">
+          <div ref={panelRef} id={`${listId}-panel`} className="place-panel" data-state={state} role="dialog" aria-modal="true" aria-label="Choose a place">
             <div className="place-panel__top">
               <input
                 ref={searchRef}

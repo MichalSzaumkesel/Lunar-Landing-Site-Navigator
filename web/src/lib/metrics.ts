@@ -56,6 +56,9 @@ export function computeMetrics(
   input: MetricsInput,
 ): ScenarioMetrics | null {
   const { ephem, horizon } = bundle;
+  if (Number.isNaN(input.startMs) || Number.isNaN(input.endMs)) {
+    return null;
+  }
   if (ephem.count <= 0 || input.startMs >= input.endMs) {
     return null;
   }

@@ -14,11 +14,17 @@ export interface Chip {
   tip: string
 }
 
+const NOT_AVAILABLE = 'Not available'
+
 export function fmtChipTime(ms: number): string {
+  if (!Number.isFinite(ms) || Number.isNaN(new Date(ms).getTime())) return NOT_AVAILABLE
   return new Date(ms).toISOString().slice(5, 16).replace('T', ' ')
 }
 
-const fmtFull = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+const fmtFull = (ms: number) =>
+  !Number.isFinite(ms) || Number.isNaN(new Date(ms).getTime())
+    ? 'a time that is not available'
+    : new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
 
 /** Events with startMs <= ms < endMs from a time-sorted list (binary search on both ends). */
 export function eventsInWindow(events: readonly SkyEvent[], startMs: number, endMs: number): SkyEvent[] {

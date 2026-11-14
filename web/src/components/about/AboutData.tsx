@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MetaInput } from '../../lib/types'
+import { useFocusTrap } from '../../lib/useFocusTrap'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import type { PresenceState } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
@@ -56,6 +57,8 @@ function Provenance() {
 export default function AboutData({ onClose, state = 'open' }: { onClose: () => void; state?: PresenceState }) {
   const validation = useValidation()
   const closeRef = useRef<HTMLButtonElement | null>(null)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  useFocusTrap(dialogRef, true)
 
   useEffect(() => {
     closeRef.current?.focus()
@@ -69,6 +72,7 @@ export default function AboutData({ onClose, state = 'open' }: { onClose: () => 
   return (
     <div className="about__backdrop presence-fade" data-state={state} onClick={onClose}>
       <div
+        ref={dialogRef}
         className="about presence-rise"
         data-state={state}
         role="dialog"

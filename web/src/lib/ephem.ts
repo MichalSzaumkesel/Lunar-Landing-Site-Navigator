@@ -39,7 +39,7 @@ export function sampleAt(e: EphemFile, ms: number): SkySample | null {
   }
 
   const { startMs, endMs } = ephemCoverage(e);
-  if (ms < startMs || ms > endMs) {
+  if (Number.isNaN(ms) || ms < startMs || ms > endMs) {
     return null;
   }
 

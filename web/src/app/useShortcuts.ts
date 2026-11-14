@@ -26,6 +26,13 @@ const IGNORED_ROLES = new Set([
   'grid',
   'region',
   'application',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'radio',
+  'radiogroup',
+  'listbox',
+  'option',
 ])
 
 /**
@@ -98,13 +105,16 @@ export function useShortcuts(): void {
       const closestRegion = target?.closest?.(
         '[role="region"][tabindex], [role="region"][tabIndex]',
       )
-      const ancestorRole = closestGrid
-        ? 'grid'
-        : closestApp
-          ? 'application'
-          : closestRegion
-            ? 'region'
-            : null
+      const closestMenu = target?.closest?.('[role="menu"], [role="radiogroup"], [role="listbox"]')
+      const ancestorRole = closestMenu
+        ? 'menu'
+        : closestGrid
+          ? 'grid'
+          : closestApp
+            ? 'application'
+            : closestRegion
+              ? 'region'
+              : null
 
       const targetRole = target?.getAttribute?.('role') ?? ancestorRole
       const targetEditable = Boolean(
