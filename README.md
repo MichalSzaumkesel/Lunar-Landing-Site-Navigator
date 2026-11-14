@@ -42,7 +42,7 @@ Screenshots will be added after the final UI pass. Planned files (not yet in the
 - Two camera modes: surface observer and orbital overview; quick views toward the Sun or Earth.
 - Movable lander (arrow keys, Shift for larger steps) with the local horizon recalculated.
 - Sunlight heatmap over the patch and "Find sunniest spot" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
-- Earth disc textured with NASA Blue Marble imagery and placed from the ephemeris.
+- Earth disc textured with NASA Blue Marble imagery, placed from the ephemeris and oriented from `earth_orientation.json` when it is present (otherwise the orientation is labelled illustrative).
 
 ### Planning
 - Mission rules: stay length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 168 h, 240 h and 336 h stays.
@@ -55,6 +55,7 @@ Screenshots will be added after the final UI pass. Planned files (not yet in the
 ### Sharing and export
 - Share link: the workspace state (scenarios, dates, slip, observer height, view) is kept in the URL.
 - CSV export of the hourly time series (UTC time, Sun and Earth azimuth and elevation, visibility).
+- PNG export of a scenario card.
 - Dossier export for printing.
 - "Record video" in the demo narration, which saves a WebM file of the browser tab.
 
@@ -71,7 +72,7 @@ Screenshots will be added after the final UI pass. Planned files (not yet in the
 
 ## Quick Start
 
-Requirements: Node.js 20 or newer (24 recommended) and npm.
+Requirements: Node.js 20.19 or newer (CI uses 24) and npm.
 
 ```bash
 cd web
@@ -93,11 +94,12 @@ npm run gen:mocks  # regenerate the synthetic mock datasets
 ## Data
 
 - **Contract**: data files follow [docs/contract.md](docs/contract.md) (contract version 1.1.1). Times are UTC, angles in degrees, longitude east-positive, azimuth measured from north clockwise.
-- **Real and mock data**: the app reads real datasets from `web/public/data/` (`sites.json`, `ephem/`, `horizon/`, `terrain/`). The loader (`web/src/lib/loader.ts`) falls back to synthetic datasets in `web/public/data/mock/` for each site whose real files are missing, and `VITE_USE_MOCK=1` forces mock data everywhere.
+- **Real and mock data**: the app reads real datasets from `web/public/data/` (`sites.json`, `ephem/`, `horizon/`, `terrain/`, `earth_orientation.json`). The loader (`web/src/lib/loader.ts`) falls back to synthetic datasets in `web/public/data/mock/` for each site whose real files are missing, and `VITE_USE_MOCK=1` forces mock data everywhere.
 - **Labels**:
   - Synthetic data is marked with a `Synthetic data` badge.
   - Approximate values, including custom coordinates computed without the optional service, carry an `Approximate` badge.
   - Derived values (Earth phase, solar limb clipping, local terrain horizon) are labelled as derived.
+- **Heatmap**: the 3D sunlight heatmap is computed in the browser from the local terrain. The pipeline's `illum/` files (21 by 21 cells, approximate) are used for validation against NASA PGDA, not rendered by the app.
 - **Sources**: each real site lists its source URL in `sites.json`; the pipeline records its inputs in each file's `meta`.
 
 ## Environment Variables
@@ -128,11 +130,16 @@ The workflow [.github/workflows/deploy-web.yml](.github/workflows/deploy-web.yml
 ├── README.md                 # This file
 ├── CLAUDE.md                 # Shared project instructions
 ├── CRITICAL.md               # Cross-scope notices
+├── pipeline/                 # Data pipeline (Python, scope A)
+├── validation/               # Validation scripts, results and metric fixtures
 ├── .github/workflows/
 │   └── deploy-web.yml        # Deployment workflow
 ├── docs/
 │   ├── contract.md           # Data contract between the data and web scopes
 │   ├── demo-script.md        # Live demo script and 30-second video storyboard
+│   ├── pitch.md              # Pitch numbers and sources (scope A)
+│   ├── method.md             # Method notes
+│   ├── sources.md            # Source list with per-value URLs
 │   ├── scope-A-data.md       # Data and science scope brief
 │   ├── scope-B-web.md        # Web app scope brief
 │   ├── status-B.md           # Web app status notes

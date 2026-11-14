@@ -1,85 +1,41 @@
 # Status B (Web App & Demo)
 
-Lead: Claude (Opus). Last update: 2026-11-14 09:10 CET. First push done at 09:03.
+Lead: Claude (Opus). Last update: 2026-11-14, wave 9. Scope B work is complete; what remains needs the repo owner or a human.
 
-Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private, owner is the scope A human, B human has push but not admin access). `CRITICAL.md` has no notices.
+Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). PRs 1 to 13 are merged except PR 5.
 
-## Status 09:10
+## Built
 
-The web app runs end to end on three synthetic mock sites: sky plot, panorama, loupe, timeline with Play, countdowns, metrics, up to 4 cards, slip slider, Moon map, site library, window map, 3D view, Simple/Advanced modes with a tutorial, demo mode, share link, CSV and PNG export. 553 tests, typecheck, lint and the production build pass locally and on GitHub Actions (Linux). `main` has the shared set plus the merged scaffold (PR 1) and a lockfile fix (PR 2). **Deploy is not live:** the Pages step of the Deploy web workflow fails because GitHub Pages is not enabled on the repo. Enabling it needs the repo owner (Settings, Pages, Source: GitHub Actions), and private repos need a paid plan. Alternative: Vercel. Waiting for scope A: real data for apollo_11, a south pole site and an Artemis III region.
+- Static web app (Vite, React, TypeScript, d3, three, zustand), no backend, reading the real contract 1.1.1 data from `web/public/data/` (21 sites, `earth_orientation.json`) with a per-site fallback to labelled synthetic mocks.
+- Compare: up to 4 scenario cards, compare table, presets (Apollo 11 vs South Pole Artemis candidate region, South pole, Same site 14 days later), observer 2 m or 10 m, slip of +-60 days.
+- Sky and time: polar sky plot, panorama, loupe (visible fraction of the solar disc), elevation chart, shared relative time cursor with Play, Sun and Earth countdowns.
+- 3D view (lazy loaded): terrain, shadows, movable lander, local sunlight heatmap and Find sunniest spot (Web Workers), Earth texture oriented from `earth_orientation.json`.
+- Planning: mission rules and mission bar, window map (Web Worker), Moon map, site library, custom coordinates (client-side approximation, labelled `Approximate`).
+- Simple and Advanced modes, tutorial tour, demo mode and 30 s video variant with WebM recording, share link, CSV, card PNG and dossier export, optional sound (off by default).
+- Wording: only "Sun visible", "Sun below horizon", "Earth in view", "Earth below horizon"; "Artemis candidate region" everywhere (C-003); no power or link claims.
+- Wave 9: demo captions now show the app's own percentages (Sun visible and Earth in view of both cards; Sun visible before and after the 14-day slip), fallback names say "Artemis candidate region", and docs/demo-script.md and README.md were checked against the code.
 
-## Tasks
+## Verified
 
-| # | Task | Status | Notes |
-|---|---|---|---|
-| B0 | Scaffold, shell, state types, mocks, deploy | in progress | Vite 8 + React 19 + TS 7, vitest, d3, three, zustand. Shell and store done, typecheck green. Mocks are being generated (agy). Deploy workflow written but untested (no remote). |
-| B1 | Loader with real-to-mock fallback, `metrics.ts` | not started | ui-core. Needs `validation/fixtures/metrics_cases.json` from A. |
-| B2 | D3 polar sky plot | not started | ui-core. Placeholder in `components/sky/`. |
-| B3 | Timeline + Play | not started | ui-core. Store, rAF loop and a global transport bar exist (`state/`, `app/Transport.tsx`). |
-| B4 | Scenario cards + countdowns | not started | ui-core. |
-| B5 | Preset bar | basic version done | `app/PresetBar.tsx`, `config/presets.ts`. App opens into `southpole_landed`. |
-| B6 | Map + site library + custom lat/lon | not started | ui-features. |
-| B7 | 3D view | not started | After B2 and B3 work end to end. |
-| B8 | Slip slider, window finder, Planner/Explore | not started | Store already has slip and mode. |
-| B9 | Links, CSV, README, demo script, video | README draft done | |
+- `npm run typecheck`, `npm run lint` and `npm test` pass: 93 test files, 932 tests (wave 9, local, Windows). The production build and CI checks passed on GitHub Actions (Linux) for the previous merges.
+- The metrics in TypeScript match the shared fixtures (11 of 11) and the Python pipeline on real data (scope A, `web/public/data/validation.json`, 41 of 41 checks pass).
+- README links, scripts, files, env variables and feature claims were checked against the code in wave 9.
 
-## Decisions
+## Not verified / open
 
-- **Time cursor is shared and relative.** `cursorH` is hours from each scenario's effective window start, so cards with different dates (same site, new date) animate in lockstep. Playback loops at the shortest window.
-- **Provenance is explicit.** `SiteBundle.provenance` is `real | mock | custom_api | custom_approx`; badges derive from `meta.synthetic` / `meta.approximate`.
-- **Mock sites have no real source.** Their `source.url` is empty and their names start with `[MOCK]`. This is the only exception to rule 1 and it is labelled.
-- **Delegation.** See `web/DELEGATION.md`: boilerplate with a fixed spec goes to agy (Gemini 3.8 Flash, run by `web/scripts/agy/run-agy.ps1` with a watchdog), judgement work to Sonnet teammates, architecture stays with the lead.
-- **Custom-site fallback without an API.** The Sun's Moon-fixed direction is the same for every site, so a custom site can reuse the ephemeris of the nearest loaded site, rotated into the local frame. Earth parallax (at most about 0.26 deg) is ignored, so the result is `approximate`.
+- **No live URL.** The Deploy web workflow fails at the Pages step (404): GitHub Pages is not enabled. See requests below.
+- Not tested on the demo projector hardware; WebGL fallback is the Polar and Panorama views (see `docs/demo-script.md`).
+- No screenshots in the repository yet (README lists planned files).
+- The recorded 30 s video file does not exist yet; the recorder runs in the browser.
+- Numbers in `docs/pitch.md` (2027-01 window at the IM-2 site) differ from the default demo window (30 days from 2027-10-06); both come from the data, but they must not be mixed on stage.
+- The `illum/` files from scope A are used for validation only; the app computes its own heatmap.
 
-## Requests to other scope
+## Requests to scope A and the humans
 
-1. **Contract §2.3 example count.** `count: 18264` does not match the stated coverage. Hourly from 2026-12-01T00:00Z to 2028-12-31T23:00Z inclusive is 18288 samples (762 days). The loader reads `count` from the file, so A should write the true number; the example in the contract should be fixed in its next PR. The contract example also shows `contract_version` "1.0.0" in `meta` while the contract is 1.1.1.
-2. **Fixture shape for missing transitions.** Please state in the header of `metrics_cases.json` how "null plus reason `beyond_data`" is written (field names), so `metrics.ts` and the fixtures agree.
-3. **Optional custom-site service (`api/`), proposed by the human, not yet agreed.** Open points for A and both humans:
-   - `api/` has no owner in the CLAUDE.md table, and CLAUDE.md says "No backend". Changing that needs a PR approved by the other human.
-   - The response `{ site, horizon, ephem }` is a wrapper that is not in the contract. If kept, it needs a short §2.8, plus `meta.contract_version` 1.1.1 (the proposal says 1.0.0).
-   - Live Horizons fetching for 18288 samples cannot fit in 1 to 2 seconds (sequential requests, at least 1 s apart). Realistic options: derive the ephemeris from an already cached site by rotation (see Decisions), or precompute a Moon-centred Sun and Earth vector set once.
-   - The service needs CORS enabled for the web origin.
-   - B side: after the contract question is settled, `loadCustomSite(lat, lon)` in the loader tries `${VITE_API_URL}/api/custom-site` with a 4 s timeout, then falls back to the client-side approximation. B can build the fallback without waiting for A.
-
-4. **Optional new file: Earth orientation (proposed contract addition, not blocking).** The 3D view draws Earth with a real NASA Blue Marble texture, but which continent faces the Moon and the tilt of the axis are not in the contract, so today the texture rotation is decorative and the UI says so. Proposal for a new section (contract_version 1.2.0, additive, one global file because the Earth's appearance from the Moon is practically the same for every site): `data/earth_orientation.json` with `meta` (as §1, incl. `inputs` and the exact Horizons query), `start_utc`, `step_s` 3600, `count` (same grid as the ephemeris), `sub_lunar_lat_deg[]` and `sub_lunar_lon_deg[]` (the point on Earth that sees the Moon at the zenith; east-positive, -180..180) and `pole_pa_deg[]` (position angle of Earth's north pole as seen from the Moon, degrees east of celestial north). A should verify which Horizons observer-table quantities give these (sub-observer point and north-pole position angle for target Earth, observer at the Moon centre) and record them in `meta.inputs`. B renders it only if the file exists; otherwise the texture stays labelled illustrative.
-
-## Draft CRITICAL notice (second, for the contract addition above)
-
-Not sent. Same rules as C-001. Contract text changes go by a PR on `docs/contract.md` approved by scope A's human (not by agents).
-
-```
-### C-002 · Proposal: contract 1.2.0, add earth_orientation.json (optional)
-- Date (CET): <fill in when committed>
-- From: scope B
-- Affects: scope A (new file), contract (additive section)
-- Severity: nice-to-have (not blocking CP1 or CP2)
-- Contract: new section "Earth orientation", contract_version 1.2.0, see docs/status-B.md "Requests to other scope" item 4
-- What changed / what's wrong: the Earth texture orientation in the 3D view is currently illustrative.
-- Action required: A decides whether to produce `data/earth_orientation.json` after the 3 demo sites; if yes, A and B agree the field names in the PR.
-- Workaround until fixed: none needed, UI says "illustrative".
-- Status: open
-```
-
-## Draft CRITICAL notice
-
-Not sent. Review and commit to `main` yourself if you agree (agents never commit this file).
-
-```
-### C-001 · Ephemeris `count` in contract example is wrong
-- Date (CET): <fill in when committed>
-- From: scope B
-- Affects: scope A
-- Severity: must-fix-before-freeze
-- Contract: needs a fix in the next contract PR (example only, no format change)
-- What changed / what's wrong: contract §2.3 shows `count: 18264`. Hourly samples from 2026-12-01T00:00Z to
-  2028-12-31T23:00Z inclusive are 18288. The web loader reads `count` from each file.
-- Action required: write the real sample count in every ephem file; fix the example in the contract.
-- Workaround until fixed: none needed on B's side.
-- Status: open
-```
-
-## Open questions for the human
-
-- First push to the empty `main`: **decided, B's human does it after 09:00** (the agents commit and push nothing before that). Plan: the shared files (`CLAUDE.md`, `CRITICAL.md`, `docs/contract.md`, both scope files) as the first commit, then scope B's scaffold on a `b/*` branch. Scope A's human should be told so they do not push a competing first commit.
-- Static deploy: GitHub Pages on a private repo needs a paid plan and the owner's admin rights to enable. Vercel can deploy from a private repo with access granted by the owner. Which one?
+1. **Deploy (repo owner).** Enable GitHub Pages (Settings, Pages, Source: GitHub Actions; a private repo needs a paid plan) or deploy with Vercel (root `web`, build `npm run build`, output `dist`, `VITE_BASE=/`).
+2. **Contract PR 5 (1.2.0) is still open.** It needs scope A's human to approve it after the section 2.8 wording fix (`pole_pa_deg` is measured from the Moon's north pole, as in the C-002 ACK) and the section 2.6 grid orientation text. Until then the data files say 1.1.1.
+3. **Pins to contract 1.2.0 (scope A, after PR 5).** Bump `CONTRACT_VERSION` in `pipeline/common.py` and `validation/fixtures/build_metrics_cases.py`, rerun the generators and tests. Web reads `count` from files, not the version, so no web change is needed. The README states contract 1.1.1; update it to 1.2.0 with the same PR.
+4. **ACK lines for a human to add to `CRITICAL.md`** (agents do not edit it):
+   - C-003: `ACK scope B 2026-11-14 — UI copy, preset label, tests and demo captions say "Artemis candidate region"; no Artemis III landing date is implied. Names come from sites.json. Status: done.`
+   - C-004: `ACK scope B 2026-11-14 — the app does not render illum/ files; the 3D heatmap is computed in the browser from local terrain. If illum/ is rendered later, the orientation (row 0 = north, col 0 = west) and the Approximate badge will be used. Status: no action for B.`
+5. **Optional custom-site service (`api/`)** stays not agreed (no owner in CLAUDE.md, response wrapper not in the contract). The client-side fallback is in place, so nothing is blocked.
