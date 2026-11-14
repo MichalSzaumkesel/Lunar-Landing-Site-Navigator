@@ -5,6 +5,7 @@ import {
   DEFAULT_PRESET,
   DEFAULT_SPEED_H_PER_SEC,
   DEFAULT_START_UTC,
+  SIMPLE_DEFAULT_START_UTC,
   type Preset,
   type PresetScenario,
 } from '../config/presets'
@@ -53,6 +54,19 @@ export function assignScenarioIds(
   })
 }
 
+/** Swaps the untouched default scenario for the Simple one (a start with both Sun and Earth up); anything else stays. */
+export function withSimpleDefault(scenarios: Scenario[]): Scenario[] {
+  const base = DEFAULT_PRESET.scenarios[0]
+  const [only] = scenarios
+  const untouched =
+    scenarios.length === 1 &&
+    only.siteId === base.siteId &&
+    only.startUtc === DEFAULT_START_UTC &&
+    only.durationH === DEFAULT_DURATION_H &&
+    only.slipDays === 0
+  return untouched ? [{ ...only, startUtc: SIMPLE_DEFAULT_START_UTC }] : scenarios
+}
+
 const initialScenarios = assignScenarioIds(DEFAULT_PRESET.scenarios)
 
 export const useAppStore = create<AppStore>()((set, get) => ({
@@ -78,7 +92,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       mode,
       scenarios:
         mode === 'simple'
-          ? s.scenarios.map((sc) => (sc.slipDays !== 0 ? { ...sc, slipDays: 0 } : sc))
+          ? withSimpleDefault(s.scenarios.map((sc) => (sc.slipDays !== 0 ? { ...sc, slipDays: 0 } : sc)))
           : s.scenarios,
     })),
   setObserverHeight: (observerHeightM) =>

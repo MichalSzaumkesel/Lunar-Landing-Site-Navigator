@@ -27,7 +27,7 @@ describe('PlacePicker component', () => {
     vi.restoreAllMocks()
   })
 
-  it('renders one grouped, keyboard-operable list of all sites from dataSource', async () => {
+  it('shows the current place on a button that opens a searchable, keyboard-operable list', async () => {
     const mockSites = [
       {
         id: 'apollo_11',
@@ -102,43 +102,107 @@ describe('PlacePicker component', () => {
       await Promise.resolve()
     })
 
-    const rows = container.querySelectorAll<HTMLElement>('[role="option"]')
-    expect(rows).toHaveLength(3)
+    // Closed: one trigger with name and description, no list
+    const trigger = container.querySelector<HTMLButtonElement>('.place-trigger')!
+    expect(trigger.textContent).toContain('South Pole Site')
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(container.querySelector('[role="option"]')).toBeNull()
 
+    await act(async () => {
+      trigger.click()
+    })
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    const search = container.querySelector<HTMLInputElement>('.place-search')!
+    expect(document.activeElement).toBe(search)
+
+    const rows = () => Array.from(container.querySelectorAll<HTMLElement>('[role="option"]'))
+    expect(rows()).toHaveLength(3)
     // Leading "[MOCK] " is stripped; each row has one sentence built from the data
-    expect(rows[0].querySelector('.simple-place-row__title')?.textContent).toBe('Apollo 11')
-    expect(rows[0].querySelector('.simple-place-row__desc')?.textContent).toBe(
-      'Apollo landing site (US), near the equator.',
-    )
-    expect(rows[0].getAttribute('aria-selected')).toBe('false')
-    expect(rows[1].getAttribute('aria-selected')).toBe('true')
-    expect(rows[1].tabIndex).toBe(0)
-    expect(rows[0].tabIndex).toBe(-1)
-    expect(rows[2].querySelector('.simple-place-row__desc')?.textContent).toBe(
-      'Possible future landing zone, near the south pole.',
-    )
-
-    const groups = Array.from(container.querySelectorAll('.simple-place-group__heading')).map((g) => g.textContent)
-    expect(groups).toEqual(['Apollo landings', 'Other landers', 'Possible future landing zones'])
+    expect(rows()[0].querySelector('.place-option__name')?.textContent).toBe('Apollo 11')
+    expect(rows()[0].querySelector('.place-option__desc')?.textContent).toBe('Apollo landing site (US), near the equator.')
+    expect(rows()[1].getAttribute('aria-selected')).toBe('true')
+    expect(rows()[1].querySelector('.place-option__check')).not.toBeNull()
+    expect(rows()[0].querySelector('.place-option__check')).toBeNull()
+    const tabs = Array.from(container.querySelectorAll('.place-tab')).map((t) => t.textContent)
+    expect(tabs).toEqual(['All', 'Apollo landings', 'Other landers', 'Possible future landing zones'])
     expect(container.textContent).not.toContain('CLPS')
 
-    // Arrow keys move focus without changing the place
-    rows[1].focus()
+    // Arrow keys move the highlight, not the place
+    expect(search.getAttribute('aria-activedescendant')).toBe(rows()[1].id)
     await act(async () => {
-      rows[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
     })
-    expect(document.activeElement).toBe(rows[2])
+    expect(search.getAttribute('aria-activedescendant')).toBe(rows()[2].id)
     expect(updateSpy).not.toHaveBeenCalled()
 
-    // Click and Enter select
+    // Enter selects the highlighted row and closes
     await act(async () => {
-      rows[0].click()
-    })
-    expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'apollo_11' })
-    await act(async () => {
-      rows[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     })
     expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'artemis_region_1' })
+    expect(document.activeElement).toBe(trigger)
+
+    // Group chips filter, click selects
+    await act(async () => {
+      trigger.click()
+    })
+    const chip = Array.from(container.querySelectorAll<HTMLButtonElement>('.place-tab')).find((t) => t.textContent === 'Apollo landings')!
+    await act(async () => {
+      chip.click()
+    })
+    expect(rows()).toHaveLength(1)
+    await act(async () => {
+      rows()[0].click()
+    })
+    expect(updateSpy).toHaveBeenCalledWith('sc1', { siteId: 'apollo_11' })
+  })
+
+  it('searches by name and description, closes on Escape and on an outside press', async () => {
+    vi.spyOn(dataSource, 'loadSites').mockResolvedValue({
+      meta: { contract_version: '1.1.1', generated_utc: '2026-01-01T00:00:00Z', generator: 'test', synthetic: false, approximate: false, inputs: [] },
+      sites: [
+        { id: 'a', name: 'Alpha', category: 'apollo', mission: null, agency: null, country: 'US', lat_deg: 0, lon_deg: 0, elevation_m: 0, landing_date_utc: null, status: 'landed', region_radius_km: null, source: { title: 't', url: 'https://example.com' }, notes: '' },
+        { id: 'b', name: 'Beta', category: 'artemis_region', mission: null, agency: null, country: null, lat_deg: -89, lon_deg: 0, elevation_m: 0, landing_date_utc: null, status: 'candidate_region', region_radius_km: null, source: { title: 't', url: 'https://example.com' }, notes: '' },
+      ],
+    })
+    await act(async () => {
+      root.render(createElement(PlacePicker, { activeSiteId: 'a' }))
+    })
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    const trigger = container.querySelector<HTMLButtonElement>('.place-trigger')!
+    await act(async () => {
+      trigger.click()
+    })
+    const search = container.querySelector<HTMLInputElement>('.place-search')!
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+    await act(async () => {
+      setValue.call(search, 'south pole')
+      search.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    expect(Array.from(container.querySelectorAll('.place-option__name')).map((n) => n.textContent)).toEqual(['Beta'])
+    await act(async () => {
+      setValue.call(search, 'zzz')
+      search.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    expect(container.textContent).toContain('No places match')
+
+    await act(async () => {
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(trigger)
+
+    await act(async () => {
+      trigger.click()
+    })
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    await act(async () => {
+      document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    })
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 
   it('shows plain error with role="alert" and "Try again" button that reloads the site list when load fails', async () => {

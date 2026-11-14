@@ -15,7 +15,7 @@ const GROUP_OF: Record<SiteCategory, PlaceGroup['id']> = {
   artemis_region: 'future',
 }
 
-const GROUP_LABEL: Record<PlaceGroup['id'], string> = {
+export const GROUP_LABEL: Record<PlaceGroup['id'], string> = {
   apollo: 'Apollo landings',
   missions: 'Other landers',
   future: 'Possible future landing zones',
@@ -62,4 +62,14 @@ export function groupPlaces(sites: readonly Site[]): PlaceGroup[] {
       sites: sites.filter((s) => GROUP_OF[s.category] === id),
     }))
     .filter((g) => g.sites.length > 0)
+}
+
+/** Sites of one group (or all) whose name or description contains every word of the query, in data order. */
+export function filterPlaces(sites: readonly Site[], query: string, groupId: PlaceGroup['id'] | 'all'): Site[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  return sites.filter((site) => {
+    if (groupId !== 'all' && GROUP_OF[site.category] !== groupId) return false
+    const text = `${displayName(site)} ${placeDescription(site)}`.toLowerCase()
+    return words.every((w) => text.includes(w))
+  })
 }

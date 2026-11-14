@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_START_UTC } from '../config/presets'
+import { DEFAULT_START_UTC, SIMPLE_DEFAULT_START_UTC } from '../config/presets'
 import { DATA_END_MS, DATA_START_MS } from '../config/dataRange'
 import { decodeHeights } from '../viz3d/terrain'
 import { localSunlitGrid } from '../viz3d/localIllum'
@@ -12,6 +12,9 @@ import { isValidEarthOrientation } from './earthOrientation'
 import type { EarthOrientationFile } from './earthOrientation'
 import { findWindows } from './finder'
 import { computeMetrics } from './metrics'
+import { listSkyEvents } from './events'
+import { sampleAt } from './ephem'
+import { describeBody, pickMask } from '../components/sky/geometry'
 import { PRESET_SLIP } from '../config/presets'
 import { isValidEphem, isValidHorizon, isValidTerrain } from './loader'
 import type { EphemFile, HorizonFile, SitesFile, TerrainFile } from './types'
@@ -200,6 +203,22 @@ describe.skipIf(!hasReal)('real data files (scope A)', () => {
     const start = Date.parse(DEFAULT_START_UTC)
     expect(start).toBeGreaterThanOrEqual(DATA_START_MS)
     expect(start + 30 * 86_400_000).toBeLessThanOrEqual(DATA_END_MS)
+  })
+
+  it('Simple default: Sun and Earth both up at the first instant, shares 47.5 % and 77.2 %, both sets inside the window', () => {
+    const b = { horizon: read<HorizonFile>('horizon/southpole_landed.json'), ephem: read<EphemFile>('ephem/southpole_landed.json') }
+    const startMs = Date.parse(SIMPLE_DEFAULT_START_UTC)
+    const endMs = startMs + 30 * 86_400_000
+    const m = computeMetrics(b, { observerHeightM: 2, startMs, endMs })
+    expect(m?.pct_sunlit).toBeCloseTo(47.5, 0)
+    expect(m?.pct_earth).toBeCloseTo(77.2, 0)
+    const smp = sampleAt(b.ephem, startMs)!
+    const mask = pickMask(b, 2)
+    expect(describeBody(smp.sun, mask, b.horizon.az_step_deg, b.ephem.sun_ang_radius_deg).visible).toBe(true)
+    expect(describeBody(smp.earth, mask, b.horizon.az_step_deg, b.ephem.earth_ang_radius_deg).visible).toBe(true)
+    const ev = listSkyEvents(b, 2, startMs, endMs)
+    expect(ev.find((e) => e.kind === 'sunset')).toBeDefined()
+    expect(ev.find((e) => e.kind === 'earthset')).toBeDefined()
   })
 
   it('slip preset: 14-day mission at southpole_landed from 2027-01-01 and +14 days (pitch 4c)', () => {
