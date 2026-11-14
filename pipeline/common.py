@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -10,7 +11,7 @@ from pathlib import Path
 CONTRACT_VERSION = "1.1.1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "web" / "public" / "data"      # real data (scope A); mock/ belongs to scope B
-RAW_DIR = REPO_ROOT / "data" / "raw"                  # git-ignored downloads and API caches
+RAW_DIR = Path(os.environ["LLSN_RAW_DIR"]) if os.environ.get("LLSN_RAW_DIR") else REPO_ROOT / "data" / "raw"                  # git-ignored downloads and API caches
 
 MOON_RADIUS_KM = 1737.4
 SUN_ANG_RADIUS_DEG = 0.2666
