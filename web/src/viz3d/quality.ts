@@ -17,6 +17,8 @@ export interface TierSettings {
   pixelRatioCap: number
   /** Horizontal glare streak on the Sun (the cheap stand-in for bloom). */
   glare: boolean
+  /** Earth cloud layer (a separate image download). */
+  earthClouds: boolean
 }
 
 export const TIERS: Record<QualityTier, TierSettings> = {
@@ -34,6 +36,7 @@ export const TIERS: Record<QualityTier, TierSettings> = {
     anisotropy: 8,
     pixelRatioCap: 2,
     glare: true,
+    earthClouds: true,
   },
   medium: {
     farShadowMap: 1024,
@@ -49,6 +52,7 @@ export const TIERS: Record<QualityTier, TierSettings> = {
     anisotropy: 4,
     pixelRatioCap: 1.5,
     glare: true,
+    earthClouds: true,
   },
   low: {
     farShadowMap: 1024,
@@ -64,6 +68,7 @@ export const TIERS: Record<QualityTier, TierSettings> = {
     anisotropy: 1,
     pixelRatioCap: 1,
     glare: false,
+    earthClouds: false,
   },
 }
 
