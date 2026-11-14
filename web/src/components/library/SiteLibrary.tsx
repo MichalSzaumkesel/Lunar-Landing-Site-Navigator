@@ -243,7 +243,7 @@ export const SiteLibrary: FC<SiteLibraryProps> = ({
                             </a>
                           ) : (
                             <span className="site-row__no-source">
-                              {site.source.title || 'Mock data, no source'}
+                              {site.source.title || 'Synthetic test data, no source'}
                             </span>
                           )}
                         </div>

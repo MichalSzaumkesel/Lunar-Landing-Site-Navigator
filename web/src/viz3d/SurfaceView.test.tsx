@@ -211,7 +211,7 @@ describe('SurfaceView 3D View Fixes', () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
     })
     const text = container.textContent ?? ''
-    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sunlight map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery', 'sunniest']) {
+    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sun visible map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery', 'most Sun visible']) {
       expect(text).not.toContain(t)
     }
     const labels = Array.from(container.querySelectorAll('button')).map((b) => b.textContent)
@@ -364,7 +364,7 @@ describe('SurfaceView 3D View Fixes', () => {
 
     // Click Sunlight map toggle button
     const buttons = Array.from(container.querySelectorAll('button'))
-    const mapBtn = buttons.find((b) => b.textContent?.includes('Sunlight map'))
+    const mapBtn = buttons.find((b) => b.textContent?.includes('Sun visible map'))
     expect(mapBtn).toBeDefined()
 
     await act(async () => {
@@ -379,7 +379,7 @@ describe('SurfaceView 3D View Fixes', () => {
     const legend = container.querySelector('.surface__frame .surface__map-legend')
     expect(legend).not.toBeNull()
     expect(legend?.getAttribute('role')).toBe('img')
-    expect(legend?.getAttribute('aria-label')).toContain('Sunlight map colour scale')
+    expect(legend?.getAttribute('aria-label')).toContain('Sun visible map colour scale')
     expect(legend?.textContent).toContain('Sun visible')
 
     // Inspector readout should NOT have tabIndex
@@ -393,7 +393,7 @@ describe('SurfaceView 3D View Fixes', () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
     })
-    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sunlight map') as HTMLButtonElement
+    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sun visible map') as HTMLButtonElement
     expect(mapBtn.hasAttribute('data-loading')).toBe(false)
     await act(async () => {
       mapBtn.click()
@@ -431,7 +431,7 @@ describe('SurfaceView 3D View Fixes', () => {
     vi.useRealTimers()
   })
 
-  it('renders sunniest spot result card with role="status" and aria-live="polite"', async () => {
+  it('renders best spot result card with role="status" and aria-live="polite"', async () => {
     vi.mocked(bestSpotClientModule.findBestSpotAsync).mockResolvedValueOnce({
       result: {
         row: 10,
@@ -449,7 +449,7 @@ describe('SurfaceView 3D View Fixes', () => {
     })
 
     const findBtn = Array.from(container.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Find sunniest spot'),
+      b.textContent?.includes('Find spot with most Sun visible'),
     )
     expect(findBtn).toBeDefined()
 
@@ -461,7 +461,7 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(resultCard).not.toBeNull()
     expect(resultCard?.getAttribute('role')).toBe('status')
     expect(resultCard?.getAttribute('aria-live')).toBe('polite')
-    expect(resultCard?.getAttribute('aria-label')).toBe('Sunniest spot result')
+    expect(resultCard?.getAttribute('aria-label')).toBe('Best spot result')
   })
 
   it('displays "Outside ephemeris coverage" when search returns no result on out-of-range dates', async () => {
@@ -490,7 +490,7 @@ describe('SurfaceView 3D View Fixes', () => {
     })
 
     const findBtn = Array.from(container.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Find sunniest spot'),
+      b.textContent?.includes('Find spot with most Sun visible'),
     )
     expect(findBtn).toBeDefined()
 

@@ -416,7 +416,7 @@ describe('formatSimpleResultSentence', () => {
   })
   it('says the spot is already good when there is no gain', () => {
     expect(formatSimpleResultSentence({ eastM: 0, northM: 0 }, 0)).toBe(
-      'The current spot is already among the sunniest nearby.',
+      'The current spot is already among the best nearby for Sun visible.',
     )
   })
 })

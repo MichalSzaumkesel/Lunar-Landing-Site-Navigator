@@ -9,7 +9,7 @@ Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). P
 - Static web app (Vite, React, TypeScript, d3, three, zustand), no backend, reading the real contract 1.1.1 data from `web/public/data/` (21 sites, `earth_orientation.json`) with a per-site fallback to labelled synthetic mocks.
 - Compare: up to 4 scenario cards, compare table, presets (Apollo 11 vs South Pole Artemis candidate region, South pole, Same site 14 days later), observer 2 m or 10 m, slip of +-60 days.
 - Sky and time: polar sky plot, panorama, loupe (visible fraction of the solar disc), elevation chart, shared relative time cursor with Play, Sun and Earth countdowns.
-- 3D view (lazy loaded): terrain, shadows, movable lander, local sunlight heatmap and Find sunniest spot (Web Workers), Earth texture oriented from `earth_orientation.json`.
+- 3D view (lazy loaded): terrain, shadows, movable lander, Sun visible map and Find spot with most Sun visible (Web Workers), Earth texture oriented from `earth_orientation.json`.
 - Planning: mission rules and mission bar, window map (Web Worker), Moon map, site library, custom coordinates (client-side approximation, labelled `Approximate`).
 - Simple and Advanced modes, tutorial tour, demo mode and 30 s video variant with WebM recording, share link, CSV and dossier export, optional sound (off by default).
 - Wording: only "Sun visible", "Sun below horizon", "Earth in view", "Earth below horizon"; "Artemis candidate region" everywhere (C-003); no power or link claims.
@@ -17,7 +17,7 @@ Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). P
 
 ## Verified
 
-- `npm run typecheck`, `npm run lint` and `npm test` pass: 93 test files, 932 tests (wave 9, local, Windows). The production build and CI checks passed on GitHub Actions (Linux) for the previous merges.
+- `npm run typecheck`, `npm run lint` and `npm test` pass: 111 test files, 1079 tests (wave 57, local, Windows). The production build and CI checks passed on GitHub Actions (Linux) for the previous merges.
 - The metrics in TypeScript match the shared fixtures (11 of 11) and the Python pipeline on real data (scope A, `web/public/data/validation.json`, 41 of 41 checks pass).
 - README links, scripts, files, env variables and feature claims were checked against the code in wave 9.
 
@@ -25,7 +25,6 @@ Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). P
 
 - **No live URL.** The Deploy web workflow fails at the Pages step (404): GitHub Pages is not enabled. See requests below.
 - Not tested on the demo projector hardware; WebGL fallback is the Polar and Panorama views (see `docs/demo-script.md`).
-- No screenshots in the repository yet (README lists planned files).
 - The recorded 30 s video file does not exist yet; the recorder runs in the browser.
 - Numbers in `docs/pitch.md` (2027-01 window at the IM-2 site) differ from the default demo window (30 days from 2027-10-06); both come from the data, but they must not be mixed on stage.
 - The `illum/` files from scope A are used for validation only; the app computes its own heatmap.

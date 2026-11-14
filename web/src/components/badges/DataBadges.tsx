@@ -18,7 +18,7 @@ export const DataBadges: FC<DataBadgesProps> = ({ synthetic, approximate, notes 
       {synthetic && (
         <span
           className="badge badge--synthetic"
-          title="Fake data for interface development, not a measurement."
+          title="Synthetic test data for interface development, not a measurement."
         >
           Synthetic data
         </span>
