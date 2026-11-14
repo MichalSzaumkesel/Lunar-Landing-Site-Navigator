@@ -1,41 +1,14 @@
 /* Simple mode layout and components */
-/* One bordered card holds the place, the view switch, the diagram and the status. */
 .simple-view {
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 16px);
   width: 100%;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius, 10px);
-  padding: var(--space-4, 16px);
-}
-
-.simple-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3, 12px);
-}
-
-.simple-head__main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1, 4px);
-  min-width: 0;
-}
-
-.simple-head__aside {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 8px);
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .simple-places {
   position: relative;
-  max-width: 100%;
+  width: 100%;
 }
 
 .simple-place-loading {
@@ -49,12 +22,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  max-width: 100%;
-  min-height: 2.5rem;
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--space-3) var(--space-4);
   text-align: left;
-  background: var(--panel-2);
+  background: var(--panel);
   border: 1px solid var(--control-border);
   border-radius: var(--radius);
   color: var(--text);
@@ -105,7 +78,7 @@
   position: absolute;
   top: calc(100% + var(--space-2));
   left: 0;
-  width: min(32rem, calc(100vw - 3rem));
+  right: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
@@ -277,7 +250,7 @@
 .simple-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-4, 16px);
+  gap: var(--space-5, 24px);
   align-items: stretch;
 }
 
@@ -297,7 +270,7 @@
 .simple-sky-wrap {
   flex: 1;
   align-items: center;
-  background: var(--panel-2);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius, 10px);
   padding: var(--space-3, 12px);
@@ -361,11 +334,40 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4, 16px);
-  background: var(--panel-2);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius, 10px);
-  padding: var(--space-4, 16px);
+  padding: var(--space-5, 24px);
   min-width: 0;
+}
+
+.simple-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+}
+
+.simple-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+.simple-card__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.simple-card__aside {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .simple-card__window {
@@ -588,25 +590,32 @@
   animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
 }
 
-/* View switch above the diagram */
+/* View switch: compact segmented control in the stage's top-left corner, same row as the corner buttons. */
 .simple-view-switch {
+  position: absolute;
+  top: var(--space-2, 8px);
+  left: var(--space-2, 8px);
+  z-index: 2;
   display: flex;
-  gap: var(--space-1, 4px);
-  padding: var(--space-1, 4px);
-  background: var(--panel);
+  height: var(--corner-btn-size, 28px);
+  padding: 2px;
+  gap: 2px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
   border: 1px solid var(--line);
   border-radius: 999px;
-  align-self: flex-start;
 }
 
 .simple-view-switch__btn {
-  min-height: 2.25rem;
-  padding: 0 var(--space-4, 16px);
+  min-height: 0;
+  min-width: 0;
+  padding: 0 var(--space-3, 12px);
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1;
   cursor: pointer;
 }
 

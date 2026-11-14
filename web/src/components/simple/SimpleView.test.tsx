@@ -143,6 +143,17 @@ describe('SimpleView component', () => {
     // Place picker remains present
     const placePicker = container.querySelector('.simple-places')
     expect(placePicker).not.toBeNull()
+
+    // Picker sits above the card; the card title is plain text
+    const card = container.querySelector('.simple-card')
+    expect(card?.contains(placePicker)).toBe(false)
+    expect(container.querySelector('.simple-card__title')?.tagName).toBe('H2')
+    expect(container.querySelector('.simple-card button.place-trigger')).toBeNull()
+
+    // View switch lives inside the diagram frame
+    const wrap = container.querySelector('.simple-sky-wrap')
+    const labels = Array.from(wrap?.querySelectorAll('.simple-view-switch__btn') ?? []).map((b) => b.textContent)
+    expect(labels).toEqual(['Polar', 'Panorama', '3D'])
   })
 
   it('renders DataBadges in SimpleView card header for synthetic and approximate data', async () => {
