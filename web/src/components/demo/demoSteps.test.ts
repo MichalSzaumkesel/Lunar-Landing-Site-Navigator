@@ -347,10 +347,10 @@ describe('demoSteps', () => {
       )
     })
 
-    it('formatHoursWithUnit formats integers and decimals cleanly', () => {
-      expect(formatHoursWithUnit(24)).toBe('24 h')
+    it('formatHoursWithUnit uses one decimal for integers and decimals', () => {
+      expect(formatHoursWithUnit(24)).toBe('24.0 h')
       expect(formatHoursWithUnit(24.5)).toBe('24.5 h')
-      expect(formatHoursWithUnit(-0)).toBe('0 h')
+      expect(formatHoursWithUnit(-0)).toBe('0.0 h')
     })
 
     it('formatPercent uses one decimal and a space before the sign', () => {

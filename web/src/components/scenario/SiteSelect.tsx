@@ -1,23 +1,10 @@
 import { useEffect, useId, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { dataSource } from '../../lib/loader'
 import type { Site } from '../../lib/types'
 import { useAppStore } from '../../state/store'
 import { groupByCategory } from './cardLogic'
+import { loadCuratedSites } from './curatedSites'
 import './scenario.css'
-
-/** Curated sites, loaded once and shared by every card. */
-let sitesPromise: Promise<Site[]> | null = null
-function loadCuratedSites(): Promise<Site[]> {
-  sitesPromise ??= dataSource
-    .loadSites()
-    .then((f) => f.sites.filter((s) => s.category !== 'custom'))
-    .catch(() => {
-      sitesPromise = null
-      return []
-    })
-  return sitesPromise
-}
 
 /** In-place site switcher for one scenario card. */
 export function SiteSelect({ scenarioId, siteId }: { scenarioId: string; siteId: string }) {

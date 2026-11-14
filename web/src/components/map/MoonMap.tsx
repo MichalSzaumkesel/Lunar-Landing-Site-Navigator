@@ -107,7 +107,6 @@ export const MoonMap: FC<MoonMapProps> = ({
 
         const isNight = sunEl < 0
         const isNoEarth = earthEl < 0
-        const isHatch = isNoEarth && ((x + y) % 2 === 0)
 
         if (isNight) {
           // Night: dark translucent overlay
@@ -117,19 +116,12 @@ export const MoonMap: FC<MoonMapProps> = ({
           data[p + 3] = 175
         }
 
-        if (isHatch) {
-          // Light diagonal hatch where Earth elevation < 0
-          if (isNight) {
-            data[p] = 74
-            data[p + 1] = 144
-            data[p + 2] = 226
-            data[p + 3] = 190
-          } else {
-            data[p] = 80
-            data[p + 1] = 150
-            data[p + 2] = 235
-            data[p + 3] = 90
-          }
+        if (isNoEarth) {
+          // Subtle blue tint, stronger over the night shading so it stays readable
+          data[p] = isNight ? 40 : 80
+          data[p + 1] = isNight ? 80 : 150
+          data[p + 2] = isNight ? 150 : 235
+          data[p + 3] = isNight ? 190 : 45
         }
       }
     }

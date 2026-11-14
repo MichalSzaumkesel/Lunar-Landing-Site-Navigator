@@ -1,10 +1,11 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
-import { memo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { MouseEvent } from 'react'
+import { HOUR_MS } from '../../config/dataRange'
 import { MAX_SCENARIOS } from '../../config/dataRange'
 import type { SiteBundle } from '../../lib/types'
 import { useScenarioEvents } from '../../lib/useScenarioEvents'
-import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import { useOriginalMetrics, useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import type { SiteBundleStatus } from '../../lib/useSiteBundle'
 import { scenarioWindowMs } from '../../state/selectors'
@@ -21,7 +22,8 @@ import { MetricsPanel } from './MetricsPanel'
 import { ScenarioControls } from './ScenarioControls'
 import { SiteSelect } from './SiteSelect'
 import { SkyViews } from './SkyViews'
-import { formatSlip, formatWindow, siteSubtitle } from './cardLogic'
+import { CustomSiteNote } from './CustomSiteNote'
+import { formatSlip, formatWindow, siteSubtitle, slipChange } from './cardLogic'
 import { CompareTable } from '../compare'
 import './scenario.css'
 
@@ -42,6 +44,11 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   const events = useScenarioEvents(bundle, heightM)
   const { startMs, endMs } = scenarioWindowMs(scenario)
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
+  const original = useOriginalMetrics(bundle, heightM, startMs, endMs, scenario.slipDays)
+  const change = useMemo(
+    () => (metrics && original ? slipChange(metrics, original, (endMs - startMs) / HOUR_MS) : null),
+    [metrics, original, startMs, endMs],
+  )
   const { title, sub } = headingText(status, bundle)
 
   // Open by default at any card count: dates, slip and metrics are what a comparison needs.
@@ -102,10 +109,11 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
         </div>
       </header>
 
+      <Countdowns scenario={scenario} bundle={bundle} events={events} heightM={heightM} metrics={metrics} change={change} />
+      {bundle?.site.category === 'custom' && <CustomSiteNote site={bundle.site} scenarioId={scenario.id} />}
       <SkyViews scenarioId={scenario.id} siteName={bundle?.site.name ?? title} />
       <SkyReadout scenarioId={scenario.id} />
       <Timeline scenarioId={scenario.id} />
-      <Countdowns scenario={scenario} bundle={bundle} events={events} heightM={heightM} />
 
       <details
         className="card__more"
@@ -118,7 +126,7 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
       >
         <summary className="card__more-summary">Details and controls</summary>
         <EventChips scenario={scenario} bundle={bundle} events={events} heightM={heightM} />
-        <MetricsPanel scenario={scenario} bundle={bundle} heightM={heightM} />
+        <MetricsPanel scenario={scenario} bundle={bundle} heightM={heightM} change={change} />
         <ScenarioControls scenario={scenario} siteName={bundle?.site.name ?? title} />
       </details>
     </section>

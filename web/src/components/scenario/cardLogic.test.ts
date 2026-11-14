@@ -133,7 +133,7 @@ describe('metric rows', () => {
   it('formats window rows with units', () => {
     const rows = Object.fromEntries(windowMetricRows(metrics).map((r) => [r.key, r.value]))
     expect(rows.pct_sunlit).toBe('62.5 %')
-    expect(rows.longest_dark_h).toBe('132 h')
+    expect(rows.longest_dark_h).toBe('132.0 h')
     expect(rows.longest_no_earth_h).toBe('5.5 h')
     expect(rows.pct_both).toBe('31.3 %')
   })
@@ -148,3 +148,27 @@ describe('metric rows', () => {
   })
 })
 
+
+describe('slip change and nearest site', () => {
+  it('computes hours and percentage points against slip 0', async () => {
+    const { slipChange, formatChange } = await import('./cardLogic')
+    const now = { pct_sunlit: 60, pct_earth: 40 } as never
+    const orig = { pct_sunlit: 50, pct_earth: 45 } as never
+    const c = slipChange(now, orig, 200)
+    expect(c.sunPp).toBeCloseTo(10, 6)
+    expect(c.sunH).toBeCloseTo(20, 6)
+    expect(c.earthH).toBeCloseTo(-10, 6)
+    expect(formatChange(c.sunH, c.sunPp)).toBe('+20.0 h, +10.0 pp')
+  })
+
+  it('picks the closest curated site', async () => {
+    const { nearestSite } = await import('./cardLogic')
+    const sites = [
+      { id: 'a', name: 'A', lat_deg: -89, lon_deg: 0 },
+      { id: 'b', name: 'B', lat_deg: 0, lon_deg: 0 },
+    ]
+    expect(nearestSite(-88, 10, sites)?.id).toBe('a')
+    expect(nearestSite(1, 1, sites)?.id).toBe('b')
+    expect(nearestSite(0, 0, [])).toBeNull()
+  })
+})

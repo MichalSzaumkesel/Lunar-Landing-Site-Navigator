@@ -2,7 +2,7 @@
 import { DATA_END_MS, DATA_START_MS, DAY_MS, HOUR_MS } from '../../config/dataRange'
 import type { SkyEvent, SkyEventKind } from '../../lib/events'
 import type { ScenarioMetrics, Site, SiteCategory } from '../../lib/types'
-import { fmtNum } from '../sky/geometry'
+import { fmtHours, fmtNum } from '../sky/geometry'
 
 export const DURATION_DAYS = [3, 7, 10, 14, 30, 60] as const
 
@@ -187,7 +187,7 @@ export interface MetricRow {
 }
 
 const pct = (v: number) => `${fmtNum(v, 1)} %`
-const hours = (v: number) => `${fmtNum(v, Number.isInteger(v) ? 0 : 1)} h`
+const hours = fmtHours
 
 /** The two rows that follow the time cursor; null values show a dash. */
 export function cursorMetricRows(sunElDeg: number | null, sunClearanceDeg: number | null): MetricRow[] {
@@ -247,4 +247,55 @@ export function windowMetricRows(m: ScenarioMetrics): MetricRow[] {
       tip: 'pct_both: share of samples in the window where both the Sun and the Earth centres are above the terrain horizon.',
     },
   ]
+}
+
+// --- Change versus the original window (slip 0) ---
+
+export interface SlipChange {
+  sunH: number
+  sunPp: number
+  earthH: number
+  earthPp: number
+}
+
+/** Sun visible and Earth in view of the slipped window minus the same metrics at slip 0. */
+export function slipChange(now: ScenarioMetrics, original: ScenarioMetrics, windowH: number): SlipChange {
+  const sunPp = now.pct_sunlit - original.pct_sunlit
+  const earthPp = now.pct_earth - original.pct_earth
+  return { sunH: (sunPp / 100) * windowH, sunPp, earthH: (earthPp / 100) * windowH, earthPp }
+}
+
+const signedHours = (v: number) => `${fmtNum(v, 1, true)} h`
+const signedPp = (v: number) => `${fmtNum(v, 1, true)} pp`
+
+/** "+10.0 h, +1.4 pp" for one metric. */
+export function formatChange(hoursValue: number, pp: number): string {
+  return `${signedHours(hoursValue)}, ${signedPp(pp)}`
+}
+
+// --- Custom points ---
+
+const RAD = Math.PI / 180
+
+/** Great-circle distance between two surface points in km (Moon radius 1737.4 km). */
+export function surfaceDistanceKm(latA: number, lonA: number, latB: number, lonB: number): number {
+  const dLon = (lonB - lonA) * RAD
+  const c =
+    Math.sin(latA * RAD) * Math.sin(latB * RAD) +
+    Math.cos(latA * RAD) * Math.cos(latB * RAD) * Math.cos(dLon)
+  return 1737.4 * Math.acos(Math.max(-1, Math.min(1, c)))
+}
+
+/** The curated site closest to a point, or null when the list is empty. */
+export function nearestSite(
+  lat: number,
+  lon: number,
+  sites: readonly Pick<Site, 'id' | 'name' | 'lat_deg' | 'lon_deg'>[],
+): { id: string; name: string; distanceKm: number } | null {
+  let best: { id: string; name: string; distanceKm: number } | null = null
+  for (const s of sites) {
+    const d = surfaceDistanceKm(lat, lon, s.lat_deg, s.lon_deg)
+    if (!best || d < best.distanceKm) best = { id: s.id, name: s.name, distanceKm: d }
+  }
+  return best
 }

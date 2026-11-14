@@ -216,13 +216,7 @@
 }
 
 .map-legend__swatch--hatch {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--earth),
-    var(--earth) 2px,
-    transparent 2px,
-    transparent 6px
-  );
+  background: rgba(80, 150, 235, 0.3);
 }
 
 .map-legend__swatch--terminator {

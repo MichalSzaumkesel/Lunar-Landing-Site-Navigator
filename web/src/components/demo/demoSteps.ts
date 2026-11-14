@@ -6,6 +6,7 @@ import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
 import { scenarioWindowMs } from '../../state/selectors'
 import type { AppStore, Scenario } from '../../state/types'
 import { formatDuration } from '../scenario/cardLogic'
+import { fmtHours } from '../sky/geometry'
 import { triggerDemoCameraPan } from './cameraControl'
 
 export interface DemoStepContext {
@@ -32,10 +33,9 @@ export function appendDemoDataNotice(text: string, isSynthetic?: boolean): strin
   return `${text} (demo data)`
 }
 
-/** Formats whole hours or 1 decimal place with unit. */
+/** Formats hours with one decimal and a unit, e.g. "24.0 h". */
 export function formatHoursWithUnit(hours: number): string {
-  const norm = Object.is(hours, -0) ? 0 : hours
-  return Number.isInteger(norm) ? `${norm} h` : `${norm.toFixed(1)} h`
+  return fmtHours(hours)
 }
 
 /** Formats a percentage taken from the app's own metrics, one decimal, e.g. "6.8 %". */
