@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ScenarioMetrics, SiteBundle } from '../../lib/types'
-import type { Scenario } from '../../state/types'
+import type { AppStore, Scenario } from '../../state/types'
 import {
   DEMO_STEPS,
   appendDemoDataNotice,
   findFirstSunsetH,
+  findSunsetCursorH,
+  SUNSET_LEAD_H,
   formatHoursWithUnit,
   formatStep1Caption,
   formatStep2Caption,
@@ -200,8 +202,8 @@ describe('demoSteps', () => {
 
       const caption = formatStep3Caption(ctx)
 
-      // formatDuration(18.5) gives "19 h" (since rounded above 10h)
-      expect(caption).toContain('Sun sets in 19 h')
+      // Cursor sits 2 h before the sunset, so the caption counts from the cursor, like the card.
+      expect(caption).toContain('Sun sets in 2.0 h')
       expect(caption).toContain('Artemis region 1')
       expect(caption).not.toMatch(FORBIDDEN_WORDS)
     })
@@ -263,6 +265,36 @@ describe('demoSteps', () => {
       ]
       expect(findFirstSunsetH(scenario, events)).toBe(24)
       expect(findFirstSunsetH(scenario, [])).toBeNull()
+    })
+
+    it('findSunsetCursorH puts the cursor 2 h before the sunset and never before window start', () => {
+      const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
+      const t0 = Date.parse(scenario.startUtc)
+      const at = (h: number) => [{ kind: 'sunset' as const, ms: t0 + h * 3600000, utc: '' }]
+      expect(SUNSET_LEAD_H).toBe(2)
+      expect(findSunsetCursorH(scenario, at(184))).toBe(182)
+      expect(findSunsetCursorH(scenario, at(1))).toBe(0)
+      expect(findSunsetCursorH(scenario, [])).toBeNull()
+    })
+
+    it('step 3 sets the cursor 2 h before the sunset on the second card and asks for the loupe', () => {
+      const scenario = makeMockScenario('s2', 'artemis_region_1', 720)
+      const t0 = Date.parse(scenario.startUtc)
+      const events = [{ kind: 'sunset' as const, ms: t0 + 184 * 3600000, utc: '' }]
+      const ctx: DemoStepContext = {
+        scenarios: [makeMockScenario('s1', 'apollo_11'), scenario],
+        bundles: [null, null],
+        metrics: [null, null],
+        events: [[], events],
+      }
+      const step = DEMO_STEPS[2]
+      const store = { setPlaying: vi.fn(), setActiveScenario: vi.fn(), setCursorH: vi.fn() }
+      step.run(store as unknown as AppStore, ctx)
+      expect(step.showLoupe).toBe(true)
+      expect(store.setActiveScenario).toHaveBeenCalledWith('s2')
+      expect(store.setCursorH).toHaveBeenCalledWith(182)
+      expect(step.caption(ctx)).toContain('Sun sets in 2.0 h')
+      expect(DEMO_STEPS.filter((x) => x.showLoupe).length).toBe(1)
     })
 
     it('formatStep3Caption says "Sun sets in less than a minute" below 1 minute', () => {

@@ -19,6 +19,8 @@ export interface DemoStepContext {
 export interface DemoStep {
   id: string
   durationMs: number
+  /** Opens the sky loupe on the active card while this step is shown. */
+  showLoupe?: boolean
   run(store: AppStore, ctx?: DemoStepContext): void
   caption(ctx: DemoStepContext): string
 }
@@ -53,6 +55,18 @@ export function findFirstSunsetH(
   return Math.max(0, (firstSunset.ms - startMs) / HOUR_MS)
 }
 
+/** The step 3 cursor sits this long before the sunset, so the card shows a countdown, not zero. */
+export const SUNSET_LEAD_H = 2
+
+/** Cursor offset in hours for step 3: SUNSET_LEAD_H before the first sunset, never before window start. */
+export function findSunsetCursorH(
+  scenario?: Scenario,
+  events?: readonly SkyEvent[] | null,
+): number | null {
+  const sunsetH = findFirstSunsetH(scenario, events)
+  return sunsetH === null ? null : Math.max(0, sunsetH - SUNSET_LEAD_H)
+}
+
 /** Step 1 caption: names both sites from the scenario data. */
 export function formatStep1Caption(ctx: DemoStepContext): string {
   const site1 = ctx.bundles[0]?.site.name ?? ctx.scenarios[0]?.siteId ?? 'Apollo 11'
@@ -78,7 +92,9 @@ export function formatStep3Caption(ctx: DemoStepContext): string {
     const { startMs, endMs } = scenarioWindowMs(scenario)
     const firstSunset = events.find((e) => e.kind === 'sunset' && e.ms >= startMs && e.ms <= endMs)
     if (firstSunset) {
-      const hoursUntil = Math.max(0, (firstSunset.ms - startMs) / HOUR_MS)
+      // Same reference as the card countdown: the cursor position set by step 3.
+      const cursorMs = startMs + (findSunsetCursorH(scenario, events) ?? 0) * HOUR_MS
+      const hoursUntil = Math.max(0, (firstSunset.ms - cursorMs) / HOUR_MS)
       const countdownText =
         hoursUntil * 60 < 1 ? 'less than a minute' : formatDuration(hoursUntil)
       return appendDemoDataNotice(`${siteName}: Sun sets in ${countdownText}.`, ctx.isSynthetic)
@@ -168,6 +184,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   {
     id: 'step-3-sunset-countdown',
     durationMs: 6000,
+    showLoupe: true,
     run(store, ctx) {
       store.setPlaying(false)
       if (typeof document !== 'undefined') {
@@ -177,9 +194,10 @@ export const DEMO_STEPS: readonly DemoStep[] = [
         }
       }
       if (ctx && ctx.scenarios[1] && ctx.events[1]) {
-        const sunsetH = findFirstSunsetH(ctx.scenarios[1], ctx.events[1])
-        if (sunsetH !== null) {
-          store.setCursorH(sunsetH)
+        const cursorH = findSunsetCursorH(ctx.scenarios[1], ctx.events[1])
+        if (cursorH !== null) {
+          store.setActiveScenario(ctx.scenarios[1].id)
+          store.setCursorH(cursorH)
           return
         }
       }

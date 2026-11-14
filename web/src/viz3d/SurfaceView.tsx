@@ -51,11 +51,14 @@ function faceTitle(body: 'Sun' | 'Earth', mode: ViewMode, hasSample: boolean): s
   return `Turn the camera towards the ${body}`
 }
 
-function Badges({ bundle, edgeWarning }: { bundle: SiteBundle; edgeWarning?: boolean }) {
+// The far horizon comes from the site's horizon mask until the lander is moved; then the local patch alone is used.
+function Badges({ bundle, edgeWarning, moved }: { bundle: SiteBundle; edgeWarning?: boolean; moved: boolean }) {
   return (
     <div className="surface__badges">
       {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
-      <span className="badge badge--approximate">Approximate (terrain patch only)</span>
+      <span className="badge badge--approximate">
+        {moved ? 'Approximate (local terrain patch horizon)' : 'Local terrain patch + horizon mask'}
+      </span>
       {edgeWarning && <span className="badge badge--warn">Edge of the terrain data</span>}
     </div>
   )
@@ -551,7 +554,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
           role="img"
           aria-label={`3D view of ${bundle.site.name}, ${fmtUtc(cursorMs)}`}
         />
-        <Badges bundle={bundle} edgeWarning={isClamped} />
+        <Badges bundle={bundle} edgeWarning={isClamped} moved={!isAtOrigin} />
         <div className="surface__overlay surface__overlay--tl">
           <div className="surface__time">{fmtUtc(cursorMs)}</div>
           {sample && sunRead ? (
@@ -713,7 +716,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
         <div className="surface__result-card" role="status" aria-live="polite" aria-label="Sunniest spot result">
           <div className="surface__result-badges">
             {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
-            <span className="badge badge--approximate">Approximate (terrain patch only)</span>
+            <span className="badge badge--approximate">Approximate (local terrain patch horizon)</span>
           </div>
           <div className="surface__result-sentence">
             {formatResultSentence(

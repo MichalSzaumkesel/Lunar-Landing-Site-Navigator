@@ -205,6 +205,15 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(badgeTexts).toContain('Synthetic data')
   })
 
+  it('top badge says terrain patch plus horizon mask while the lander is at the site', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const texts = Array.from(container.querySelectorAll('.surface__badges .badge')).map((b) => b.textContent)
+    expect(texts).toContain('Local terrain patch + horizon mask')
+    expect(texts).not.toContain('Approximate (terrain patch only)')
+  })
+
   it('renders vertical exaggeration slider with aria-label="Vertical exaggeration"', async () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))

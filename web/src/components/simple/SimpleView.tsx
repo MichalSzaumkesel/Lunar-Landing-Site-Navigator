@@ -105,7 +105,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
             <div className="simple-card__titles">
               <div className="simple-card__title-row">
                 <h2 className="simple-card__title">{siteName}</h2>
-                {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} />}
+                {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
               </div>
               <p className="simple-card__window" title="UTC is world standard time, the same everywhere">
                 {formatWindowPlain(startMs, endMs)} · world time (UTC)

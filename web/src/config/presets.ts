@@ -40,11 +40,18 @@ export const PRESET_APOLLO_VS_ARTEMIS: Preset = {
   scenarios: [{ siteId: 'apollo_11' }, { siteId: 'artemis_region_1' }],
 }
 
+/** Slip preset window: 14 days from 2027-01-01; the 6.8 % and 94.0 % in its description are pinned in realData.test.ts. */
+const SLIP_START_UTC = '2027-01-01T00:00:00Z'
+const SLIP_DURATION_H = 336
+
 export const PRESET_SLIP: Preset = {
   id: 'same_site_slip',
   label: 'Same site, 14 days later',
-  description: 'The same south-pole site with the window slipped by two weeks.',
-  scenarios: [{ siteId: 'southpole_landed' }, { siteId: 'southpole_landed', slipDays: 14 }],
+  description: 'A 14-day mission from 2027-01-01: Sun visible 6.8 % of the time, and 94.0 % after a 14-day slip.',
+  scenarios: [
+    { siteId: 'southpole_landed', startUtc: SLIP_START_UTC, durationH: SLIP_DURATION_H },
+    { siteId: 'southpole_landed', startUtc: SLIP_START_UTC, durationH: SLIP_DURATION_H, slipDays: 14 },
+  ],
 }
 
 export const PRESETS: Preset[] = [PRESET_APOLLO_VS_ARTEMIS, PRESET_SOUTH_POLE, PRESET_SLIP]

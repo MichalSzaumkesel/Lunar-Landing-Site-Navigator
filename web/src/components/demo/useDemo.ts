@@ -60,6 +60,7 @@ export function useDemo(): DemoController {
     const step = steps[stepIndex]
     if (!step) return
 
+    useDemoStore.setState({ loupeOpen: step.showLoupe === true })
     const store = useAppStore.getState()
     step.run(store, ctxRef.current)
 

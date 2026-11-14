@@ -11,6 +11,8 @@ import { horizonFromTerrain } from '../viz3d/terrainHorizon'
 import { isValidEarthOrientation } from './earthOrientation'
 import type { EarthOrientationFile } from './earthOrientation'
 import { findWindows } from './finder'
+import { computeMetrics } from './metrics'
+import { PRESET_SLIP } from '../config/presets'
 import { isValidEphem, isValidHorizon, isValidTerrain } from './loader'
 import type { EphemFile, HorizonFile, SitesFile, TerrainFile } from './types'
 import { computeWindowMap, windowsFromRow } from './windowMap'
@@ -198,6 +200,21 @@ describe.skipIf(!hasReal)('real data files (scope A)', () => {
     const start = Date.parse(DEFAULT_START_UTC)
     expect(start).toBeGreaterThanOrEqual(DATA_START_MS)
     expect(start + 30 * 86_400_000).toBeLessThanOrEqual(DATA_END_MS)
+  })
+
+  it('slip preset: 14-day mission at southpole_landed from 2027-01-01 and +14 days (pitch 4c)', () => {
+    const bundle = { horizon: read<HorizonFile>('horizon/southpole_landed.json'), ephem: read<EphemFile>('ephem/southpole_landed.json') }
+    const [a, b] = PRESET_SLIP.scenarios
+    const run = (sc: typeof a) => {
+      const startMs = Date.parse(sc.startUtc ?? '') + (sc.slipDays ?? 0) * 86_400_000
+      return computeMetrics(bundle, { observerHeightM: 2, startMs, endMs: startMs + (sc.durationH ?? 0) * 3_600_000 })
+    }
+    const m0 = run(a)
+    const m14 = run(b)
+    expect(m0?.pct_sunlit).toBeCloseTo(6.8, 0)
+    expect(m0?.longest_dark_h).toBeCloseTo(313, -1)
+    expect(m14?.pct_sunlit).toBeCloseTo(94.0, 0)
+    expect(m14?.longest_dark_h).toBeCloseTo(20, -1)
   })
 
   it.each(['apollo_11', 'southpole_landed', 'artemis_region_2'])(
