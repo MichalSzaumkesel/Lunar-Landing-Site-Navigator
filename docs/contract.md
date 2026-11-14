@@ -1,6 +1,6 @@
 # Data contract
 
-`contract_version: 1.1.1`. Shared between scope A (produces data) and scope B (consumes it). Changes only via PR approved by the other human. Agents never edit this file.
+`contract_version: 1.3.0`. Shared between scope A (produces data) and scope B (consumes it). Changes only via PR approved by the other human. Agents never edit this file.
 
 The contract defines every file in `web/public/data/` and every metric, exactly. Scope A's pipeline (Python) produces the files. Scope B's web app (TypeScript) consumes them. Both implement §3 identically, and scope A's validator checks that they agree.
 
@@ -179,6 +179,34 @@ A local heatmap of `pct_sunlit` for a grid around the site, over a stated period
   "pct_sunlit": [[...], ...] }
 ```
 
+### 2.9 `basemap/` (map backgrounds, visual only; owner: scope A)
+
+Two images with a JSON sidecar each. No metric uses them.
+
+```json
+{ "meta": { ... },
+  "image": "basemap/southpole.png",
+  "projection": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +R=1737400 +units=m +no_defs",
+  "extent_m": [-304000, 304000, -304000, 304000],
+  "width": 2048, "height": 2048, "row0": "top",
+  "shading": { "sun_az_deg": 315, "sun_alt_deg": 35, "z_factor": 1.5, "az_reference": "..." },
+  "credit": "Hillshade: LRO LOLA LDEM_80S_40M (NASA PDS)" }
+```
+
+```json
+{ "meta": { ... },
+  "image": "basemap/global.jpg",
+  "projection": "equirectangular", "lon_range": [-180, 180], "lat_range": [-90, 90],
+  "width": 2048, "height": 1024, "row0": "top",
+  "shading": { ... },
+  "credit": "NASA's Scientific Visualization Studio, CGI Moon Kit (svs.gsfc.nasa.gov/4720)" }
+```
+
+- `southpole`: Moon-sphere south polar stereographic (same CRS as the horizon pipeline). `extent_m = [xmin, xmax, ymin, ymax]` are the outer pixel **edges**. Row 0 is the top edge (`y = ymax`), column 0 the left edge (`x = xmin`). Forward projection (R = 1 737 400 m, φ, λ in radians, λ east-positive): `ρ = 2R·tan(π/4 + φ/2)`, `x = ρ·sin λ`, `y = ρ·cos λ` (lon 0° is up, lon 90°E is right; local north points away from the pole). Pixel: `col = (x − xmin)/(xmax − xmin)·width`, `row = (ymax − y)/(ymax − ymin)·height`. Covers every site with |lat| ≥ 80°.
+- `global`: equirectangular, column 0 = lon −180° (left edge), row 0 = lat +90° (top edge).
+- `credit` must be visible in the UI while the image is shown. `meta.inputs` records the source URLs.
+- Size budget: `southpole.png` ≤ 2 MB, `global.jpg` ≤ 1.5 MB. The shading light is cartographic, not a real Sun position.
+
 ### 2.7 Mocks (owner: scope B)
 
 `web/public/data/mock/` mirrors the real structure (`sites.json`, `horizon/`, `ephem/`, `terrain/`) for 3 sites with the same IDs as the demo sites, with `meta.synthetic = true`. The web app picks real data per site when present and falls back to mock otherwise, showing the "synthetic" badge. `VITE_USE_MOCK=1` forces mocks everywhere.
@@ -250,5 +278,6 @@ Written by scope A **first**, before anything else. `validation/fixtures/metrics
 | Version | Date | Change |
 |---|---|---|
 | 1.0.0 | 2026-11-14 | Initial |
+| 1.3.0 | 2026-11-14 | §2.9 basemap files (additive, visual only). Numbered after PR #5 (§2.8, 1.2.0) |
 | 1.1.1 | 2026-11-14 | Link to CRITICAL.md; every contract change needs a CRITICAL notice |
 | 1.1.0 | 2026-11-14 | Compact JSON + lazy load; Horizons fetch rules; terrain heightmaps (§2.5); fixed demo site IDs; mocks owned by scope B |
