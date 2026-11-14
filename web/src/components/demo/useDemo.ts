@@ -1,26 +1,32 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTourStore } from '../help/tourState'
 import { useAppStore } from '../../state/store'
 import { useDemoStore } from './demoState'
+import type { DemoVariant } from './demoState'
 import { DEMO_STEPS } from './demoSteps'
 import type { DemoStep } from './demoSteps'
+import { planVideoSteps } from './videoScript'
 import { useDemoContext } from './useDemoContext'
 
 export interface DemoController {
   isActive: boolean
   stepIndex: number
+  variant: DemoVariant
   currentStep: DemoStep | undefined
   caption: string
-  startDemo: () => void
+  startDemo: (variant?: DemoVariant) => void
   stopDemo: () => void
+  setVariant: (variant: DemoVariant) => void
 }
 
 export function useDemo(): DemoController {
   const isActive = useDemoStore((s) => s.isActive)
   const stepIndex = useDemoStore((s) => s.stepIndex)
+  const variant = useDemoStore((s) => s.variant)
   const nextStep = useDemoStore((s) => s.nextStep)
   const storeStop = useDemoStore((s) => s.stopDemo)
   const storeStart = useDemoStore((s) => s.startDemo)
+  const setVariant = useDemoStore((s) => s.setVariant)
   const closeTour = useTourStore((s) => s.closeTour)
 
   const ctx = useDemoContext()
@@ -34,30 +40,42 @@ export function useDemo(): DemoController {
     storeStop()
   }, [storeStop])
 
-  const startDemo = useCallback(() => {
-    closeTour()
-    storeStart()
-  }, [closeTour, storeStart])
+  const startDemo = useCallback(
+    (v?: DemoVariant) => {
+      closeTour()
+      storeStart(v)
+    },
+    [closeTour, storeStart],
+  )
 
-  const currentStep = DEMO_STEPS[stepIndex]
+  const steps = useMemo(() => {
+    return variant === 'video30s' ? planVideoSteps(30000) : DEMO_STEPS
+  }, [variant])
+
+  const currentStep = steps[stepIndex]
 
   // Execute step action once per step and schedule timer for narration progression
   useEffect(() => {
     if (!isActive) return
-    const step = DEMO_STEPS[stepIndex]
+    const step = steps[stepIndex]
     if (!step) return
 
     const store = useAppStore.getState()
     step.run(store, ctxRef.current)
 
     const timer = setTimeout(() => {
-      nextStep(DEMO_STEPS.length)
+      if (variant === 'video30s' && stepIndex >= steps.length - 1) {
+        // Video finished after end card
+        stopDemo()
+      } else {
+        nextStep(steps.length)
+      }
     }, step.durationMs)
 
     return () => {
       clearTimeout(timer)
     }
-  }, [isActive, stepIndex, nextStep])
+  }, [isActive, stepIndex, steps, variant, nextStep, stopDemo])
 
   // Esc or any key stops the demo and leaves the app in a normal state
   useEffect(() => {
@@ -81,9 +99,11 @@ export function useDemo(): DemoController {
   return {
     isActive,
     stepIndex,
+    variant,
     currentStep,
     caption,
     startDemo,
     stopDemo,
+    setVariant,
   }
 }

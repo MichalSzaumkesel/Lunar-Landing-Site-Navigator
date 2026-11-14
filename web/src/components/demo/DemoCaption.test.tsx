@@ -104,4 +104,78 @@ describe('DemoCaption component', () => {
     expect(useDemoStore.getState().isActive).toBe(false)
     expect(container.querySelector('.demo-caption')).toBeNull()
   })
+
+  it('renders "Video 30 s" variant button and toggles variant on click', async () => {
+    await act(async () => {
+      root.render(createElement(DemoCaption))
+    })
+
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+
+    const variantBtn = container.querySelector<HTMLButtonElement>('[aria-label="Video 30 s variant"]')
+    expect(variantBtn).not.toBeNull()
+    expect(variantBtn?.textContent).toBe('Video 30 s')
+    expect(useDemoStore.getState().variant).toBe('normal')
+
+    await act(async () => {
+      variantBtn?.click()
+    })
+
+    expect(useDemoStore.getState().variant).toBe('video30s')
+    expect(variantBtn?.textContent).toBe('Standard demo')
+  })
+
+  it('renders "Record video" button next to "Video 30 s" button', async () => {
+    await act(async () => {
+      root.render(createElement(DemoCaption))
+    })
+
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+
+    const recordBtn = container.querySelector<HTMLButtonElement>('[aria-label="Record video"]')
+    expect(recordBtn).not.toBeNull()
+    expect(recordBtn?.textContent).toBe('Record video')
+
+    const actionsContainer = container.querySelector('.demo-caption__actions')
+    expect(actionsContainer).not.toBeNull()
+    const buttons = actionsContainer?.querySelectorAll('button')
+    expect(buttons?.length).toBe(2)
+  })
+
+  it('shows permission error message when recorder is declined', async () => {
+    // Mock getDisplayMedia throwing NotAllowedError
+    const mockGetDisplayMedia = vi.fn().mockRejectedValue(
+      new DOMException('Permission denied', 'NotAllowedError'),
+    )
+    vi.stubGlobal('navigator', {
+      mediaDevices: {
+        getDisplayMedia: mockGetDisplayMedia,
+      },
+    })
+    vi.stubGlobal('MediaRecorder', {
+      isTypeSupported: vi.fn(() => true),
+    })
+
+    await act(async () => {
+      root.render(createElement(DemoCaption))
+    })
+
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+
+    const recordBtn = container.querySelector<HTMLButtonElement>('[aria-label="Record video"]')
+    await act(async () => {
+      recordBtn?.click()
+    })
+
+    const textEl = container.querySelector('.demo-caption__text')
+    expect(textEl?.textContent).toBe(
+      'Recording needs permission to capture this tab. Nothing was saved.',
+    )
+  })
 })
