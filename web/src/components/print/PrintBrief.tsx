@@ -313,7 +313,7 @@ export function PrintBrief({
                     className="print-table__section-heading"
                     colSpan={1 + scenarioDataList.length}
                   >
-                    Mission Rules Evaluation
+                    Mission Rules Evaluation (mission interval from landing, not the full window)
                   </td>
                 </tr>
 
