@@ -6,6 +6,7 @@ import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
+import { useThrottledCursorH } from '../../viz3d/useThrottledCursorH'
 import { earthPhaseText, earthPhaseView } from './earthDisc'
 import { describeSky, earthStateText, fmtNum, fmtUtc, pickMask, sunStateText } from './geometry'
 import type { BodyReadout } from './geometry'
@@ -47,9 +48,9 @@ function BodyRow({ kind, state, tip, body, extra }: {
 }
 
 function ReadoutView({ scenario }: { scenario: Scenario }) {
-  const { bundle } = useSiteBundle(scenario.siteId)
+  const { status, bundle, error } = useSiteBundle(scenario.siteId)
   const heightM = useAppStore((s) => s.observerHeightM)
-  const cursorH = useAppStore((s) => s.cursorH)
+  const cursorH = useThrottledCursorH()
   const mask = useMemo(() => (bundle ? pickMask(bundle, heightM) : null), [bundle, heightM])
 
   const eclipses = useMemo(() => {
@@ -57,6 +58,22 @@ function ReadoutView({ scenario }: { scenario: Scenario }) {
     const { startMs, endMs } = ephemCoverage(bundle.ephem)
     return listEclipses(bundle.ephem, startMs, endMs + 1)
   }, [bundle])
+
+  if (status === 'error') {
+    return (
+      <div className="readout sky__readout sky__box--error" role="alert">
+        <span>{error ?? 'Failed to load site data'}</span>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.reload()
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   if (!bundle || !mask) {
     return <div className="readout sky__readout sky__readout--loading" aria-busy="true" />

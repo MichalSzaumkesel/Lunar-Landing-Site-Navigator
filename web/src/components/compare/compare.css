@@ -1,0 +1,266 @@
+/* Comparison table styles (W22) */
+
+.compare-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.compare-section--empty {
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: var(--space-2);
+}
+
+.compare-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.compare-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.compare-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.compare-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.compare-status-msg {
+  font-size: 0.875rem;
+  color: var(--both);
+  padding: 0 var(--space-2);
+}
+
+.compare-empty-msg,
+.compare-error-msg {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.compare-error-msg {
+  color: var(--warn);
+}
+
+.compare-loading {
+  padding: var(--space-4);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* Horizontal scroll inside table container only (mobile responsive) */
+.compare-container {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.compare-container:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.compare-table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.compare-th-criterion {
+  width: 220px;
+  min-width: 190px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compare-th-scenario {
+  min-width: 150px;
+  background: var(--panel);
+  text-align: right;
+  border-left: 1px solid var(--line);
+}
+
+.compare-th-scenario--active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compare-scenario-btn {
+  background: transparent;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  width: 100%;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  cursor: pointer;
+  border-radius: 4px;
+  min-height: auto;
+  min-width: auto;
+}
+
+.compare-scenario-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compare-scenario-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9375rem;
+}
+
+.compare-scenario-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.compare-scenario-active-badge {
+  font-size: 0.6875rem;
+  color: var(--both);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.compare-row-th {
+  background: var(--panel);
+  padding: 0;
+}
+
+.compare-sort-btn {
+  background: transparent;
+  border: none;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  border-radius: 0;
+  min-height: auto;
+  min-width: auto;
+  transition: background-color var(--motion-duration-fast) ease;
+}
+
+.compare-sort-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compare-sort-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.compare-sort-btn--active {
+  color: var(--sun);
+}
+
+.compare-sort-arrow {
+  font-size: 0.75rem;
+  margin-left: var(--space-2);
+  color: var(--sun);
+}
+
+.compare-sort-hint {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  opacity: 0.4;
+  margin-left: auto;
+}
+
+.compare-sort-btn:hover .compare-sort-hint {
+  opacity: 0.8;
+}
+
+.compare-cell {
+  text-align: right;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  white-space: nowrap;
+}
+
+/* Soft highlight of the better value per row (neutral wording "higher/lower", no verdict) */
+.compare-cell--better {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compare-value {
+  font-weight: 500;
+}
+
+.compare-cell--better .compare-value {
+  font-weight: 600;
+}
+
+.compare-tag {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: var(--space-2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--control-border);
+  color: var(--muted);
+  vertical-align: middle;
+  text-transform: lowercase;
+}
+
+/* Toggle button styling when used in board toolbar */
+.compare-toggle-btn.active {
+  background: var(--panel-2);
+  border-color: var(--muted);
+  color: var(--sun);
+}
