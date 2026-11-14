@@ -18,6 +18,16 @@
 .surface__canvas {
   position: absolute;
   inset: 0;
+  animation: surface-fade-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+@keyframes surface-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .surface__canvas canvas {
@@ -352,6 +362,7 @@
 
 /* Sunniest spot result card & notifications */
 .surface__result-card {
+  animation: surface-card-in var(--motion-duration-normal) var(--motion-ease-out);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -359,6 +370,17 @@
   background: var(--panel);
   border: 1px solid var(--sun);
   border-radius: var(--radius);
+}
+
+@keyframes surface-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .surface__result-badges {

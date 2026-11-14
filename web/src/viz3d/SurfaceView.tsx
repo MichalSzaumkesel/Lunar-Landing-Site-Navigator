@@ -697,7 +697,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       </div>
 
       {isSearching && (
-        <div className="surface__search-progress" aria-live="polite">
+        <div className="surface__search-progress" role="status" aria-live="polite">
           Searching for sunniest spot: {Math.round(searchProgress * 100)}%
         </div>
       )}
@@ -798,7 +798,7 @@ function SurfaceStage({ scenario, bundle, terrain, heights }: StageProps) {
       {showHeatmap && (
         <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
           {heatmapLoading ? (
-            <div className="surface__heatmap-loading" aria-busy="true">
+            <div className="surface__heatmap-loading" role="status" aria-busy="true">
               Computing sunlight map...
             </div>
           ) : heatmapGrid ? (
@@ -848,7 +848,7 @@ function SurfaceViewInner({ scenario }: { scenario: Scenario }) {
       </div>
     )
   } else if (status === 'loading' || !bundle) {
-    body = <div className="surface__frame surface__box surface__skeleton" aria-busy="true" aria-label="Loading 3D view" />
+    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading 3D view" />
   } else if (!terrain) {
     body = (
       <>
@@ -872,7 +872,7 @@ function SurfaceViewInner({ scenario }: { scenario: Scenario }) {
       </div>
     )
   } else if (heights.status !== 'ready' || !heights.heights) {
-    body = <div className="surface__frame surface__box surface__skeleton" aria-busy="true" aria-label="Loading terrain" />
+    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading terrain" />
   } else {
     body = (
       <SurfaceStage

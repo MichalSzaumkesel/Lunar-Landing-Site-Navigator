@@ -59,7 +59,7 @@ const SkyTop = memo(function SkyTop({ model }: { model: SkyModel }) {
   return (
     <g>
       <path className="sky__terrain" d={model.terrainPath} fillRule="evenodd" />
-      <path className="sky__horizon" d={model.horizonPath} />
+      <path key={model.horizonPath} className="sky__horizon" d={model.horizonPath} />
       <circle className="sky__rim" r={RIM_R} />
       {model.rings.map((ring) => {
         const p = polarToXY(45, ring.el, model.zoomEl, RIM_R, 0, 0)
