@@ -183,13 +183,13 @@ describe('ExportCardPngButton', () => {
   it('disables button with informative title when not on polar view tab', async () => {
     // Mount simulated tabs in DOM
     const polarTab = document.createElement('button')
-    polarTab.id = 'sky-views-sc1-tab-polar'
+    polarTab.id = ':r0:-tab-polar'
     polarTab.setAttribute('role', 'tab')
     polarTab.setAttribute('aria-selected', 'false')
     document.body.appendChild(polarTab)
 
     const tab3d = document.createElement('button')
-    tab3d.id = 'sky-views-sc1-tab-3d'
+    tab3d.id = ':r0:-tab-3d'
     tab3d.setAttribute('role', 'tab')
     tab3d.setAttribute('aria-selected', 'true')
     document.body.appendChild(tab3d)

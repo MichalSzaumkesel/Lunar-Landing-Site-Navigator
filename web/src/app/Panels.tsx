@@ -18,7 +18,7 @@ type TabId = (typeof TABS)[number]['id']
 
 /** Lower section of the Advanced layout: window map, Moon map and site library as tabs. */
 export function Panels() {
-  const [active, setActive] = useState<TabId>('window-map')
+  const [active, setActive] = useState<TabId>('sites')
   const refs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
