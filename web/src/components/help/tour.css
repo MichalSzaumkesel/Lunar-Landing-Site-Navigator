@@ -1,32 +1,38 @@
 /* Guided tour overlay, cutout and popover card */
-.tour-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.72);
-  pointer-events: none;
-  z-index: 890;
-  transition: opacity 150ms ease-out;
-}
-
-.tour-backdrop--off {
-  opacity: 0;
-}
-
-/* Frame is placed while hidden; only opacity animates */
+/* Spotlight frame: its huge shadow is the only dimming layer, always on while the tour is open.
+   Only its rect animates between steps, so the page is never exposed undimmed. */
 .tour-cutout {
   position: fixed;
   border-radius: var(--radius, 8px);
   pointer-events: none;
   z-index: 900;
-  border: 2px solid var(--earth, #4aa8ff);
-  opacity: 0;
-  transition: opacity 120ms ease-out;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
+  transition:
+    top 200ms ease-out,
+    left 200ms ease-out,
+    width 200ms ease-out,
+    height 200ms ease-out;
+  animation: tour-dim-in 150ms ease-out;
 }
 
-.tour-cutout--on {
+.tour-cutout::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--earth, #4aa8ff);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.tour-cutout--on::after {
   opacity: 1;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
-  transition-duration: 150ms;
+}
+
+@keyframes tour-dim-in {
+  from {
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0);
+  }
 }
 
 .tour-card {
@@ -129,8 +135,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tour-backdrop,
   .tour-cutout,
+  .tour-cutout::after,
   .tour-card {
     transition: none !important;
     animation: none !important;
