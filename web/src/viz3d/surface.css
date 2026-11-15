@@ -1097,7 +1097,7 @@
 .surface--simple .surface__frame {
   flex: 1 1 auto;
   height: auto;
-  min-height: 12rem;
+  min-height: 10rem;
 }
 
 .surface--simple .surface__controls > .surface__faces {
@@ -1106,6 +1106,8 @@
 
 .surface--simple .surface__side {
   flex: none;
+  /* room for the Face buttons' 3px focus margin, so the stage never gets a scroll overflow */
+  padding-bottom: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -667,26 +667,37 @@
 .simple-stage {
   width: 100%;
   aspect-ratio: 1;
+  /* Square, but never taller than what fits next to the header and the sticky Transport (same rule as the
+     Advanced 3D view), so the card needs no inner scrollbar and the 3D controls stay in view. */
+  max-height: max(24rem, calc(100dvh - 11rem));
   min-height: 0;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  overflow: auto;
-  /* The stage scrollbar must not sit under the corner buttons: they get their own row above. */
-  scrollbar-gutter: stable;
+  /* clip, not scroll: no scrollbar ever; the margin keeps the Face buttons' focus ring visible */
+  overflow: hidden;
+  overflow: clip;
+  overflow-clip-margin: 4px;
   margin-top: calc(var(--corner-btn-size, 32px) + var(--space-1, 4px));
   container-type: size;
 }
 
-/* Auto margins centre short views and let tall ones (3D with its controls) scroll from the top. */
+/* Auto margins centre short views; every view is sized to fit the stage. */
 .simple-stage > * {
   max-width: 100%;
+  max-height: 100%;
   margin-block: auto;
+}
+
+/* Polar: the square dial shrinks with the stage height instead of overflowing it. */
+.simple-stage .sky__frame {
+  width: min(100%, 100cqh);
 }
 
 @media (max-width: 600px) {
   .simple-stage {
     aspect-ratio: 4 / 5;
+    max-height: none;
   }
 }
 
@@ -713,6 +724,7 @@
 .simple-sky-wrap[data-fullscreen='true'] .simple-stage {
   flex: 1;
   aspect-ratio: auto;
+  max-height: none;
   height: auto;
   min-height: 0;
   align-items: center;
