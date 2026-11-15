@@ -85,7 +85,7 @@ function bell(t0, f, gain = 0.1, decay = 1.6, pan = 0) {
     add(i0 + k, v * (1 - pan) * 0.5 * 1.4, v * (1 + pan) * 0.5 * 1.4)
   }
 }
-function tick(t0, gain = 0.07) {
+function tick(t0, gain = 0.03) {
   const n = Math.floor(0.06 * SR), i0 = Math.floor(t0 * SR)
   for (let k = 0; k < n; k++) {
     const t = k / SR
@@ -95,8 +95,7 @@ function tick(t0, gain = 0.07) {
 }
 
 // --- events from the timeline and the capture metadata ------------------------------------------
-for (const s of SHOTS) if (starts[s.id] > 0) whoosh(starts[s.id] / FPS, s.id === 'end' ? 1.1 : 0.7, s.id === 'end' ? 0.13 : 0.09)
-whoosh(sec('hook', 104), 0.9, 0.08)
+for (const s of SHOTS) if (starts[s.id] > 0) whoosh(starts[s.id] / FPS, s.id === 'end' ? 0.8 : 0.5, s.id === 'end' ? 0.035 : 0.025)
 for (const [id, m] of Object.entries(meta.shots)) for (const c of m.clicks || []) tick(sec(id, c))
 for (const id of ['hook', 'surface']) {
   const fr = meta.shots[id]?.frames || []
