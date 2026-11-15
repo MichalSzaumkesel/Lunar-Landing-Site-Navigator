@@ -49,11 +49,11 @@ function cspPlugin(apiUrl?: string): Plugin {
   }
 }
 
-// VITE_BASE lets the same build run at "/" (Vercel, local) and at "/<repo>/" (GitHub Pages).
+// BASE_PATH (or legacy VITE_BASE) lets the same build run at "/" (dev, Vercel) and at "/<repo>/" (GitHub Pages).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiUrl = env.VITE_API_URL || process.env.VITE_API_URL
-  const base = env.VITE_BASE || process.env.VITE_BASE || '/'
+  const base = process.env.BASE_PATH || env.VITE_BASE || process.env.VITE_BASE || '/'
 
   return {
     base,
