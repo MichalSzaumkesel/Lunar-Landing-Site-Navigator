@@ -206,3 +206,25 @@ Listed in [web/package.json](web/package.json):
 ## How This Was Built
 
 The project was built for the NASA Space Apps Challenge 2026 (Rzeszów local event) by two people with a split of scope: the data scope covered elevation models, ephemerides and validation, and the web scope covered the interactive app and visualisation. Development was AI-assisted, with coding agents used for well-specified functions, tests and boilerplate, and the human leads reviewing the integration. Preparation was done locally before the official start; work in this repository began at 09:03 on 2026-11-14.
+
+## Use of AI
+
+This project was built with AI ("Super Intelligence") tools, as allowed by the NASA Space Apps rules.
+
+- **Tools:** Claude Code with Anthropic Claude models (Opus leads, Sonnet agent teammates) in both
+  the data and web scopes; the `agy` CLI with Google Gemini 3.8 Flash for well-specified web
+  boilerplate and read-only code reviews.
+- **What AI did:** most of the code (Python data pipeline, validation scripts, React/D3/three.js app,
+  tests), source research with a URL recorded for every value, documentation drafts, and the
+  30-second video pipeline (scripted screen capture, captions, code-synthesised audio).
+- **What people did:** the concept, the architecture and the feature map of the challenge brief; the
+  science specification the code had to follow (horizon formula, Moon-sphere projection, DEM choice,
+  disc sizes); the versioned data contract between pipeline and app (v1.0 to v1.3, each change
+  approved by the other person); the sourcing, labelling and wording rules; the choice of which model
+  did which job; coordination of the two workstreams through cross-scope notices; review and merge of
+  all 92 pull requests; and the live demo.
+- **Media:** the logo, favicon set and social card (`web/public/brand/`) were generated with Claude
+  Sonnet as SVG vector code; the wordmark is derived from the Inter typeface (SIL OFL 1.1). All other
+  imagery is NASA data (LOLA, SVS CGI Moon Kit, Blue Marble) or procedural geometry. The video's edit
+  and audio were made with AI tools; its end card and MP4 metadata say so.
+- All numbers shown come from NASA data and are checked by `validation/` (see `docs/method.md`).
