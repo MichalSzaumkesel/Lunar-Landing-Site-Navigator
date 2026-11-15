@@ -322,7 +322,13 @@ export function CompareTable({
                     >
                       <span className="compare-scenario-name">{title}</span>
                       <span className="compare-scenario-sub">{formatWindow(startMs, endMs)}</span>
-                      {isActive && <span className="compare-scenario-active-badge">Active</span>}
+                      {isActive ? (
+                        <span className="compare-scenario-active-badge">Active</span>
+                      ) : (
+                        <span className="compare-scenario-active-badge compare-scenario-active-badge--placeholder" aria-hidden="true">
+                          Active
+                        </span>
+                      )}
                     </button>
                   </th>
                 )

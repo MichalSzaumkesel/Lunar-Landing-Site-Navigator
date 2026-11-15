@@ -201,13 +201,12 @@
 /* Mission bar toolbar and controls */
 .tl__toolbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
   min-height: 2rem;
-  overflow-x: auto;
 }
 
 .tl__toggle {
@@ -217,11 +216,25 @@
 
 .tl__mission-info {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1) var(--space-2);
   font-size: 0.8125rem;
+  min-width: 0;
+}
+
+.tl__mission-utc,
+.tl__badge,
+.tl__apply-btn,
+.tl__release-check {
   white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  /* The info group takes its own full-width row under the toggle instead of scrolling sideways */
+  .tl__mission-info {
+    flex: 1 1 100%;
+  }
 }
 
 .tl__mission-utc {

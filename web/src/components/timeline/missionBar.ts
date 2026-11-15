@@ -85,3 +85,25 @@ export function evaluateMissionRulesAt(
     sunElAtLanding: res.sunElAtLanding,
   }
 }
+
+/** Rough text width in px for the 11-12 px semibold bar label (average glyph ~6.4 px). */
+export const BAR_LABEL_CHAR_PX = 6.4
+
+/**
+ * Mission bar label that fits `availPx`: the long form first, then shorter ones,
+ * ending with the bare status. The full wording stays in the tooltip and aria text.
+ */
+export function missionBarLabel(
+  valid: boolean,
+  failingRule: string | null,
+  textInside: boolean,
+  availPx: number,
+): string {
+  if (valid) return 'Rules met'
+  const rule = failingRule ?? ''
+  const candidates = textInside
+    ? [`Rules not met: ${rule}`, `Fail: ${rule}`, 'Rules not met', 'Fail']
+    : [`Fail: ${rule}`, 'Fail']
+  const fit = candidates.find((c) => c.length * BAR_LABEL_CHAR_PX <= availPx)
+  return fit ?? 'Fail'
+}

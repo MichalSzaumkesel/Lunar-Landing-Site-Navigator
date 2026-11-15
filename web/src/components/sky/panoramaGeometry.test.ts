@@ -3,6 +3,7 @@ import type { EphemFile, HorizonFile } from '../../lib/types'
 import {
   LOUPE_SIZE,
   PANO_H,
+  PANO_H_TALL,
   PANO_W,
   azToX,
   buildPanoramaModel,
@@ -12,6 +13,7 @@ import {
   loupeTerrainPath,
   loupeX,
   loupeY,
+  panoViewH,
   stripSegments,
 } from './panoramaGeometry'
 
@@ -123,5 +125,19 @@ describe('loupe', () => {
 
   it('returns nothing without a mask', () => {
     expect(loupeTerrainPath([], 0.5, 0)).toEqual({ fill: '', edge: '' })
+  })
+})
+
+describe('tall panorama plot', () => {
+  const t0 = Date.parse('2027-01-01T00:00:00Z')
+  const tall = buildPanoramaModel({ horizon, ephem }, 2, t0, t0 + 3 * 3_600_000, PANO_H_TALL)
+  const base = buildPanoramaModel({ horizon, ephem }, 2, t0, t0 + 3 * 3_600_000)
+  it('scales only the vertical axis', () => {
+    expect(tall.plotH).toBe(PANO_H_TALL)
+    expect(tall.xPerDeg).toBe(base.xPerDeg)
+    expect(tall.yPerDeg / base.yPerDeg).toBeCloseTo(PANO_H_TALL / PANO_H, 6)
+    expect(elToY(0, 5, PANO_H_TALL)).toBe(PANO_H_TALL)
+    expect(tall.terrainPath.endsWith(`L${PANO_W},${PANO_H_TALL}L0,${PANO_H_TALL}Z`)).toBe(true)
+    expect(panoViewH(PANO_H_TALL) / panoViewH()).toBeGreaterThan(1.5)
   })
 })

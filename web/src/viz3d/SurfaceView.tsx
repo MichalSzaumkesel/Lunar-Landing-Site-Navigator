@@ -1295,17 +1295,7 @@ function SurfaceViewInner({ scenario, simple, cornerSlot }: { scenario: Scenario
       <>
         <div className="surface__frame surface__box">
           <Corner slot={cornerSlot} />
-          No terrain for this site
-        </div>
-        <div className="surface__controls">
-          <button
-            type="button"
-            disabled
-            title="No terrain data for this site"
-            aria-label="No terrain data for this site"
-          >
-            Find spot with most Sun visible
-          </button>
+          No terrain for this site. The 3D controls and Find spot need terrain data.
         </div>
       </>
     )

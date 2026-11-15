@@ -174,6 +174,52 @@
   }
 }
 
+@media (max-width: 600px) {
+  /* Phone: badge and Stop share row 1, the caption gets row 2 with room reserved for three
+     lines so a step change never moves the app below. Recorder buttons are desktop-only. */
+  .demo-caption {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'badge controls'
+      'text text';
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .demo-caption__content {
+    display: contents;
+  }
+
+  .demo-caption__badge {
+    grid-area: badge;
+    justify-self: start;
+  }
+
+  .demo-caption__controls {
+    grid-area: controls;
+    width: auto;
+    flex-wrap: nowrap;
+  }
+
+  .demo-caption__actions[data-recorder-ui] {
+    display: none;
+  }
+
+  .demo-caption__text {
+    grid-area: text;
+    font-size: 0.875rem;
+    line-height: 1.35;
+    min-height: calc(3 * 1.35em);
+  }
+
+  .demo-caption__stop {
+    min-height: 2rem;
+    padding: var(--space-1) var(--space-3);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .demo-caption,
   .demo-caption__text {
