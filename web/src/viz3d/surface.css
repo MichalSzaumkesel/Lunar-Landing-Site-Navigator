@@ -733,89 +733,103 @@
 
 
 /*
- * Sunlight map toggle while the map is computing: two short bright segments ("comets") chase each
- * other along the button outline (offset-path on ::before / ::after, so layout is untouched).
- * --mapbtn-p is the leading comet's position on the outline. Its keyframes use different easing
- * per phase, so the pair speeds up and slows down every ~2 s, and --mapbtn-gap (the distance
- * to the second comet) breathes on its own period.
+ * Sunlight map toggle while the map computes: an absolutely positioned SVG ring (MapButtonRing) draws
+ * two bright segments that chase each other around the border. The overlay never affects layout; the
+ * button's own border stays as a static dim outline underneath.
  */
-@property --mapbtn-p {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: 0%;
-}
-
-@property --mapbtn-gap {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: 45%;
-}
-
-.surface__controls button.surface__mapbtn[data-loading] {
+.surface__controls button.surface__mapbtn {
   position: relative;
-  animation:
-    mapbtn-run 4.4s linear infinite,
-    mapbtn-gap 3.1s ease-in-out infinite;
 }
 
-.surface__controls button.surface__mapbtn[data-loading]::before,
-.surface__controls button.surface__mapbtn[data-loading]::after {
-  content: '';
+.surface__mapbtn-ring {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 26px;
-  height: 3px;
-  margin: 0;
-  border-radius: 2px;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  overflow: visible;
   pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(90deg, transparent, var(--sun) 55%, #fff6d6);
-  box-shadow: 0 0 6px 1px rgba(255, 194, 51, 0.65);
-  offset-path: inset(0 round 8px);
-  offset-rotate: auto;
-  offset-anchor: 100% 50%;
-  offset-distance: var(--mapbtn-p);
 }
 
-.surface__controls button.surface__mapbtn[data-loading]::after {
-  offset-distance: calc(var(--mapbtn-p) + var(--mapbtn-gap));
-}
-
-/* fast, slow, fast, slow: eased turns between phases, net one lap per 4.4 s */
-@keyframes mapbtn-run {
-  0% {
-    --mapbtn-p: 0%;
-    animation-timing-function: cubic-bezier(0.45, 0.2, 0.55, 0.9);
-  }
-  50% {
-    --mapbtn-p: 70%;
-    animation-timing-function: cubic-bezier(0.45, 0.1, 0.55, 0.8);
-  }
-  100% {
-    --mapbtn-p: 100%;
-  }
-}
-
-@keyframes mapbtn-gap {
-  0%,
-  100% {
-    --mapbtn-gap: 38%;
-  }
-  50% {
-    --mapbtn-gap: 54%;
-  }
+.surface__mapbtn-seg {
+  x: 1px;
+  y: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  rx: var(--radius, 8px);
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 2px;
+  stroke-linecap: round;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .surface__controls button.surface__mapbtn[data-loading] {
-    animation: none;
     border-color: var(--sun);
     background: rgba(255, 194, 51, 0.18);
   }
-  .surface__controls button.surface__mapbtn[data-loading]::before,
-  .surface__controls button.surface__mapbtn[data-loading]::after {
+  .surface__mapbtn-ring {
     display: none;
+  }
+}
+
+/* Lander popover: button under the full screen button, panel over the canvas */
+.surface__lander-pop {
+  position: absolute;
+  z-index: 3;
+  top: calc(var(--corner-btn-size, 32px) + 16px);
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - var(--corner-btn-size, 32px) - 24px);
+}
+
+.surface__lander-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 2rem;
+  padding: 0 0.6rem;
+  background: var(--panel);
+  flex: none;
+}
+
+.surface__lander-btn[aria-expanded='true'] {
+  border-color: var(--sun);
+  color: var(--sun);
+}
+
+.surface__lander-panel {
+  width: min(22rem, 100%);
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.4rem;
+  background: rgba(11, 14, 22, 0.94);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transform-origin: top right;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
+}
+
+.surface__lander-panel[data-state='closed'] {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  pointer-events: none;
+}
+
+.surface__lander-panel[data-state='open'] {
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface__lander-panel {
+    transition: none;
   }
 }
 
@@ -843,7 +857,7 @@
  * so nothing jumps while the sunlight map computes or a search runs.
  */
 .surface {
-  --surface-chrome: 19rem;
+  --surface-chrome: 21.5rem;
   --surface-h: clamp(15rem, calc(100dvh - var(--surface-chrome)), 60rem);
 }
 
@@ -939,76 +953,6 @@
 
 .surface__controls > .group[role='group'] select {
   min-height: 2.25rem;
-}
-
-/* Secondary readouts: collapsed row (always mounted so the keyboard nudge keeps working) */
-.surface__more {
-  border-top: 1px solid var(--line);
-}
-
-.surface__more-summary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2.25rem;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius);
-  cursor: pointer;
-  list-style: none;
-  font-weight: 600;
-}
-
-.surface__more-summary::-webkit-details-marker {
-  display: none;
-}
-
-.surface__more-summary::before {
-  content: '';
-  flex: none;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(-45deg);
-  transition: transform var(--motion-duration-fast, 120ms) ease;
-}
-
-.surface__more[open] > .surface__more-summary::before {
-  transform: rotate(45deg);
-}
-
-.surface__more-summary:hover {
-  background: var(--panel-2);
-}
-
-.surface__more-summary:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.surface__more-title {
-  flex: none;
-  white-space: nowrap;
-}
-
-.surface__more-sum {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.surface__more[open] > .surface__more-summary .surface__more-sum {
-  display: none;
-}
-
-.surface__more > .surface__lander-box,
-.surface__more > .surface__heatmap-panel {
-  margin-top: 0.4rem;
 }
 
 /* Phones: Transport is taller there, so the frame gives more height back */
@@ -1108,12 +1052,6 @@
   flex: none;
   /* room for the Face buttons' 3px focus margin, so the stage never gets a scroll overflow */
   padding-bottom: 3px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .surface__more-summary::before {
-    transition: none;
-  }
 }
 
 /* Simple, roomy stage: toggle and Face buttons share one row */

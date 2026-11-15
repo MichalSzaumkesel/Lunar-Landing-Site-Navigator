@@ -211,7 +211,7 @@ describe('SurfaceView 3D View Fixes', () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
     })
     const text = container.textContent ?? ''
-    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sun visible map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery', 'most Sun visible']) {
+    for (const t of ['Offset', 'Terrain height', 'Radius', 'Sun visible hours', 'Approximate', 'Sunlight map', 'Reset position', 'Sun el', 'Earth lit', 'Terrain:', 'Earth imagery', 'most Sun visible']) {
       expect(text).not.toContain(t)
     }
     const labels = Array.from(container.querySelectorAll('button')).map((b) => b.textContent)
@@ -378,7 +378,7 @@ describe('SurfaceView 3D View Fixes', () => {
 
     // Click Sunlight map toggle button
     const buttons = Array.from(container.querySelectorAll('button'))
-    const mapBtn = buttons.find((b) => b.textContent?.includes('Sun visible map'))
+    const mapBtn = buttons.find((b) => b.textContent?.includes('Sunlight map'))
     expect(mapBtn).toBeDefined()
 
     await act(async () => {
@@ -393,7 +393,7 @@ describe('SurfaceView 3D View Fixes', () => {
     const legend = container.querySelector('.surface__frame .surface__map-legend')
     expect(legend).not.toBeNull()
     expect(legend?.getAttribute('role')).toBe('img')
-    expect(legend?.getAttribute('aria-label')).toContain('Sun visible map colour scale')
+    expect(legend?.getAttribute('aria-label')).toContain('Sunlight map colour scale')
     expect(legend?.textContent).toContain('Sun visible')
 
     // Inspector readout should NOT have tabIndex
@@ -407,7 +407,7 @@ describe('SurfaceView 3D View Fixes', () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
     })
-    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sun visible map') as HTMLButtonElement
+    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sunlight map') as HTMLButtonElement
     expect(mapBtn.hasAttribute('data-loading')).toBe(false)
     await act(async () => {
       mapBtn.click()
@@ -418,6 +418,50 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(container.querySelector('.surface__heatmap-panel')).toBeNull()
     expect(container.textContent).not.toContain('Computing sunlight map...')
     spy.mockRestore()
+  })
+
+  it('draws the loading outline as an aria-hidden SVG overlay with two segments, only while computing', async () => {
+    const spy = vi.spyOn(localIllumClientModule, 'localSunlitGridAsync').mockReturnValue(new Promise(() => {}))
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    const mapBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Sunlight map') as HTMLButtonElement
+    expect(mapBtn.querySelector('.surface__mapbtn-ring')).toBeNull()
+    await act(async () => {
+      mapBtn.click()
+    })
+    const ring = mapBtn.querySelector('svg.surface__mapbtn-ring')
+    expect(ring?.getAttribute('aria-hidden')).toBe('true')
+    const segs = ring?.querySelectorAll('rect')
+    expect(segs?.length).toBe(2)
+    expect(segs?.[0].getAttribute('pathLength')).toBe('100')
+    expect(mapBtn.textContent).toBe('Sunlight map')
+    spy.mockRestore()
+  })
+
+  it('moves the lander readouts into a popover on the frame that opens, closes with Escape and returns focus', async () => {
+    await act(async () => {
+      root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+    })
+    expect(container.querySelector('details.surface__more')).toBeNull()
+    const panel = container.querySelector('.surface__frame .surface__lander-panel') as HTMLElement
+    expect(panel).not.toBeNull()
+    expect(panel.getAttribute('data-state')).toBe('closed')
+    expect(panel.querySelector('.surface__nudge-control')).not.toBeNull()
+    expect(container.querySelector('.surface__controls .surface__nudge-control')).toBeNull()
+    const btn = container.querySelector('.surface__lander-btn') as HTMLButtonElement
+    expect(btn.getAttribute('aria-expanded')).toBe('false')
+    await act(async () => {
+      btn.click()
+    })
+    expect(btn.getAttribute('aria-expanded')).toBe('true')
+    expect(panel.getAttribute('data-state')).toBe('open')
+    expect(document.activeElement).toBe(panel.querySelector('.surface__nudge-control'))
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(panel.getAttribute('data-state')).toBe('closed')
+    expect(document.activeElement).toBe(btn)
   })
 
   it('a quick click on Face the Sun shows no hold visuals, a long press does', async () => {

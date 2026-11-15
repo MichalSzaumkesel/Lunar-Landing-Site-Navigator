@@ -12,7 +12,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 
 ![3D terrain view with lander](docs/screenshots/03-surface-3d.png)
 
-![Sun visible map and "Find spot with most Sun visible" result](docs/screenshots/04-sunniest-spot.png)
+![Sunlight map and "Find spot with most Sun visible" result](docs/screenshots/04-sunniest-spot.png)
 
 ![Window finder for the mission rules](docs/screenshots/05-window-map.png)
 
@@ -44,7 +44,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Shadows updated from the Sun position at the time cursor.
 - Two camera modes: On the surface and Overview; quick views and tracking lock toward the lander, Sun or Earth.
 - Movable lander (arrow keys, Shift for larger steps) with the local horizon recalculated.
-- "Sun visible map" over the patch and "Find spot with most Sun visible" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
+- "Sunlight map" over the patch and "Find spot with most Sun visible" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
 - Earth disc textured with NASA Blue Marble imagery, placed from the ephemeris and oriented from `earth_orientation.json` when it is present (otherwise the orientation is labelled illustrative).
 
 ### Planning

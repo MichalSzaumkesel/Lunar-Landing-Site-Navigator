@@ -9,7 +9,7 @@ Remote: `origin` is `MichalSzaumkesel/Lunar-Landing-Site-Navigator` (private). P
 - Static web app (Vite, React, TypeScript, d3, three, zustand), no backend, reading the real contract 1.1.1 data from `web/public/data/` (21 sites, `earth_orientation.json`) with a per-site fallback to labelled synthetic mocks.
 - Compare: up to 4 scenario cards, compare table, presets (Apollo 11 vs South Pole Artemis candidate region, South pole, Same site 14 days later), observer 2 m or 10 m, slip of +-60 days.
 - Sky and time: polar sky plot, panorama, loupe (visible fraction of the solar disc), elevation chart, shared relative time cursor with Play, Sun and Earth countdowns.
-- 3D view (lazy loaded): terrain, shadows, movable lander, Sun visible map and Find spot with most Sun visible (Web Workers), Earth texture oriented from `earth_orientation.json`.
+- 3D view (lazy loaded): terrain, shadows, movable lander, Sunlight map and Find spot with most Sun visible (Web Workers), Earth texture oriented from `earth_orientation.json`.
 - Planning: mission rules and mission bar, window map (Web Worker), Moon map, site library, custom coordinates (client-side approximation, labelled `Approximate`).
 - Simple and Advanced modes, tutorial tour, demo mode and 30 s video variant with WebM recording, share link, CSV and dossier export, optional sound (off by default).
 - Wording: only "Sun visible", "Sun below horizon", "Earth in view", "Earth below horizon"; "Artemis candidate region" everywhere (C-003); no power or link claims.
