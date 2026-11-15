@@ -226,9 +226,9 @@ const shots = {
     }
     // Numbers and the sentence are read from the screen, never typed.
     const read = await page.evaluate(() => {
-      const leaf = [...document.querySelectorAll('*')].filter((e) => e.children.length <= 2 && /^Sun visible \d/.test((e.textContent || '').trim()))
+      const leaf = [...document.querySelectorAll('*')].filter((e) => e.children.length <= 2 && /^Sun visible[\s ]+\d/.test((e.textContent || '').trim()))
       const tiles = leaf.filter((e) => !leaf.some((o) => o !== e && e.contains(o)))
-      const vals = tiles.map((e) => (e.textContent.match(/Sun visible (\d+(?:\.\d+)?) %/) || [])[1])
+      const vals = tiles.map((e) => (e.textContent.match(/Sun visible[\s ]+(\d+(?:\.\d+)?)[\s ]*%/) || [])[1])
       const box = (e) => { let t = e; while (t.parentElement && t.getBoundingClientRect().height < 40) t = t.parentElement; const r = t.getBoundingClientRect(); return [r.x, r.y, r.width, r.height] }
       // the strip of the slipped (last) card
       const cells = [...document.querySelectorAll('.slipstrip__cells')].pop()
@@ -241,7 +241,7 @@ const shots = {
       const lastNote = noteEls[noteEls.length - 1]?.getBoundingClientRect()
       return { vals, boxes: tiles.map(box), notes, strip: strip && [strip.x, strip.y, strip.width, strip.height], note: note && lastNote && [note.x, note.y, Math.max(note.width, lastNote.width), lastNote.bottom - note.y] }
     })
-    if (read.vals.length < 2 || !read.strip) throw new Error('slip shot: could not read tiles or strip: ' + JSON.stringify(read))
+    if (read.vals.length < 2 || read.vals.some((v) => !v) || !read.strip) throw new Error('slip shot: could not read tiles or strip: ' + JSON.stringify(read))
     meta.vars.slipA = `${read.vals[0]} %`
     meta.vars.slipB = `${read.vals[1]} %`
     meta.vars.slipNote = read.notes.join(' ')
