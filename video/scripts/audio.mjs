@@ -97,17 +97,7 @@ function tick(t0, gain = 0.03) {
 // --- events from the timeline and the capture metadata ------------------------------------------
 for (const s of SHOTS) if (starts[s.id] > 0) whoosh(starts[s.id] / FPS, s.id === 'end' ? 0.8 : 0.5, s.id === 'end' ? 0.035 : 0.025)
 for (const [id, m] of Object.entries(meta.shots)) for (const c of m.clicks || []) tick(sec(id, c))
-for (const id of ['hook', 'surface']) {
-  const fr = meta.shots[id]?.frames || []
-  for (let k = 1; k < fr.length; k++) {
-    if (fr[k].s !== undefined && fr[k].s !== fr[k - 1].s) {
-      bell(sec(id, k), st(43), 0.06, 0.7, -0.2) // E5
-      bell(sec(id, k) + 0.16, st(40), 0.06, 0.9, 0.2) // C#5
-    }
-  }
-}
-bell(sec('hook', 162), st(36), 0.1, 1.5) // A4 on the title
-bell(sec('hook', 162) + 0.02, st(43), 0.05, 1.3, 0.3)
+// No bells on Sun state changes or on cuts; only the soft end-card chord below.
 bell(sec('end', 4), st(36), 0.12, 2.0)
 bell(sec('end', 4) + 0.03, st(40), 0.07, 1.8, -0.3)
 bell(sec('end', 4) + 0.06, st(43), 0.06, 1.8, 0.3)

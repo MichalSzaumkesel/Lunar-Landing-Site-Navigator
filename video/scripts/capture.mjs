@@ -355,7 +355,7 @@ const shots = {
     await rec.start()
     await page.evaluate(() => window.__vid.store.getState().setPlaying(true))
     await rec.tick(rec.max)
-    rec.out.cam = [{ f: 0, cx: 960, cy: 540, z: 1.0 }, { f: 44, cx: 960, cy: 560, z: 1.07 }]
+    rec.out.cam = [{ f: 0, cx: 960, cy: 540, z: 1.0 }, { f: 59, cx: 960, cy: 560, z: 1.07 }]
     rec.finish()
     await env.ctx.close()
   },

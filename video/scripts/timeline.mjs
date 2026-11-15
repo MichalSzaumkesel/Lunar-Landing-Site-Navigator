@@ -10,8 +10,8 @@ export const SHOTS = [
   { id: 'slip', frames: 150 }, // 13.0 - 18.0 s same site 14 days later + slip tolerance strip
   { id: 'surface', frames: 110 }, // 18.0 - 21.7 s 3D first person, hold-to-lock on the Sun, sunset
   { id: 'sunmap', frames: 85 }, // 21.7 - 24.5 s Sunlight map, overview orbit
-  { id: 'simple', frames: 45 }, // 24.5 - 26.0 s Simple mode
-  { id: 'end', frames: 118 }, // 26.0 - 29.93 s end card (background: a still from `hook`)
+  { id: 'simple', frames: 60 }, // 24.5 - 26.0 s Simple mode
+  { id: 'end', frames: 103 }, // 26.0 - 29.93 s end card (background: a still from `hook`)
 ]
 
 export const TOTAL_FRAMES = SHOTS.reduce((a, s) => a + s.frames, 0)
@@ -30,14 +30,13 @@ export function shotStarts() {
 // kind: 'lower' (lower third), 'big' (centre, large), 'title' (project title sting).
 export const CAPTIONS = [
   // Reading time budget: about 0.35 s per word plus 1 s, so every caption stays on screen for most of its shot.
-  { shot: 'hook', at: 6, to: 110, kind: 'lower', text: 'At the lunar south pole the Sun skims the horizon' },
   { shot: 'hook', at: 114, to: 195, kind: 'big', text: 'Missions slip.', sub: 'Will the Sun still be visible?' },
-  { shot: 'compare', at: 4, to: 192, kind: 'lower', text: 'Apollo 11 vs the south pole: Sun visible and Earth in view flip live' },
+  { shot: 'compare', at: 4, to: 192, kind: 'lower', text: 'Compare up to 4 different scenarios at the same time' },
   { shot: 'slip', at: 3, to: 80, kind: 'lower', text: 'Same site, 14 days later: Sun visible {slipA} → {slipB}' },
   { shot: 'slip', at: 84, to: 147, kind: 'lower', text: 'Slip tolerance: −60 to +60 days' },
-  { shot: 'surface', at: 3, to: 107, kind: 'lower', text: 'Hold to lock the camera on the Sun' },
+  { shot: 'surface', at: 3, to: 107, kind: 'lower', text: 'Precise camera controls' },
   { shot: 'sunmap', at: 3, to: 82, kind: 'lower', text: 'Sunlight map: where the Sun is visible', sub: 'Approximate' },
-  { shot: 'simple', at: 2, to: 43, kind: 'lower', text: 'Simple mode for classrooms' },
+  { shot: 'simple', at: 2, to: 58, kind: 'lower', text: 'Simple mode for beginners' },
 ]
 
 // End card. URL comes from the VIDEO_URL env var (omitted when empty); team from VIDEO_TEAM.
@@ -45,7 +44,7 @@ export const END_CARD = {
   title: 'Lunar Landing Site Navigator',
   line1: 'Real NASA LOLA terrain + JPL Horizons',
   line2: 'Michał Szaumkesel, Patryk Sadowski',
-  footer: 'NASA Space Apps Challenge 2026 · Rzeszów',
+  footer: 'NASA Space Apps Challenge 2026',
   // Space Apps asks teams to mark AI-assisted content; set VIDEO_AI_NOTE=0 to hide this line.
   aiNote: '',
 }
