@@ -17,7 +17,7 @@ export type DiagramView = 'sky' | 'horizon' | '3d'
 
 const HELP_TEXT: Record<Exclude<DiagramView, 'sky'>, string> = {
   horizon: 'The horizon as you would see it standing on the surface, looking around. Gold: the Sun. Blue: the Earth.',
-  '3d': 'A 3D view of the landing area. Switch between On the surface (standing next to the lander) and Overview (from above). Drag to look around, or use the arrow keys to turn the view. Click the terrain to move the lander. Face the lander, Face the Sun and Face the Earth turn the camera to them; hold one to keep the camera locked on it, then click it to unlock. The terrain is a local approximation.',
+  '3d': 'A 3D view of the landing area. Switch between On the surface (standing next to the lander) and Overview (from above). Walk with W, A, S and D (Shift to hurry), and look around with the arrow keys or by dragging; the 3D view must have focus. Walking here only moves the view and changes none of the numbers; Back to start returns you. Click the terrain to move the lander. Face the lander, Face the Sun and Face the Earth turn the camera to them; hold one to keep the camera locked on it, then click it to unlock. The terrain is a local approximation.',
 }
 
 export interface SkyHelpProps {

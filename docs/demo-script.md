@@ -46,7 +46,7 @@ Captions are generated from the app's own data (the same values the cards show, 
 
 - **WebGL fails or the projector lags**: stay on the **Polar** sky plot and the **Panorama** view. They use SVG and 2D canvas only.
 - **No network**: the app is static. Load it once before the talk and keep that tab open; it then works offline in-session only (the demo sites are prefetched), but a reload without network fails.
-- **Small or low-resolution screen (below 900 px wide)**: zoom out to 80-90%. The layout switches to one column; arrow keys and Space still work.
+- **Small or low-resolution screen (below 900 px wide)**: zoom out to 80-90%. The layout switches to one column; arrow keys and Space still work on the timeline; in the 3D view W, A, S, D walk and the arrow keys only look around.
 - **Unexpected state or misclick**: reload the page (`F5`) or open `/?m=a&tour=0`. The scenario is kept in the URL, so reloading restores it; a link without `m=a` opens Simple mode.
 - **Only 45 seconds left**: click **Demo** in the top bar. The narration bar runs the steps and moves the camera and timeline for you.
 

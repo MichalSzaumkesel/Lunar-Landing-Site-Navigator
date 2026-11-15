@@ -47,7 +47,8 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Terrain view loaded on demand (`React.lazy`), so the first screen does not load three.js.
 - Shadows updated from the Sun position at the time cursor.
 - Two camera modes: On the surface and Overview; quick views and tracking lock toward the lander, Sun or Earth.
-- Movable lander (arrow keys, Shift for larger steps) with the local horizon recalculated.
+- Walk the surface with W, A, S, D (Shift for a faster pace) relative to the view; arrow keys and dragging only look around. Walking moves the lander and the local horizon is recalculated when you stop (Simple mode: the walk is visual only, with a Back to start control). In Overview, WASD pans the view.
+- Movable lander: click the terrain, or nudge it with the arrow keys in the Lander panel (Shift for larger steps).
 - "Sunlight map" over the patch and "Find spot with most Sun visible" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
 - Earth disc textured with NASA Blue Marble imagery, placed from the ephemeris and oriented from `earth_orientation.json` when it is present (otherwise the orientation is labelled illustrative).
 

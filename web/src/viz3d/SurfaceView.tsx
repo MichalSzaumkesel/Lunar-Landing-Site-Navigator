@@ -37,6 +37,8 @@ import {
 import type { OffsetM } from './landerHelpers'
 import { createKeyMotion } from './keyMotion'
 import type { KeyMotion } from './keyMotion'
+import { createWalkMotion, isTypingTarget } from './walk'
+import type { WalkMotion } from './walk'
 import { MOVE_MS } from './tween'
 import { lockReducer } from './cameraLock'
 import type { LockBody, LockState } from './cameraLock'
@@ -46,6 +48,8 @@ import { SegmentedToggle } from '../components/ui/SegmentedToggle'
 /** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
 const LANDER_M_PER_S = 400
 const READOUT_MS = 100
+/** While walking, the Advanced readouts follow at most this often (about 4 Hz); the horizon waits for the stop. */
+const WALK_SYNC_MS = 250
 import { usePresence, usePresenceValue } from '../lib/usePresence'
 import { useTerrainHeights } from './useTerrainHeights'
 import {
@@ -77,7 +81,7 @@ function LookHint() {
   if (!mounted) return null
   return (
     <div className="surface__overlay surface__overlay--br surface__hint" data-state={state}>
-      Drag to look around. Click terrain to move the lander.
+      WASD to move, arrows or drag to look.
     </div>
   )
 }
@@ -135,6 +139,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   // Lander movement and what-if state (local only, not in global store)
   const [landerOffset, setLanderOffset] = useState<OffsetM>({ eastM: 0, northM: 0 })
   const [isClamped, setIsClamped] = useState(false)
+  // WASD walking: Advanced follows the lander offset, Simple only moves the view (walkMoved shows Back to start).
+  const [walking, setWalking] = useState(false)
+  const [walkMoved, setWalkMoved] = useState(false)
 
   // Sunlight heatmap state
   const [showHeatmap, setShowHeatmap] = useState(false)
@@ -232,9 +239,10 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   // The horizon is rebuilt only once the lander rests, so dragging stays smooth.
   const [maskOffset, setMaskOffset] = useState<OffsetM>(landerOffset)
   useEffect(() => {
+    if (walking) return
     const t = setTimeout(() => setMaskOffset(landerOffset), 120)
     return () => clearTimeout(t)
-  }, [landerOffset])
+  }, [landerOffset, walking])
 
   const movedMask = useMemo(() => {
     if (maskOffset.eastM === 0 && maskOffset.northM === 0) return origMask
@@ -430,14 +438,17 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
     })
   }, [scene, buildSky])
 
-  // Sync lander position with 3D scene
+  // Sync lander position with 3D scene (the scene leads while a walk is running)
+  const walkingRef = useRef(false)
   useEffect(() => {
+    if (walkingRef.current) return
     scene?.setLanderOffset(landerOffset.eastM, landerOffset.northM)
   }, [scene, landerOffset])
 
   // Latest requested lander position (an animated move updates the state only when it ends).
   const targetOffsetRef = useRef<OffsetM>({ eastM: 0, northM: 0 })
   const moveSeqRef = useRef(0)
+  const walkMotionRef = useRef<WalkMotion | null>(null)
   const mountedRef = useRef(true)
   useEffect(() => {
     mountedRef.current = true
@@ -468,6 +479,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   // Raycast terrain click to move lander
   const handleTerrainClick = useCallback(
     (hit: { eastM: number; northM: number; heightM: number }) => {
+      walkMotionRef.current?.stop()
       const clamped = clampLanderOffset(
         { eastM: Math.round(hit.eastM), northM: Math.round(hit.northM) },
         terrain.size_px,
@@ -617,6 +629,92 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
     }
   }, [scene, terrain.size_px, terrain.spacing_m])
 
+  // WASD walks the observer relative to the view; arrows only turn the camera (the scene handles those).
+  const modeRef = useRef<ViewMode>(mode)
+  const lastWalkSyncRef = useRef(0)
+  useEffect(() => {
+    modeRef.current = mode
+    walkMotionRef.current?.stop()
+  }, [mode])
+  useEffect(() => {
+    if (!scene) return
+    let pos: OffsetM = { eastM: 0, northM: 0 }
+    let walkMode: ViewMode = 'surface'
+    const motion = createWalkMotion({
+      getFrame: () => scene.walkFrame(),
+      reducedMotion: () => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),
+      onStart: () => {
+        walkMode = modeRef.current
+        walkingRef.current = true
+        scene.cancelLanderAnimation()
+        if (walkMode !== 'surface') return
+        // The walk takes over from a running animated move without a jump.
+        moveSeqRef.current++
+        pos = scene.currentLanderOffset()
+        targetOffsetRef.current = pos
+        if (!simple) {
+          setBestSpotResult(null)
+          setWalking(true)
+        }
+      },
+      onMove: (dE, dN) => {
+        if (walkMode !== 'surface') {
+          scene.panBy(dE, dN)
+          return
+        }
+        const c = clampLanderOffset({ eastM: pos.eastM + dE, northM: pos.northM + dN }, terrain.size_px, terrain.spacing_m)
+        pos = c.offset
+        targetOffsetRef.current = pos
+        scene.setLanderOffset(pos.eastM, pos.northM)
+        // Simple: purely visual, no metrics or readouts change.
+        if (simple) {
+          setWalkMoved(true)
+          return
+        }
+        setIsClamped(c.clamped)
+        const t = performance.now()
+        if (t - lastWalkSyncRef.current > WALK_SYNC_MS) {
+          lastWalkSyncRef.current = t
+          setLanderOffset(pos)
+        }
+      },
+      onStop: () => {
+        walkingRef.current = false
+        if (walkMode !== 'surface') return
+        if (simple) setWalkMoved(pos.eastM !== 0 || pos.northM !== 0)
+        else {
+          setLanderOffset(pos)
+          setWalking(false)
+        }
+      },
+    })
+    walkMotionRef.current = motion
+    // A key released while the page is hidden or unfocused never arrives: stop the walk.
+    const stop = () => motion.stop()
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') motion.stop()
+    }
+    window.addEventListener('blur', stop)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('blur', stop)
+      document.removeEventListener('visibilitychange', onVisibility)
+      motion.dispose()
+      walkingRef.current = false
+      walkMotionRef.current = null
+    }
+  }, [scene, simple, terrain.size_px, terrain.spacing_m])
+
+  // Keys reach the frame from the canvas, or from the frame itself when it holds the focus.
+  const handleFrameKey = (e: React.KeyboardEvent<HTMLElement>, down: boolean) => {
+    const t = e.target as HTMLElement
+    const direct = t === e.currentTarget
+    if (!direct && t.tagName !== 'CANVAS') return
+    if (isTypingTarget(t)) return
+    if (direct && scene?.lookKey(e, down)) e.preventDefault()
+    if (walkMotionRef.current?.handleKey(e, down)) e.preventDefault()
+  }
+
   const handleLanderKeyDown = (e: React.KeyboardEvent) => {
     if (keyMotionRef.current?.handleKey(e, true)) e.preventDefault()
   }
@@ -625,11 +723,13 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   }
 
   const handleResetPosition = () => {
+    walkMotionRef.current?.stop()
     void moveLanderTo({ eastM: 0, northM: 0 }, MOVE_MS)
     setIsClamped(false)
     setBestSpotResult(null)
     setShowComparison(false)
     setSearchMessage(null)
+    setWalkMoved(false)
   }
 
   useEffect(() => {
@@ -709,6 +809,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   }
 
   const isAtOrigin = landerOffset.eastM === 0 && landerOffset.northM === 0
+  const showBackToStart = simple && (walkMoved || !isAtOrigin)
+  const backPresence = usePresence(showBackToStart)
 
   const activeMask: readonly number[] = useMemo(() => {
     if (isAtOrigin) return pickMask(bundle, observerHeightM)
@@ -734,7 +836,13 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
         className="surface__frame"
         // Arrow keys on the 3D view only turn the camera: no lander move, no time seek.
         data-no-shortcuts=""
-        {...(simple ? { tabIndex: 0, 'aria-label': '3D view. Arrow keys turn the view.' } : {})}
+        // WASD walks and arrows turn the view while the canvas or the frame has focus.
+        {...(simple ? { tabIndex: 0 } : {})}
+        role="group"
+        aria-label="3D view. WASD moves, arrow keys turn the view."
+        onKeyDown={(e) => handleFrameKey(e, true)}
+        onKeyUp={(e) => handleFrameKey(e, false)}
+        onBlur={() => walkMotionRef.current?.stop()}
       >
         <div
           ref={holderRef}
@@ -760,6 +868,16 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
             )}
             <button type="button" className="surface__chip-close" aria-label="Dismiss result" onClick={() => setDismissedResult(bestSpotResult)}>
               ×
+            </button>
+          </div>
+        )}
+        {simple && backPresence.mounted && !(chipPresence.mounted && chipResult) && (
+          <div
+            className="surface__result-card surface__result-chip surface__backchip presence-rise"
+            data-state={backPresence.state}
+          >
+            <button type="button" onClick={handleResetPosition}>
+              Back to start
             </button>
           </div>
         )}
@@ -895,8 +1013,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
         </div>
         <div className="surface__overlay surface__overlay--br">
           {mode === 'surface'
-            ? 'Drag or arrow keys to look around; click terrain to move lander'
-            : 'Drag to orbit, scroll to zoom; click terrain to move lander'}
+            ? 'WASD to move, arrows or drag to look; click terrain to move lander'
+            : 'Drag to orbit, scroll to zoom, WASD to pan; click terrain to move lander'}
         </div>
           </>
         )}

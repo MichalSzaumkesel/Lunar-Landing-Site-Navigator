@@ -41,6 +41,8 @@ import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { dampAngleDeg, dampFactor, dampValue, lockPitchDeg } from './cameraLock'
 import { earthLitFraction, faceTarget, lookAnglesTo, overviewFaceTarget } from './viewMath'
 import { createKeyMotion } from './keyMotion'
+import { WALK_SPEED_MPS } from './walk'
+import type { WalkFrame } from './walk'
 import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
 
 /**
@@ -738,6 +740,40 @@ export class SurfaceScene {
       this.cameraAnimationCancel = null
       cb()
     }
+  }
+
+  /** Forwards an arrow key (keyboard focus on the frame rather than the canvas). Returns true when it turns the view. */
+  lookKey(e: { key: string; shiftKey: boolean; altKey: boolean }, down: boolean): boolean {
+    if (this.mode !== 'surface') return false
+    return this.lookMotion.handleKey(e, down)
+  }
+
+  /**
+   * View azimuth and top walking speed for WASD: on the surface the look direction at a walking pace,
+   * in Overview the orbit heading, with a speed that scales with the camera distance.
+   */
+  walkFrame(): WalkFrame {
+    if (this.mode === 'surface') return { yawDeg: this.yawDeg, speedMps: WALK_SPEED_MPS }
+    const dist = this.camera.position.distanceTo(this.controls.target)
+    return {
+      yawDeg: (-this.controls.getAzimuthalAngle() * 180) / Math.PI,
+      speedMps: Math.max(20, dist * 0.1),
+    }
+  }
+
+  /** Overview: slides the orbit target (and the camera with it) over the ground plane, kept inside the patch. */
+  panBy(dEastM: number, dNorthM: number): void {
+    if (this.mode !== 'overview' || this.disposed) return
+    this.breakLock()
+    this.cancelCameraAnimation()
+    const half = Math.max(0, (this.data.sizePx / 2) * this.data.spacingM - this.data.spacingM * 2)
+    const t = this.controls.target
+    const nx = Math.max(-half, Math.min(half, t.x + dEastM))
+    const nz = Math.max(-half, Math.min(half, t.z - dNorthM))
+    const ny = this.groundY(nx, nz)
+    this.camera.position.add(new THREE.Vector3(nx - t.x, ny - t.y, nz - t.z))
+    t.set(nx, ny, nz)
+    this.invalidate()
   }
 
   cancelLanderAnimation(): void {
