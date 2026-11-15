@@ -13,6 +13,7 @@
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
 import { useFullscreen } from './useFullscreen'
+import type { FullscreenControl } from './useFullscreen'
 import './FullscreenButton.css'
 
 export interface FullscreenButtonProps {
@@ -22,13 +23,9 @@ export interface FullscreenButtonProps {
   className?: string
 }
 
-export function FullscreenButton({ targetRef, onChange, className = '' }: FullscreenButtonProps) {
-  const { mode, active, toggle } = useFullscreen(targetRef)
-
-  useEffect(() => {
-    onChange?.(active)
-  }, [active, onChange])
-
+/** Presentational toggle driven by a control owned higher up (it survives this button remounting). */
+export function FullscreenToggle({ control, className = '' }: { control: FullscreenControl; className?: string }) {
+  const { mode, active, toggle } = control
   if (mode === 'none') return null
   const label = active ? 'Exit full screen' : 'Full screen'
   return (
@@ -49,4 +46,14 @@ export function FullscreenButton({ targetRef, onChange, className = '' }: Fullsc
       </svg>
     </button>
   )
+}
+
+export function FullscreenButton({ targetRef, onChange, className = '' }: FullscreenButtonProps) {
+  const control = useFullscreen(targetRef)
+
+  useEffect(() => {
+    onChange?.(control.active)
+  }, [control.active, onChange])
+
+  return <FullscreenToggle control={control} className={className} />
 }

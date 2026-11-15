@@ -75,7 +75,7 @@ export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteNam
   }
 
   return (
-    <FullscreenStage className="views" onChange={(on) => on && setActive(scenarioId)}>
+    <FullscreenStage className="views" persistentExit onChange={(on) => on && setActive(scenarioId)}>
       {(fsButton) => (
         <>
           <div
