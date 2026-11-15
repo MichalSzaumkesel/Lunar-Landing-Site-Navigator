@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --amber: #fbbf24; --blue: #4aa8ff; --ink: #070b14; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000; font-family: "Segoe UI", "Inter", Arial, sans-serif; color: #fff; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  .layer { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  .layer img { display: block; }
+  #prev { position: absolute; inset: 0; width: 1920px; height: 1080px; object-fit: cover; opacity: 0; }
+  #dim { position: absolute; inset: 0; background: #03060c; opacity: 0; }
+  #vig { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  .hl { position: absolute; border: 3px solid var(--amber); border-radius: 10px; box-shadow: 0 0 0 2px rgba(0,0,0,.55), 0 0 26px 4px rgba(251,191,36,.6); }
+  #cursor { position: absolute; width: 0; height: 0; }
+  #cursor svg { position: absolute; left: -3px; top: -2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.8)); }
+  #ring { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--amber); opacity: 0; }
+  #lower { position: absolute; left: 0; right: 0; bottom: 92px; display: flex; flex-direction: column; align-items: center; }
+  .cap { display: inline-flex; flex-direction: column; align-items: center; padding: 16px 38px 18px; border-radius: 18px; background: rgba(5,9,18,.86); border: 1px solid rgba(255,255,255,.16); border-bottom: 4px solid var(--amber); box-shadow: 0 14px 44px rgba(0,0,0,.6); max-width: 1760px; }
+  .cap .t { font-size: 52px; font-weight: 700; letter-spacing: -.3px; line-height: 1.12; text-align: center; white-space: nowrap; }
+  .cap .s { font-size: 31px; font-weight: 500; color: #c9d6ea; margin-top: 6px; text-align: center; white-space: nowrap; }
+  #big { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #big .t { font-size: 132px; font-weight: 800; letter-spacing: -2px; text-shadow: 0 6px 40px rgba(0,0,0,.9); }
+  #big .s { font-size: 50px; font-weight: 600; color: #e6eefb; margin-top: 18px; text-shadow: 0 4px 24px rgba(0,0,0,.9); max-width: 1500px; line-height: 1.2; }
+  #title { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  #title .t { font-size: 104px; font-weight: 800; letter-spacing: -1.5px; text-shadow: 0 6px 40px rgba(0,0,0,.9); }
+  #title .bar { width: 220px; height: 6px; border-radius: 3px; background: var(--amber); margin: 22px 0 20px; }
+  #title .s { font-size: 46px; font-weight: 600; color: var(--amber); text-shadow: 0 4px 24px rgba(0,0,0,.9); }
+  #chip { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); padding: 12px 34px; border-radius: 999px; font-size: 44px; font-weight: 700; background: rgba(5,9,18,.85); border: 2px solid var(--amber); color: var(--amber); white-space: nowrap; opacity: 0; }
+  #chip.off { border-color: #8fa3c2; color: #c3d0e6; }
+  #chip small { font-size: 24px; font-weight: 600; color: #9fb0cc; margin-left: 16px; letter-spacing: .4px; }
+  #end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; opacity: 0; }
+  #end .t { font-size: 108px; font-weight: 800; letter-spacing: -1.5px; }
+  #end .bar { width: 240px; height: 6px; border-radius: 3px; background: var(--amber); margin: 26px 0 28px; }
+  #end .l1 { font-size: 50px; font-weight: 650; }
+  #end .l2 { font-size: 44px; font-weight: 700; color: var(--amber); margin-top: 14px; }
+  #end .url { font-size: 46px; font-weight: 700; margin-top: 44px; padding: 12px 34px; border-radius: 14px; border: 2px solid rgba(255,255,255,.5); background: rgba(5,9,18,.6); }
+  #end .ft { position: absolute; bottom: 86px; left: 0; right: 0; font-size: 34px; font-weight: 600; color: #d5dfef; }
+  #end .ai { position: absolute; bottom: 40px; left: 0; right: 0; font-size: 22px; color: #95a5bf; }
+  #fade { position: absolute; inset: 0; background: #000; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="layer"><img id="img"><div id="hls"></div>
+    <div id="cursor"><div id="ring"></div><svg width="30" height="36" viewBox="0 0 20 24"><path d="M2 1 L2 19 L6.5 15 L9.6 22 L12.4 20.8 L9.4 14 L15.5 14 Z" fill="#fff" stroke="#0b1220" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+  </div>
+  <img id="prev">
+  <div id="dim"></div>
+  <div id="vig"></div>
+  <div id="chip"></div>
+  <div id="lower"></div>
+  <div id="big"></div>
+  <div id="title"></div>
+  <div id="end"></div>
+  <div id="fade"></div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id)
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x))
+const smooth = (t) => { t = clamp(t); return t * t * (3 - 2 * t) }
+const outCubic = (t) => 1 - Math.pow(1 - clamp(t), 3)
+let D = null
+window.init = (data) => { D = data }
+
+const kf = (k, f) => { if (f <= k[0][0]) return k[0][1]; for (let i = 1; i < k.length; i++) if (f <= k[i][0]) return k[i - 1][1] + (k[i][1] - k[i - 1][1]) * smooth((f - k[i - 1][0]) / (k[i][0] - k[i - 1][0])); return k[k.length - 1][1] }
+function camAt(cam, f) {
+  if (!cam || !cam.length) return { cx: 960, cy: 540, z: 1 }
+  if (f <= cam[0].f) return cam[0]
+  for (let i = 1; i < cam.length; i++) {
+    if (f <= cam[i].f) {
+      const a = cam[i - 1], b = cam[i], t = smooth((f - a.f) / (b.f - a.f))
+      return { cx: a.cx + (b.cx - a.cx) * t, cy: a.cy + (b.cy - a.cy) * t, z: a.z + (b.z - a.z) * t }
+    }
+  }
+  return cam[cam.length - 1]
+}
+// in/out envelope for a text element: 0..1 with rise over `a` frames and fall over `b` frames
+const env = (f, from, to, a = 7, b = 6) => clamp(Math.min((f - from) / a, (to - f) / b))
+
+function load(img, src) {
+  if (img.dataset.src === src) return Promise.resolve()
+  img.dataset.src = src
+  img.src = src
+  return img.decode().catch(() => new Promise((r) => { img.onload = r; img.onerror = r }))
+}
+
+window.renderFrame = async (g) => {
+  // locate shot
+  let si = 0
+  while (si + 1 < D.shots.length && g >= D.shots[si + 1].start) si++
+  const shot = D.shots[si]
+  const f = g - shot.start
+  const src = shot.src // {dir, w, h, frames, cam, hl, rects, frameIndex(f)}
+  const fi = shot.still != null ? shot.still : Math.min(f, src.n - 1)
+  await load($('img'), `${src.dir}/f${String(fi).padStart(4, '0')}.jpg`)
+  const img = $('img')
+  img.style.width = src.w + 'px'
+  img.style.height = src.h + 'px'
+  let c = camAt(shot.cam || src.cam, f)
+  // keep the 1920x1080 window inside the source
+  const zmin = Math.max(1920 / src.w, 1080 / src.h)
+  const z = Math.max(c.z, zmin)
+  const cx = clamp(c.cx, 960 / z, src.w - 960 / z), cy = clamp(c.cy, 540 / z, src.h - 540 / z)
+  $('layer').style.transform = `translate(${960 - cx * z}px, ${540 - cy * z}px) scale(${z})`
+  $('layer').style.filter = shot.blur ? `blur(${kf(shot.blur, f)}px)` : 'none'
+
+  // highlights
+  const hls = $('hls'); hls.innerHTML = ''
+  if (shot.still == null) for (const h of src.hl || []) {
+    const r = src.rects[h.rect]; if (!r) continue
+    const e = env(f, h.from, h.to, 5, 5); if (e <= 0) continue
+    const d = document.createElement('div'); d.className = 'hl'
+    const grow = (1 - outCubic(clamp((f - h.from) / 8))) * 14
+    d.style.cssText = `left:${r[0] - grow}px;top:${r[1] - grow}px;width:${r[2] + 2 * grow}px;height:${r[3] + 2 * grow}px;opacity:${e};border-width:${3 / z + 1.5}px`
+    hls.appendChild(d)
+  }
+  // cursor
+  const cur = $('cursor'), fm = shot.still == null && src.frames ? src.frames[fi] : null
+  if (fm && fm.x >= 0) {
+    cur.style.display = 'block'
+    cur.style.transform = `translate(${fm.x}px, ${fm.y}px) scale(${1.25 / Math.sqrt(z)})`
+    let ring = 0, rs = 1
+    for (const cf of src.clicks || []) { const t = (fi - cf) / 12; if (t >= 0 && t < 1) { ring = 1 - t; rs = 0.5 + t * 1.3 } }
+    $('ring').style.opacity = ring; $('ring').style.transform = `scale(${rs})`
+  } else cur.style.display = 'none'
+
+  // dissolve from the previous shot's last frame
+  const X = shot.xfade || 0, prev = $('prev')
+  if (X && f < X && si > 0) {
+    await load(prev, D.shots[si - 1].lastComposite)
+    prev.style.opacity = 1 - smooth((f + 1) / (X + 1))
+  } else prev.style.opacity = 0
+
+  $('dim').style.opacity = shot.dim ? kf(shot.dim, f) : 0
+
+  // status chip mirrors the app's own HUD text
+  const chip = $('chip')
+  if (shot.chip && fm && fm.s && f >= shot.chip[0] && f <= shot.chip[1]) {
+    const on = /^Sun visible/.test(fm.s)
+    chip.className = on ? '' : 'off'
+    chip.innerHTML = `${on ? '●' : '○'} ${fm.s}<small>live from the app</small>`
+    let flip = 99
+    for (let k = fi; k > 0 && k > fi - 10; k--) if (src.frames[k - 1].s !== src.frames[k].s) { flip = fi - k; break }
+    const pop = flip < 10 ? 1 + 0.16 * (1 - flip / 10) : 1
+    chip.style.top = (shot.chipY || 120) + 'px'
+    chip.style.opacity = env(f, shot.chip[0], shot.chip[1])
+    chip.style.transform = `translateX(-50%) scale(${pop})`
+  } else chip.style.opacity = 0
+
+  // captions
+  const lower = $('lower'), big = $('big'), title = $('title')
+  lower.innerHTML = ''; big.innerHTML = ''; title.innerHTML = ''
+  for (const cp of shot.captions || []) {
+    const e = env(f, cp.at, cp.to); if (e <= 0) continue
+    const rise = (1 - outCubic(clamp((f - cp.at) / 9))) * 26
+    if (cp.kind === 'lower') {
+      lower.innerHTML = `<div class="cap" style="opacity:${e};transform:translateY(${rise}px)"><div class="t">${cp.text}</div>${cp.sub ? `<div class="s">${cp.sub}</div>` : ''}</div>`
+    } else if (cp.kind === 'big') {
+      const e2 = clamp((f - cp.at - 12) / 8) * e
+      big.innerHTML = `<div class="t" style="opacity:${e};transform:scale(${1.12 - 0.12 * outCubic(clamp((f - cp.at) / 10))})">${cp.text}</div><div class="s" style="opacity:${e2}">${cp.sub || ''}</div>`
+    } else if (cp.kind === 'title') {
+      title.innerHTML = `<div style="opacity:${e};transform:translateY(${rise}px);display:flex;flex-direction:column;align-items:center"><div class="t">${cp.text}</div><div class="bar" style="width:${220 * outCubic(clamp((f - cp.at) / 14))}px"></div><div class="s">${cp.sub || ''}</div></div>`
+    }
+  }
+
+  // end card
+  const end = $('end')
+  if (shot.end) {
+    const E = shot.end, a = (k) => outCubic(clamp((f - k) / 12))
+    end.style.opacity = 1
+    end.innerHTML = `<div class="t" style="opacity:${a(4)};transform:translateY(${(1 - a(4)) * 24}px)">${E.title}</div>
+      <div class="bar" style="width:${240 * a(8)}px"></div>
+      <div class="l1" style="opacity:${a(14)}">${E.line1}</div>
+      <div class="l2" style="opacity:${a(22)}">${E.line2}</div>
+      ${E.url ? `<div class="url" style="opacity:${a(32)}">${E.url}</div>` : ''}
+      <div class="ft" style="opacity:${a(36)}">${E.footer}</div>
+      ${E.aiNote ? `<div class="ai" style="opacity:${a(40)}">${E.aiNote}</div>` : ''}`
+  } else { end.style.opacity = 0; end.innerHTML = '' }
+
+  // global fade in / out
+  const T = D.total
+  $('fade').style.opacity = Math.max(1 - smooth((g + 1) / 8), smooth((g - (T - 10)) / 9))
+}
+</script>
+</body>
+</html>

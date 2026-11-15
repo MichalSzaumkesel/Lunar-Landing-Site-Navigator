@@ -1,0 +1,8 @@
+# large or regenerated outputs
+out/
+work/
+*.mp4
+*.webm
+*.wav
+*.mkv
+frames/
