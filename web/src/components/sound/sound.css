@@ -52,7 +52,8 @@
   order: 0;
   opacity: 0;
   transform: translateX(var(--space-4, 16px));
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-out),
+              transform var(--motion-duration-normal) var(--motion-ease-out);
 }
 
 .sound-control__volume--in {

@@ -127,9 +127,6 @@
 .views__tab {
   min-height: 2.5rem;
   font-weight: 600;
-  transition: background-color var(--motion-duration-fast, 120ms) ease,
-              border-color var(--motion-duration-fast, 120ms) ease,
-              color var(--motion-duration-fast, 120ms) ease;
 }
 
 .views__tab[aria-selected='true'] {
@@ -142,16 +139,11 @@
 
 .views__panel {
   container-type: inline-size;
-  animation: tab-content-fade var(--motion-duration-fast, 120ms) ease-out;
 }
 
-@keyframes tab-content-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* After a Polar / Panorama / 3D switch the new view fades in (opacity only, the panel keeps its size) */
+.views__panel[data-switched] > * {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
 }
 
 .views__message {
@@ -402,34 +394,6 @@
   padding-top: var(--space-2);
 }
 
-.card__more::details-content {
-  transition: opacity var(--motion-duration-normal, 180ms) ease,
-              block-size var(--motion-duration-normal, 180ms) var(--motion-ease-out, ease-out);
-  overflow: clip;
-}
-
-.card__more[open] {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.card__more-summary {
-  min-height: 40px;
-  line-height: 40px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--muted);
-  user-select: none;
-  transition: color var(--motion-duration-fast, 120ms) ease;
-}
-
-.card__more-summary:hover,
-.card__more-summary:focus-visible {
-  color: var(--text);
-}
-
 /* Multi-card board: cap sky plot size (polar and panorama) so card fits in ~800px height at 1280px wide viewport */
 .board--2 .views__sky,
 .board--3 .views__sky,
@@ -442,15 +406,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .views__tab {
-    transition: none !important;
-  }
-  .views__panel {
+  .views__panel[data-switched] > *,
+  .countdowns--compact,
+  .metrics:not(.metrics--loading),
+  .slipstrip {
     animation: none !important;
-  }
-  .card__more::details-content,
-  .card__more-summary {
-    transition: none !important;
   }
 }
 
@@ -742,4 +702,46 @@
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+/* Loaded content replaces its placeholder: opacity only, the placeholder already holds the size */
+.countdowns--compact,
+.metrics:not(.metrics--loading, .metrics--empty),
+.slipstrip {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+/* Slip strip: cells colour in as the slips are computed; the current marker and the hover ring fade */
+.slipstrip__cell {
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition: background-color var(--motion-duration-normal) var(--motion-ease-out),
+              outline-color var(--motion-duration-fast) var(--motion-ease-default),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+.slipstrip__cell:hover:not(.slipstrip__cell--current) {
+  outline-color: rgba(255, 255, 255, 0.7);
+}
+
+.slipstrip__cell--current {
+  outline-color: #fff;
+}
+
+.slipstrip__cell--ok::after {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+/* One line reserved, so a sentence of one or two lines does not move the legend */
+.slipstrip__note {
+  min-height: 1.45em;
+}
+
+/* Metric rows: hover feedback on the row, nothing moves */
+.metrics__item {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+.metrics__item:hover {
+  border-bottom-color: var(--control-border);
 }

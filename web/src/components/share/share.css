@@ -67,7 +67,7 @@
 }
 
 .share-menu__chevron {
-  transition: transform 150ms ease;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 .share-menu__trigger[aria-expanded='true'] .share-menu__chevron {
@@ -104,11 +104,11 @@
 }
 
 .share-menu__popup {
-  animation: share-menu-in 150ms ease both;
+  animation: share-menu-in var(--motion-duration-normal) var(--motion-ease-out) both;
 }
 
 .share-menu__popup[data-state='closed'] {
-  animation: share-menu-out 150ms ease both;
+  animation: share-menu-out var(--motion-duration-fast) var(--motion-ease-in) both;
   pointer-events: none;
 }
 

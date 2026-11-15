@@ -1,18 +1,18 @@
 /* Guided tour overlay, cutout and popover card */
 /* Spotlight frame: its huge shadow is the only dimming layer, always on while the tour is open.
-   Only its rect animates between steps, so the page is never exposed undimmed. */
+   Between steps it glides from the old rect to the new one with a transform (Tour.tsx plays the
+   Web Animations API FLIP), so the page is never exposed undimmed and no layout property animates.
+   Both the frame and the card are placed with transform, never top and left: no layout shift. */
 .tour-cutout {
   position: fixed;
+  top: 0;
+  left: 0;
   border-radius: var(--radius, 8px);
   pointer-events: none;
   z-index: 900;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
-  transition:
-    top 200ms ease-out,
-    left 200ms ease-out,
-    width 200ms ease-out,
-    height 200ms ease-out;
-  animation: tour-dim-in 150ms ease-out;
+  transform-origin: 0 0;
+  animation: tour-dim-in var(--motion-duration-normal) var(--motion-ease-out);
 }
 
 .tour-cutout::after {
@@ -22,7 +22,7 @@
   border-radius: inherit;
   border: 2px solid var(--earth, #4aa8ff);
   opacity: 0;
-  transition: opacity 150ms ease-out;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .tour-cutout--on::after {
@@ -37,6 +37,8 @@
 
 .tour-card {
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 950;
   width: 340px;
   max-width: calc(100vw - 32px);
@@ -50,12 +52,12 @@
   gap: var(--space-3, 12px);
   color: var(--text, #f2f5fb);
   opacity: 0;
-  transition: opacity 120ms ease-out;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .tour-card--on {
   opacity: 1;
-  transition-duration: 150ms;
+  transition-duration: var(--motion-duration-normal);
 }
 
 .tour-sr-only,

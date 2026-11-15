@@ -306,7 +306,7 @@
 
 .tl__bar {
   stroke-width: 1.5px;
-  transition: opacity 150ms ease;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 .tl__bar--green {

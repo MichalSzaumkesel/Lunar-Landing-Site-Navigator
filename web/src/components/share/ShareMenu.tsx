@@ -11,6 +11,7 @@ import {
 import { createPortal } from 'react-dom'
 import { HORIZONS_QUERY_MISSING, horizonsQueryText } from '../../lib/horizonsQuery'
 import { usePresence } from '../../lib/usePresence'
+import { SwapText } from '../ui/SwapText'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { useAppStore } from '../../state/store'
 import { PrintBrief } from '../print/PrintBrief'
@@ -237,7 +238,9 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
           <path d="m7 10 5 5 5-5" />
           <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
         </Icon>
-        <span>{label}</span>
+        <span>
+          <SwapText value={label} />
+        </span>
         <svg
           className="share-menu__chevron"
           width="14"

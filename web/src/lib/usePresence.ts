@@ -1,10 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { MOTION_MS, prefersReducedMotion as reducedMotion } from './motion'
 
-export const EXIT_MS = 150
-
-function reducedMotion(): boolean {
-  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true
-}
+/** Exit of a presence element (the CSS exits run --motion-duration-fast; this leaves a frame or two of slack). */
+export const EXIT_MS = MOTION_MS.fast + 30
 
 export type PresenceState = 'open' | 'closed'
 

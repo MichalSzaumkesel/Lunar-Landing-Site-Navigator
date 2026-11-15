@@ -434,7 +434,11 @@
   margin-top: 0.25rem;
   border-radius: 50%;
   box-sizing: border-box;
+  /* Same border in both states, so the flip below only fades the fill */
+  border: 3px solid var(--body-color);
   background: var(--body-color);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-default),
+              border-color var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 .simple-block--sun {
@@ -447,8 +451,7 @@
 
 /* Shape as well as colour: a filled dot when in view, a ring when below the horizon. */
 .simple-block--off .simple-block__dot {
-  background: transparent;
-  border: 3px solid var(--body-color);
+  background-color: transparent;
 }
 
 .simple-block__text {
@@ -657,6 +660,15 @@
   border-color: var(--earth);
   color: var(--text);
   font-weight: 600;
+}
+
+/* After a view switch the new view fades in (opacity only; the stage box keeps its size) */
+.simple-stage[data-switched] > * {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+.simple-error {
+  animation: presence-rise-in var(--motion-duration-normal) var(--motion-ease-out);
 }
 
 /* Fixed box: switching views never changes the card height. */

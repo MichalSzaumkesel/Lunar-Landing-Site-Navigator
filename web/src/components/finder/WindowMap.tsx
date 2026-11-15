@@ -6,7 +6,9 @@ import type { WindowMapRow } from '../../lib/windowMap'
 import * as windowMapClient from '../../lib/windowMapClient'
 import { dataSource } from '../../lib/loader'
 import { parseCustomSiteId } from '../../lib/customSite'
+import { usePresenceValue } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
+import { SwapText } from '../ui/SwapText'
 import { MissionRulesForm } from './MissionRulesForm'
 import {
   cellFromPointer,
@@ -60,6 +62,7 @@ export function WindowMap({ className = '' }: WindowMapProps) {
   const [keyboardHighlight, setKeyboardHighlight] = useState<{ rowIndex: number; colIndex: number } | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const confirmationPresence = usePresenceValue(confirmation)
   const [announcement, setAnnouncement] = useState<string>('')
 
   // Sizing
@@ -530,14 +533,18 @@ export function WindowMap({ className = '' }: WindowMapProps) {
       <div className="finder__header">
         <h2 className="finder__title">Site comparison and landing windows</h2>
         <p className={`finder__best-site ${isNoSiteFit ? 'finder__best-site--empty' : ''}`.trim()}>
-          {bestSiteSentence}
+          <SwapText value={bestSiteSentence} />
         </p>
       </div>
 
       {/* Confirmation notification line */}
-      {confirmation && (
-        <div className="finder__status" role="status">
-          <span className="finder__confirmation">{confirmation}</span>
+      {confirmationPresence.mounted && (
+        <div className="presence-collapse" data-state={confirmationPresence.state}>
+          <div className="presence-collapse__inner">
+            <div className="finder__status" role="status">
+              <span className="finder__confirmation">{confirmationPresence.value}</span>
+            </div>
+          </div>
         </div>
       )}
 

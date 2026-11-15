@@ -9,6 +9,7 @@ import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { describeBody, pickMask } from '../sky/geometry'
+import { SwapText } from '../ui/SwapText'
 import { EVENT_DEFINITION, bodyCountdown, formatChange, longestDarkLine, longestNoEarthLine, splitEvents } from './cardLogic'
 import type { Countdown, CountdownBody, SlipChange } from './cardLogic'
 import './scenario.css'
@@ -55,15 +56,21 @@ function Share({ body, label, value, tip, detail, change, range, uncertaintyDeg 
   return (
     <div className={`countdown countdown--${body}`} title={tip}>
       <span className="countdown__value">
-        {`${label} ${value.toFixed(1)} %`}
+        <SwapText value={`${label} ${value.toFixed(1)} %`} />
         {range && uncertaintyDeg !== null && (
           <span className="countdown__range" title={uncertaintyTip(uncertaintyDeg)}>
             {` (${formatShareRange(range)})`}
           </span>
         )}
       </span>
-      <span className="countdown__utc">{detail}</span>
-      {change && <span className="countdown__utc">{`vs slip 0: ${change}`}</span>}
+      <span className="countdown__utc">
+        <SwapText value={detail} />
+      </span>
+      {change && (
+        <span className="countdown__utc">
+          <SwapText value={`vs slip 0: ${change}`} />
+        </span>
+      )}
     </div>
   )
 }

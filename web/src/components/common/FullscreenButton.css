@@ -21,6 +21,9 @@
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  transition: color var(--motion-duration-fast) var(--motion-ease-default),
+              border-color var(--motion-duration-fast) var(--motion-ease-default),
+              background-color var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 .sky-help__marker {
@@ -48,6 +51,15 @@
   box-sizing: border-box;
   border-radius: 0;
   background: var(--bg, #05070d);
+  animation: fs-enter var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+/* Entering only: the browser restores the page itself on exit */
+@keyframes fs-enter {
+  from {
+    opacity: 0.4;
+    transform: scale(0.985);
+  }
 }
 
 /* Fixed exit control for stages that opt in: above the view, never clipped by the card. */

@@ -14,6 +14,7 @@ import { VIEW_OPTIONS, readDiagramView, writeDiagramView } from './diagramView'
 import { SkyHelp, dataSourcesText } from './SkyHelp'
 import type { DiagramView } from './SkyHelp'
 import { PlacePicker } from './PlacePicker'
+import { SwapText } from '../ui/SwapText'
 import { displayName } from './placeLabels'
 import { computeWindowDetails } from './windowDetails'
 import { formatWindowPlain, outOfRangeMessage, simpleStatus } from './simpleSummary'
@@ -41,6 +42,8 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const setMode = useAppStore((s) => s.setMode)
   const cursorH = useAppStore((s) => s.cursorH)
   const [view, setView] = useState<DiagramView>(readDiagramView)
+  // The new view fades in after a switch (not on the first paint)
+  const [switched, setSwitched] = useState(false)
   const heightM = useAppStore((s) => s.observerHeightM)
 
   const { status, bundle } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
@@ -119,6 +122,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                       aria-pressed={view === o.key}
                       onClick={() => {
                         setView(o.key)
+                        setSwitched(true)
                         writeDiagramView(o.key)
                       }}
                     >
@@ -126,7 +130,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                     </button>
                   ))}
                 </div>
-                <div className="simple-stage" data-view={view}>
+                <div className="simple-stage" data-view={view} data-switched={switched ? 'true' : undefined}>
                   <DiagramStage view={view} scenarioId={scenario.id} />
                 </div>
                 <div className="simple-tools">
@@ -219,7 +223,9 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
                               {row.child && <span className="simple-row__arrow" aria-hidden="true" />}
                               {row.label}
                             </dt>
-                            <dd>{row.value}</dd>
+                            <dd>
+                              <SwapText value={row.value} />
+                            </dd>
                           </div>
                         ))}
                       </dl>

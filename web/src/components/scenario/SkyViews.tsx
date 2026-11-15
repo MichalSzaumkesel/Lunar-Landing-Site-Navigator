@@ -61,6 +61,8 @@ function PolarPanel({ scenarioId }: { scenarioId: string }) {
 export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteName?: string }) {
   const setActive = useAppStore((s) => s.setActiveScenario)
   const [view, setView] = useState<ViewKey>('polar')
+  // The new view fades in after a switch; the first view does not, the card is already fading in
+  const [switched, setSwitched] = useState(false)
   const baseId = useId()
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -98,14 +100,23 @@ export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteNam
                 aria-controls={`${baseId}-panel`}
                 tabIndex={view === t.key ? 0 : -1}
                 className="views__tab"
-                onClick={() => setView(t.key)}
+                onClick={() => {
+                  setView(t.key)
+                  setSwitched(true)
+                }}
               >
                 {t.label}
               </button>
             ))}
           </div>
           <div className="views__stage">
-            <div role="tabpanel" id={`${baseId}-panel`} aria-labelledby={`${baseId}-tab-${view}`} className="views__panel">
+            <div
+              role="tabpanel"
+              id={`${baseId}-panel`}
+              aria-labelledby={`${baseId}-tab-${view}`}
+              className="views__panel"
+              data-switched={switched ? 'true' : undefined}
+            >
               {view === 'polar' && <PolarPanel scenarioId={scenarioId} />}
               {view === 'panorama' && <Panorama scenarioId={scenarioId} />}
               {view === '3d' && (

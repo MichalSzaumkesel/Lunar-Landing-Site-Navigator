@@ -1,8 +1,9 @@
 // Scenario board: one card per site + date. ScenarioBoard and ScenarioCard({ scenarioId }) are imported by app/.
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { AddScenarioMenu } from './AddScenarioMenu'
 import { createPortal } from 'react-dom'
 import { usePresence, usePresenceList } from '../../lib/usePresence'
+import { FlipContext, useFlip, useFlipCapture } from '../../lib/useFlip'
 import type { MouseEvent } from 'react'
 import { HOUR_MS } from '../../config/dataRange'
 import { MAX_SCENARIOS } from '../../config/dataRange'
@@ -42,6 +43,7 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   const canRemove = useAppStore((s) => s.scenarios.length > 1)
   const setActive = useAppStore((s) => s.setActiveScenario)
   const removeScenario = useAppStore((s) => s.removeScenario)
+  const captureFlip = useFlipCapture()
   const heightM = useAppStore((s) => s.observerHeightM)
   const { status, bundle } = useSiteBundle(scenario.siteId)
   const events = useScenarioEvents(bundle, heightM)
@@ -63,12 +65,14 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
   const onRemove = (e: MouseEvent) => {
     // The click must not bubble to the card, which would select the card that was just removed.
     e.stopPropagation()
+    captureFlip?.()
     removeScenario(scenario.id)
   }
 
   return (
     <section
       className={active ? 'card card--active' : 'card'}
+      data-flip-key={scenario.id}
       onClick={activate}
       onFocusCapture={activate}
       aria-current={active ? 'true' : undefined}
@@ -157,11 +161,15 @@ export function ScenarioBoard({ toolbarSlot }: ScenarioBoardProps) {
   const full = scenarios.length >= MAX_SCENARIOS
   const compare = usePresence(compareOpen)
   const cards = usePresenceList(scenarios, (s) => s.id)
+  const boardRef = useRef<HTMLDivElement>(null)
+  // Cards slide to their new place when one is added or removed (transform only)
+  const flip = useFlip(boardRef, cards.map((c) => c.item.id).join(','))
 
   // The new card starts as a copy of the active one, so "same site, other date" is one edit away.
   const onAdd = () => {
     const base = scenarios.find((s) => s.id === activeId) ?? scenarios[0]
     if (!base) return
+    flip.capture()
     addScenario({ siteId: base.siteId, startUtc: base.startUtc, durationH: base.durationH, slipDays: base.slipDays })
   }
 
@@ -198,17 +206,19 @@ export function ScenarioBoard({ toolbarSlot }: ScenarioBoardProps) {
           </div>
         </div>
       )}
-      <div className={`board board--${cards.length}`} data-tour="scenario-cards">
-        {cards.map(({ item, state }) =>
-          state === 'open' ? (
-            <ScenarioCard key={item.id} scenarioId={item.id} />
-          ) : (
-            <div key={item.id} className="board__leaving" aria-hidden="true" inert>
-              <CardBody scenario={item} />
-            </div>
-          ),
-        )}
-      </div>
+      <FlipContext.Provider value={flip}>
+        <div ref={boardRef} className={`board board--${cards.length}`} data-tour="scenario-cards">
+          {cards.map(({ item, state }) =>
+            state === 'open' ? (
+              <ScenarioCard key={item.id} scenarioId={item.id} />
+            ) : (
+              <div key={item.id} className="board__leaving" aria-hidden="true" inert>
+                <CardBody scenario={item} />
+              </div>
+            ),
+          )}
+        </div>
+      </FlipContext.Provider>
     </div>
   )
 }
