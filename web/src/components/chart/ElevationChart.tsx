@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -27,10 +28,12 @@ import {
 } from './elevationSeries'
 import './chart.css'
 
-const VIEW_W = 600
+const DEFAULT_VIEW_W = 600
+const MIN_VIEW_W = 240
+const MAX_VIEW_W = 2400
 const VIEW_H = 180
 const LEFT = 46
-const RIGHT = 580
+const RIGHT_MARGIN = 20
 const TOP = 16
 const BOTTOM = 152
 
@@ -58,6 +61,21 @@ export function ElevationLineChart({
 }: ElevationLineChartProps): ReactElement {
   const svgRef = useRef<SVGSVGElement | null>(null)
   const scaleRef = useSvgTextScale()
+  // The viewBox follows the rendered width (1 unit = 1 px), so the plot fills its panel at any size.
+  const [viewW, setViewW] = useState(DEFAULT_VIEW_W)
+  const right = viewW - RIGHT_MARGIN
+  useEffect(() => {
+    const el = svgRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const read = () => {
+      const w = Math.round(el.getBoundingClientRect().width)
+      if (w > 0) setViewW(Math.max(MIN_VIEW_W, Math.min(MAX_VIEW_W, w)))
+    }
+    read()
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const setSvg = useCallback(
     (el: SVGSVGElement | null) => {
       svgRef.current = el
@@ -70,8 +88,8 @@ export function ElevationLineChart({
   const xScale = useMemo(() => {
     const s = Number.isFinite(startH) ? startH : 0
     const e = Number.isFinite(endH) && endH > s ? endH : s + 1
-    return scaleLinear().domain([s, e]).range([LEFT, RIGHT]).clamp(true)
-  }, [startH, endH])
+    return scaleLinear().domain([s, e]).range([LEFT, right]).clamp(true)
+  }, [startH, endH, right])
 
   // Y scale mapping clearance degrees to SVG coordinates
   const { yScale, yTicks, yZero } = useMemo(() => {
@@ -123,8 +141,8 @@ export function ElevationLineChart({
     if (!svg) return
     const rect = svg.getBoundingClientRect()
     if (rect.width <= 0) return
-    const svgX = ((clientX - rect.left) / rect.width) * VIEW_W
-    const clampedSvgX = Math.max(LEFT, Math.min(RIGHT, svgX))
+    const svgX = ((clientX - rect.left) / rect.width) * viewW
+    const clampedSvgX = Math.max(LEFT, Math.min(right, svgX))
     const h = xScale.invert(clampedSvgX)
     onSeek(Math.max(0, Math.min(durationH, h)))
   }
@@ -190,7 +208,7 @@ export function ElevationLineChart({
     <svg
       ref={setSvg}
       className={`elevation-chart-svg svg-scaled ${playing ? 'is-playing' : ''}`}
-      viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+      viewBox={`0 0 ${viewW} ${VIEW_H}`}
       preserveAspectRatio="xMidYMid meet"
       role="slider"
       aria-label="Sun and Earth elevation above the horizon over time"
@@ -205,7 +223,7 @@ export function ElevationLineChart({
     >
       <defs>
         <clipPath id="elevation-chart-clip">
-          <rect x={LEFT} y={TOP} width={RIGHT - LEFT} height={BOTTOM - TOP} />
+          <rect x={LEFT} y={TOP} width={right - LEFT} height={BOTTOM - TOP} />
         </clipPath>
       </defs>
 
@@ -217,7 +235,7 @@ export function ElevationLineChart({
           <g key={`y-${tickVal}`}>
             <line
               x1={LEFT}
-              x2={RIGHT}
+              x2={right}
               y1={y}
               y2={y}
               className="chart__grid-line"
@@ -237,18 +255,11 @@ export function ElevationLineChart({
       {/* Zero line labelled "Horizon" */}
       <line
         x1={LEFT}
-        x2={RIGHT}
+        x2={right}
         y1={yZero}
         y2={yZero}
         className="chart__zero-line"
       />
-      <text
-        x={LEFT + 6}
-        y={yZero - 5}
-        className="chart__zero-label"
-      >
-        Horizon
-      </text>
       <text
         x={LEFT - 6}
         y={yZero + 4}
@@ -261,7 +272,7 @@ export function ElevationLineChart({
       {/* X axis line and ticks */}
       <line
         x1={LEFT}
-        x2={RIGHT}
+        x2={right}
         y1={BOTTOM}
         y2={BOTTOM}
         className="chart__axis-line"
@@ -307,6 +318,15 @@ export function ElevationLineChart({
         )}
       </g>
 
+      {/* Drawn after the curves so they never paint over it */}
+      <text
+        x={LEFT + 6}
+        y={yZero - 5}
+        className="chart__zero-label"
+      >
+        Horizon
+      </text>
+
       {/* Cursor vertical indicator and point highlights */}
       {cursorX !== null && (
         <g clipPath="url(#elevation-chart-clip)">
@@ -340,7 +360,7 @@ export function ElevationLineChart({
       <rect
         x={LEFT}
         y={TOP}
-        width={RIGHT - LEFT}
+        width={right - LEFT}
         height={BOTTOM - TOP}
         fill="transparent"
         className="chart__overlay-interactive"

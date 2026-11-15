@@ -144,7 +144,6 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 220px;
   overflow: visible;
   user-select: none;
   touch-action: none;
@@ -174,6 +173,11 @@
 }
 
 .chart__zero-label {
+  /* Halo so the curves cannot overpaint the word */
+  paint-order: stroke;
+  stroke: var(--panel-2, #0b1020);
+  stroke-width: 3px;
+  stroke-linejoin: round;
   fill: var(--muted, #a3afc7);
   font-size: var(--fs-label, 12px);
   font-weight: 600;
