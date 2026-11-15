@@ -136,6 +136,12 @@
   gap: var(--space-2, 8px);
 }
 
+/* Back on the first step: stays focusable so keyboard focus is not lost, but looks and acts inactive. */
+.tour-card__nav button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tour-cutout,
   .tour-cutout::after,

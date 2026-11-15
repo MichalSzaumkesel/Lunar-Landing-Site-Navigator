@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { MOTION_EASE, MOTION_MS, prefersReducedMotion } from '../../lib/motion'
-import { isFullyInView, whenScrollSettled } from './scrollSettle'
+import { isFullyInView, scrollIntoUsableView, whenScrollSettled } from './scrollSettle'
+import { describeKeyTarget, tourKeyAction } from './tourKeys'
 import { useTour } from './useTour'
 import { sectionsForTarget } from '../../lib/disclosure'
 import './tour.css'
@@ -106,6 +107,7 @@ export function Tour({ className = '' }: TourProps) {
     if (!isOpen || !currentStep) return
     settledRef.current = false
     let cancelWait = () => {}
+    let restoreMargins = () => {}
     const settle = () => {
       updatePosition()
       settledRef.current = true
@@ -118,17 +120,14 @@ export function Tour({ className = '' }: TourProps) {
         settle()
         return
       }
-      el.scrollIntoView?.({
-        block: 'center',
-        inline: 'nearest',
-        behavior: reduce ? 'auto' : 'smooth',
-      })
+      restoreMargins = scrollIntoUsableView(el, reduce ? 'auto' : 'smooth')
       if (reduce) settle()
       else cancelWait = whenScrollSettled(el, settle)
     }, reducedMotion() ? 0 : FADE_OUT_MS + (sectionsForTarget(currentStep.target).length > 0 ? SECTION_OPEN_MS : 0))
     return () => {
       clearTimeout(timer)
       cancelWait()
+      restoreMargins()
     }
   }, [isOpen, currentStep, stepIndex, updatePosition])
 
@@ -189,20 +188,35 @@ export function Tour({ className = '' }: TourProps) {
     prevOpenRef.current = isOpen
   }, [isOpen])
 
-  // Keyboard navigation and focus trap
+  // Escape and the arrows work wherever focus is while the tour is open (for example after a click on the
+  // page or when the focused Back button became inactive). Capture phase: the page shortcuts must not also move time.
+  const keysRef = useRef({ handleClose, handleNext, handleBack, canGoBack })
+  keysRef.current = { handleClose, handleNext, handleBack, canGoBack }
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      const action = tourKeyAction({
+        key: e.key,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+        defaultPrevented: e.defaultPrevented,
+        canGoBack: keysRef.current.canGoBack,
+        ...describeKeyTarget(e.target, cardRef.current),
+      })
+      if (!action) return
+      e.preventDefault()
+      if (action === 'close') keysRef.current.handleClose()
+      else if (action === 'next') keysRef.current.handleNext()
+      else keysRef.current.handleBack()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [isOpen])
+
+  // Focus trap inside the card
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      handleClose()
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault()
-      handleNext()
-    } else if (e.key === 'ArrowLeft') {
-      if (canGoBack) {
-        e.preventDefault()
-        handleBack()
-      }
-    } else if (e.key === 'Tab') {
+    if (e.key === 'Tab') {
       const card = cardRef.current
       if (!card) return
       const focusable = card.querySelectorAll<HTMLElement>(
@@ -289,7 +303,13 @@ export function Tour({ className = '' }: TourProps) {
               Skip tutorial
             </button>
             <div className="tour-card__nav">
-              <button type="button" onClick={handleBack} disabled={!canGoBack}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (canGoBack) handleBack()
+                }}
+                aria-disabled={!canGoBack}
+              >
                 Back
               </button>
               <button

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react'
 import { PRESETS, PRESET_APOLLO_VS_ARTEMIS, type Preset } from '../../config/presets'
+import { useClampedPopup } from '../../lib/popupClamp'
 import { usePresence } from '../../lib/usePresence'
 import '../share/share.css'
 import './addMenu.css'
@@ -59,6 +60,7 @@ export function AddScenarioMenu({ full, onAdd, onPreset }: AddScenarioMenuProps)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const menuId = useId()
   const presence = usePresence(open)
+  useClampedPopup(menuRef, triggerRef, presence.mounted)
 
   const items = useCallback(
     (): HTMLButtonElement[] =>
