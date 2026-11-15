@@ -10,17 +10,19 @@ Demo video (30 s): https://www.youtube.com/watch?v=TBfeCfEaTEU
 
 ## Screenshots
 
-![Compare: scenario cards side by side](docs/screenshots/01-compare-scenario-cards.png)
+![Two scenario cards side by side (Apollo 11 and the south pole) with Sun visible and Earth in view chips and polar sky plots](docs/screenshots/01-compare-scenario-cards.png)
 
-![Polar sky plot and solar disc loupe](docs/screenshots/02-polar-sky-plot-and-loupe.png)
+![Polar sky plot with the Sun and Earth paths, the terrain horizon and the solar disc loupe with its zoom caption](docs/screenshots/02-polar-sky-plot-and-loupe.png)
 
-![3D terrain view with lander](docs/screenshots/03-surface-3d.png)
+![3D view on the surface: lander and terrain with the Sun above the horizon, and the view controls](docs/screenshots/03-surface-3d.png)
 
-![Sunlight map and "Find spot with most Sun visible" result](docs/screenshots/04-sunniest-spot.png)
+![3D overview with the Sunlight map legend and the "Find spot with most Sun visible" result](docs/screenshots/04-sunniest-spot.png)
 
-![Window finder for the mission rules](docs/screenshots/05-window-map.png)
+![Window finder: valid landing days per site and the mission rules](docs/screenshots/05-window-map.png)
 
-![Simple mode summary](docs/screenshots/06-simple-mode.png)
+![Simple mode: Sun visible and Earth in view status blocks with the sky diagram](docs/screenshots/06-simple-mode.png)
+
+![Dates and slip section with the slip tolerance strip showing which slips still meet the mission rules](docs/screenshots/07-slip-strip.png)
 
 ## Features
 
