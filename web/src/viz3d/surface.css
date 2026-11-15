@@ -1012,7 +1012,11 @@
      Content taller than the frame (a result card) scrolls inside the column. */
   .surface:not(.surface--simple) .surface__side {
     height: var(--surface-h);
-    overflow-y: auto;
+    /* clip, not auto: the content is far shorter than the frame, and a 1 px overshoot (ring, rounding) must never
+       flash a scrollbar while a search or the map is computing. */
+    overflow-y: hidden;
+    overflow-y: clip;
+    overflow-clip-margin: 4px;
     padding-right: 2px;
     justify-content: space-between;
   }
