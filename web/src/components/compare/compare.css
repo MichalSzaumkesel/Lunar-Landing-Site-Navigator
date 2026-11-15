@@ -94,6 +94,8 @@
 .compare-table {
   width: 100%;
   min-width: 540px;
+  /* Fixed layout: a 220 px criterion column, the scenario columns share the rest equally */
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
@@ -108,8 +110,7 @@
 }
 
 .compare-th-criterion {
-  width: 220px;
-  min-width: 190px;
+  width: 260px;
   background: var(--panel);
   color: var(--muted);
   font-size: 0.8125rem;
@@ -119,8 +120,8 @@
 }
 
 .compare-th-scenario {
-  min-width: 150px;
   background: var(--panel);
+  vertical-align: top;
   text-align: right;
   border-left: 1px solid var(--line);
 }
@@ -169,6 +170,11 @@
   margin-top: 2px;
 }
 
+/* Inactive headers keep the line so both header texts start at the same height */
+.compare-scenario-active-badge--placeholder {
+  visibility: hidden;
+}
+
 .compare-row-th {
   background: var(--panel);
   padding: 0;
@@ -183,6 +189,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   text-align: left;
   font-size: 0.875rem;
   font-weight: 500;
@@ -218,6 +225,7 @@
   color: var(--muted);
   opacity: 0.4;
   margin-left: auto;
+  flex: none;
 }
 
 .compare-sort-btn:hover .compare-sort-hint {
@@ -274,7 +282,8 @@
 
 .compare-derived {
   display: inline-block;
-  margin-left: var(--space-2);
+  flex: none;
+  margin-left: calc(var(--space-2) - var(--space-3));
   padding: 0 4px;
   border: 1px solid var(--control-border);
   border-radius: 3px;

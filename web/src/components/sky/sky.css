@@ -303,11 +303,33 @@
 /* Panorama strip */
 .sky__pano {
   width: 100%;
+}
+
+/* Plot and skeleton hold the same box; the scale note has its own reserved line below the plot */
+.sky__pano-plot,
+.sky__pano--box {
   aspect-ratio: 776 / 224;
+}
+
+.sky__pano-scale {
+  margin: 0;
+  height: 1.25rem;
+  line-height: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .sky__pano.sky__box {
   border-radius: var(--radius);
+}
+
+@media (max-width: 480px) {
+  /* Taller strip: PANO_H_TALL in Panorama.tsx (viewBox 776 x 504), about 200 px on a 390 px phone */
+  .sky__pano-plot,
+  .sky__pano--box {
+    aspect-ratio: 776 / 504;
+  }
 }
 
 .sky__grid {

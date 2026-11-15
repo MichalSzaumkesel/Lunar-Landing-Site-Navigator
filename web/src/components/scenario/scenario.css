@@ -63,16 +63,24 @@
 }
 
 .card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'heading aside'
+    'select select';
+  align-items: start;
+  gap: 0 var(--space-3);
   min-height: 5.5rem;
 }
 
 .card__heading {
+  grid-area: heading;
   min-width: 0;
   max-width: 100%;
+}
+
+.card__header > .site-select {
+  grid-area: select;
 }
 
 .card__title {
@@ -94,6 +102,7 @@
 }
 
 .card__aside {
+  grid-area: aside;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -176,6 +185,29 @@
   max-width: 560px;
 }
 
+/* Reserve two caption lines so the accordions of side-by-side cards start at the same height
+   whether the caption is the two-line "Full sky" text or the one-line zoom pill. */
+.views__zoomslot {
+  min-height: 2rem;
+}
+
+/* With several cards the second tile row (shares and their detail lines) reserves room for four lines,
+   so the plots below start at the same height in every card. */
+.board--2 .countdowns--compact .countdown:nth-child(n + 3),
+.board--3 .countdowns--compact .countdown:nth-child(n + 3),
+.board--4 .countdowns--compact .countdown:nth-child(n + 3) {
+  min-height: 5.75rem;
+}
+
+/* With several cards, reserve two title lines so a long site name does not push one card down */
+@media (max-width: 1200px) {
+  .board--2 .card__title,
+  .board--3 .card__title,
+  .board--4 .card__title {
+    min-height: 3em;
+  }
+}
+
 /* Advanced: the zoom caption sits under the loupe, in the right column. */
 .views__zoomslot .sky__zoom {
   text-align: left;
@@ -237,6 +269,8 @@
 }
 
 .countdown__range {
+  /* The range wraps as one unit, never between its two numbers */
+  white-space: nowrap;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 400;
@@ -340,7 +374,7 @@
 .controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-3) var(--space-4);
 }
 
@@ -373,13 +407,35 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-height: 2.5rem;
 }
+
+.controls__slip button {
+  white-space: nowrap;
+}
+
 
 .controls__slip input[type='range'] {
   flex: 1 1 8rem;
   min-width: 0;
   min-height: 2.5rem;
   accent-color: var(--earth);
+}
+
+@media (max-width: 520px) {
+  /* Phone: the slider gets its own full row; readout and Reset share the row below */
+  .controls__slip {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .controls__slip input[type='range'] {
+    flex: 1 1 100%;
+  }
+
+  .controls__readout {
+    flex: 1 1 auto;
+  }
 }
 
 .controls__readout {
@@ -505,11 +561,16 @@
 
 @media (max-width: 520px) {
   .card__header {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'heading'
+      'select'
+      'aside';
     align-items: stretch;
     min-height: 0;
   }
   .card__aside {
+    grid-area: aside;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
@@ -702,6 +763,14 @@
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+@media (max-width: 520px) {
+  /* Touch: cells are only 2-3 px wide, so the strip is a visual aid here (the slider above is the
+     touch control) and gets more height to read; the legend says so. */
+  .slipstrip__cells {
+    height: 2.75rem;
+  }
 }
 
 /* Loaded content replaces its placeholder: opacity only, the placeholder already holds the size */

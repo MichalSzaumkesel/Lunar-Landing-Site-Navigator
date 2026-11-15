@@ -22,7 +22,7 @@ describe('phone width overflow guard', () => {
 
   it('stretches the stacked card header so its children are bounded by the card', () => {
     const phone = css.slice(css.indexOf('@media (max-width: 520px)'))
-    expect(rule('.card__header', phone)).toMatch(/flex-direction:\s*column/)
+    expect(rule('.card__header', phone)).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/)
     expect(rule('.card__header', phone)).toMatch(/align-items:\s*stretch/)
   })
 })

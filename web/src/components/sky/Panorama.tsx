@@ -2,6 +2,7 @@ import { memo, useId, useMemo } from 'react'
 import { sampleAt } from '../../lib/ephem'
 import type { SkySample } from '../../lib/ephem'
 import type { SiteBundle } from '../../lib/types'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import { useSvgTextScale } from '../../lib/useSvgTextScale'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
@@ -11,11 +12,11 @@ import { EarthDisc, SunDisc } from './Discs'
 import { earthPhaseView, stripRotationDeg } from './earthDisc'
 import { describeSky, earthStateText, fmtNum, fmtUtc, sunStateText } from './geometry'
 import {
-  PANO_H,
   PANO_MIN_DISC_R,
   PANO_PAD_LEFT,
   PANO_PAD_TOP,
-  PANO_VIEW_H,
+  PANO_H_TALL,
+  panoViewH,
   PANO_VIEW_W,
   PANO_W,
   azToX,
@@ -39,12 +40,12 @@ const AZ_GRID = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360]
 const PanoBase = memo(function PanoBase({ model, clipId }: { model: PanoramaModel; clipId: string }) {
   return (
     <g>
-      <rect className="sky__bg" width={PANO_W} height={PANO_H} />
+      <rect className="sky__bg" width={PANO_W} height={model.plotH} />
       {model.ticks.map((t) => (
         <line key={t.el} className="sky__grid" x1={0} x2={PANO_W} y1={t.y} y2={t.y} />
       ))}
       {AZ_GRID.map((az) => (
-        <line key={az} className="sky__grid" x1={azToX(az)} x2={azToX(az)} y1={0} y2={PANO_H} />
+        <line key={az} className="sky__grid" x1={azToX(az)} x2={azToX(az)} y1={0} y2={model.plotH} />
       ))}
       <g clipPath={`url(#${clipId})`}>
         <path className="sky__track sky__track--earth" d={model.earthTrackPath} />
@@ -61,13 +62,13 @@ const PanoTop = memo(function PanoTop({ model }: { model: PanoramaModel }) {
       <path className="sky__terrain" d={model.terrainPath} />
       {model.bandPath && <path className="sky__band" d={model.bandPath} />}
       <path key={model.horizonPath} className="sky__horizon" d={model.horizonPath} />
-      <rect className="sky__frame-line" width={PANO_W} height={PANO_H} />
+      <rect className="sky__frame-line" width={PANO_W} height={model.plotH} />
       {model.ticks.map((t) => (
         <text key={t.el} className="sky__pano-label sky__pano-label--y" x={-6} y={t.y}>
           {t.el}°
         </text>
       ))}
-      <text className="sky__pano-label sky__pano-label--y" x={-6} y={PANO_H}>
+      <text className="sky__pano-label sky__pano-label--y" x={-6} y={model.plotH}>
         0°
       </text>
       {AZ_LABELS.map(({ az, label }, i) => (
@@ -75,7 +76,7 @@ const PanoTop = memo(function PanoTop({ model }: { model: PanoramaModel }) {
           key={az}
           className="sky__pano-label sky__pano-label--x"
           x={azToX(az)}
-          y={PANO_H + 20}
+          y={model.plotH + 20}
           textAnchor={i === 0 ? 'start' : i === AZ_LABELS.length - 1 ? 'end' : 'middle'}
         >
           {label}
@@ -102,7 +103,7 @@ function PanoDiscs({ sample, bundle, model, clipId, readout }: {
       {!isBelowStrip(earth.el) && (
         <EarthDisc
           cx={azToX(earth.az)}
-          cy={elToY(earth.el, zoomEl)}
+          cy={elToY(earth.el, zoomEl, model.plotH)}
           trueRx={earthR * xPerDeg}
           trueRy={earthR * yPerDeg}
           minR={PANO_MIN_DISC_R}
@@ -113,7 +114,7 @@ function PanoDiscs({ sample, bundle, model, clipId, readout }: {
       {!isBelowStrip(sun.el) && (
         <SunDisc
           cx={azToX(sun.az)}
-          cy={elToY(sun.el, zoomEl)}
+          cy={elToY(sun.el, zoomEl, model.plotH)}
           trueRx={sunR * xPerDeg}
           trueRy={sunR * yPerDeg}
           minR={PANO_MIN_DISC_R}
@@ -127,14 +128,11 @@ function Markers({ readout, model }: { readout: ReturnType<typeof describeSky>; 
   return (
     <>
       {isBelowStrip(readout.earth.el) && (
-        <circle className="sky__marker sky__marker--earth" cx={azToX(readout.earth.az)} cy={PANO_H} r={6} />
+        <circle className="sky__marker sky__marker--earth" cx={azToX(readout.earth.az)} cy={model.plotH} r={6} />
       )}
       {isBelowStrip(readout.sun.el) && (
-        <circle className="sky__marker sky__marker--sun" cx={azToX(readout.sun.az)} cy={PANO_H} r={6} />
+        <circle className="sky__marker sky__marker--sun" cx={azToX(readout.sun.az)} cy={model.plotH} r={6} />
       )}
-      <text className="sky__scale" x={8} y={20}>
-        scale 0 to {model.zoomEl} deg, vertical x{fmtNum(model.yPerDeg / model.xPerDeg, 0)}
-      </text>
     </>
   )
 }
@@ -158,15 +156,15 @@ function PanoramaFrame({ scenario, bundle, model, cursorMs }: {
     <div className="sky__pano">
       <svg
         ref={textScaleRef}
-        className="sky__svg svg-scaled"
-        viewBox={`0 0 ${PANO_VIEW_W} ${PANO_VIEW_H}`}
+        className="sky__svg svg-scaled sky__pano-plot"
+        viewBox={`0 0 ${PANO_VIEW_W} ${panoViewH(model.plotH)}`}
         role="img"
         aria-label={label}
         data-scenario={scenario.id}
       >
         <defs>
           <clipPath id={clipId}>
-            <rect width={PANO_W} height={PANO_H} />
+            <rect width={PANO_W} height={model.plotH} />
           </clipPath>
         </defs>
         <g transform={`translate(${PANO_PAD_LEFT} ${PANO_PAD_TOP})`}>
@@ -178,14 +176,17 @@ function PanoramaFrame({ scenario, bundle, model, cursorMs }: {
           {readout && <Markers readout={readout} model={model} />}
           {!readout && (
             <g className="sky__outside">
-              <rect x={PANO_W / 2 - 120} y={PANO_H / 2 - 22} width={240} height={44} rx={8} />
-              <text x={PANO_W / 2} y={PANO_H / 2 + 1}>
+              <rect x={PANO_W / 2 - 120} y={model.plotH / 2 - 22} width={240} height={44} rx={8} />
+              <text x={PANO_W / 2} y={model.plotH / 2 + 1}>
                 Outside data range
               </text>
             </g>
           )}
         </g>
       </svg>
+      <p className="sky__pano-scale">
+        Scale 0 to {model.zoomEl} deg, vertical x{fmtNum(model.yPerDeg / model.xPerDeg, 0)}
+      </p>
     </div>
   )
 }
@@ -197,20 +198,21 @@ function PanoramaView({ scenario }: { scenario: Scenario }) {
   const { startMs, endMs } = scenarioWindowMs(scenario)
 
   // Terrain and tracks never depend on the cursor.
+  const tall = useMediaQuery('(max-width: 480px)')
   const model = useMemo(
-    () => (bundle ? buildPanoramaModel(bundle, heightM, startMs, endMs) : null),
-    [bundle, heightM, startMs, endMs],
+    () => (bundle ? buildPanoramaModel(bundle, heightM, startMs, endMs, tall ? PANO_H_TALL : undefined) : null),
+    [bundle, heightM, startMs, endMs, tall],
   )
 
   if (status === 'error') {
     return (
-      <div className="sky__pano sky__box sky__box--error" role="alert">
+      <div className="sky__pano sky__pano--box sky__box sky__box--error" role="alert">
         {error ?? 'Failed to load site data'}
       </div>
     )
   }
   if (status === 'loading' || !bundle || !model) {
-    return <div className="sky__pano sky__box sky__skeleton" aria-busy="true" aria-label="Loading panorama" />
+    return <div className="sky__pano sky__pano--box sky__box sky__skeleton" aria-busy="true" aria-label="Loading panorama" />
   }
   return (
     <PanoramaFrame

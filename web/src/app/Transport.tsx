@@ -61,10 +61,10 @@ export function Transport() {
         onKeyUp={held.onKeyUp}
         onBlur={held.onBlur}
         aria-label="Time cursor"
-        aria-valuetext={`+${cursorH.toFixed(1)} h from window start`}
+        aria-valuetext={`${active ? scenarioCursorUtc(active, cursorH) + ', ' : ''}+${cursorH.toFixed(1)} h from window start`}
       />
       <span className="readout">
-        {active ? scenarioCursorUtc(active, cursorH) : ''} · +{cursorH.toFixed(1)} h
+        <span className="readout__utc">{active ? scenarioCursorUtc(active, cursorH) : ''} · </span>+{cursorH.toFixed(1)} h
       </span>
     </footer>
   )

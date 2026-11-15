@@ -27,8 +27,13 @@ export function azToX(azDeg: number): number {
   return (azDeg / 360) * PANO_W
 }
 
-export function elToY(elDeg: number, zoomEl: number): number {
-  return PANO_H * (1 - elDeg / zoomEl)
+/** Plot height used below 480 px so the strip stays readable on a phone. */
+export const PANO_H_TALL = 460
+
+export const panoViewH = (plotH: number = PANO_H) => PANO_PAD_TOP + plotH + PANO_PAD_BOTTOM
+
+export function elToY(elDeg: number, zoomEl: number, plotH: number = PANO_H): number {
+  return plotH * (1 - elDeg / zoomEl)
 }
 
 export interface PanoTick {
@@ -51,6 +56,8 @@ export interface PanoramaModel {
   /** Strip pixels per degree, horizontal and vertical. */
   xPerDeg: number
   yPerDeg: number
+  /** Plot height in viewBox units. */
+  plotH: number
 }
 
 const f1 = (v: number) => v.toFixed(1)
@@ -62,6 +69,7 @@ export function stripSegments(
   k0: number,
   k1: number,
   zoomEl: number,
+  plotH: number = PANO_H,
 ): string {
   let d = ''
   let open = false
@@ -72,7 +80,7 @@ export function stripSegments(
       continue
     }
     if (open && Math.abs(az[k] - prevAz) > TRACK_BREAK_AZ_JUMP_DEG) open = false
-    d += `${open ? 'L' : 'M'}${f1(azToX(az[k]))},${f1(elToY(Math.max(el[k], 0), zoomEl))}`
+    d += `${open ? 'L' : 'M'}${f1(azToX(az[k]))},${f1(elToY(Math.max(el[k], 0), zoomEl, plotH))}`
     open = true
     prevAz = az[k]
   }
@@ -85,6 +93,7 @@ export function buildPanoramaModel(
   observerHeightM: number,
   startMs: number,
   endMs: number,
+  plotH: number = PANO_H,
 ): PanoramaModel {
   const { ephem, horizon } = bundle
   const mask = pickMask(bundle, observerHeightM)
@@ -94,26 +103,26 @@ export function buildPanoramaModel(
 
   const ticks: PanoTick[] = []
   const step = ringStepDeg(zoomEl)
-  for (let el = step; el < zoomEl; el += step) ticks.push({ el, y: elToY(el, zoomEl) })
+  for (let el = step; el < zoomEl; el += step) ticks.push({ el, y: elToY(el, zoomEl, plotH) })
 
   let horizonPath = ''
   if (mask.length > 0) {
     mask.forEach((el, i) => {
-      horizonPath += `${i === 0 ? 'M' : 'L'}${f1(azToX(i * azStepDeg))},${f1(elToY(Math.max(el, 0), zoomEl))}`
+      horizonPath += `${i === 0 ? 'M' : 'L'}${f1(azToX(i * azStepDeg))},${f1(elToY(Math.max(el, 0), zoomEl, plotH))}`
     })
-    horizonPath += `L${f1(PANO_W)},${f1(elToY(Math.max(mask[0], 0), zoomEl))}`
+    horizonPath += `L${f1(PANO_W)},${f1(elToY(Math.max(mask[0], 0), zoomEl, plotH))}`
   }
   let bandPath = ''
   const u = horizon.uncertainty_deg
-  if (mask.length > 0 && typeof u === 'number' && Number.isFinite(u) && u > 0 && (PANO_H / zoomEl) * 2 * u >= MIN_BAND_PX) {
-    const edge = (delta: number) => mask.map((el, i) => `${f1(azToX(i * azStepDeg))},${f1(elToY(Math.max(el + delta, 0), zoomEl))}`)
+  if (mask.length > 0 && typeof u === 'number' && Number.isFinite(u) && u > 0 && (plotH / zoomEl) * 2 * u >= MIN_BAND_PX) {
+    const edge = (delta: number) => mask.map((el, i) => `${f1(azToX(i * azStepDeg))},${f1(elToY(Math.max(el + delta, 0), zoomEl, plotH))}`)
     const up = edge(u)
     const down = edge(-u).reverse()
     bandPath = `M${up.join('L')}L${down.join('L')}Z`
   }
-  const terrainPath = horizonPath ? `${horizonPath}L${PANO_W},${PANO_H}L0,${PANO_H}Z` : ''
+  const terrainPath = horizonPath ? `${horizonPath}L${PANO_W},${plotH}L0,${plotH}Z` : ''
 
-  const track = (b: EphemFile['sun']) => stripSegments(b.az, b.el, k0, k1, zoomEl)
+  const track = (b: EphemFile['sun']) => stripSegments(b.az, b.el, k0, k1, zoomEl, plotH)
   return {
     zoomEl,
     mask,
@@ -125,7 +134,8 @@ export function buildPanoramaModel(
     sunTrackPath: track(ephem.sun),
     earthTrackPath: track(ephem.earth),
     xPerDeg: PANO_W / 360,
-    yPerDeg: PANO_H / zoomEl,
+    yPerDeg: plotH / zoomEl,
+    plotH,
   }
 }
 

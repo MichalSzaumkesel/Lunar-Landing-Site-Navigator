@@ -82,7 +82,6 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
         <div className="card__heading">
           <h2 className="card__title">{title}</h2>
           <p className="card__sub">{sub}</p>
-          <SiteSelect scenarioId={scenario.id} siteId={scenario.siteId} />
         </div>
         <div className="card__aside">
           {bundle && (
@@ -101,6 +100,7 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
             </button>
           )}
         </div>
+        <SiteSelect scenarioId={scenario.id} siteId={scenario.siteId} />
       </header>
 
       <Countdowns scenario={scenario} bundle={bundle} events={events} heightM={heightM} metrics={metrics} change={change} />
