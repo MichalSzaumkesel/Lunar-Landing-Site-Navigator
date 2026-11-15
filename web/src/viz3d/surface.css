@@ -1109,3 +1109,10 @@
     font-size: inherit;
   }
 }
+
+/* Simple 3D: small "Back to start" control after walking; wraps its content instead of spanning the frame */
+.surface__backchip {
+  right: auto;
+  flex-wrap: nowrap;
+  padding: 2px;
+}

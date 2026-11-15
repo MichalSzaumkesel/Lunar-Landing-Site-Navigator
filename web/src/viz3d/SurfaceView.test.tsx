@@ -64,6 +64,11 @@ vi.mock('./scene', () => {
       setHeatmapTexture = vi.fn()
       invalidateShadow = vi.fn()
       animateLanderTo = vi.fn().mockResolvedValue({ finished: true, offset: { eastM: 0, northM: 0 } })
+      cancelLanderAnimation = vi.fn()
+      currentLanderOffset = vi.fn().mockReturnValue({ eastM: 0, northM: 0 })
+      walkFrame = vi.fn().mockReturnValue({ yawDeg: 0, speedMps: 8 })
+      panBy = vi.fn()
+      lookKey = vi.fn().mockReturnValue(true)
     },
   }
 })
@@ -302,6 +307,188 @@ describe('SurfaceView 3D View Fixes', () => {
       await new Promise((r) => setTimeout(r, 80))
     })
     expect(scene.setLanderOffset).not.toHaveBeenCalled()
+  })
+
+  describe('WASD walking', () => {
+    type MockScene = Record<string, ReturnType<typeof vi.fn>>
+    const getScene = async () => {
+      const { SurfaceScene } = await import('./scene')
+      return (SurfaceScene as unknown as { last: MockScene }).last
+    }
+    const key = (el: Element, type: 'keydown' | 'keyup', code: string, init: KeyboardEventInit = {}) =>
+      el.dispatchEvent(
+        new KeyboardEvent(type, { key: code.slice(3).toLowerCase(), code, bubbles: true, cancelable: true, ...init }),
+      )
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+    const lastCall = (scene: MockScene) => scene.setLanderOffset.mock.calls.at(-1) as [number, number]
+
+    it('arrow keys only turn the view and never move the lander (Advanced)', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const canvasHolder = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      await act(async () => {
+        for (const code of ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']) key(canvasHolder, 'keydown', code)
+        await wait(120)
+        for (const code of ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']) key(canvasHolder, 'keyup', code)
+      })
+      expect(scene.setLanderOffset).not.toHaveBeenCalled()
+      // The frame forwards arrows to the scene look motion.
+      expect(scene.lookKey).toHaveBeenCalled()
+    })
+
+    it('W walks the lander along the view in Advanced and the readout follows when it stops', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      await act(async () => {
+        key(frame, 'keydown', 'KeyW')
+        await wait(500)
+        key(frame, 'keyup', 'KeyW')
+        await wait(500)
+      })
+      const [e, n] = lastCall(scene)
+      expect(e).toBeCloseTo(0, 6)
+      expect(n).toBeGreaterThan(1)
+      expect(n).toBeLessThan(5)
+      const label = container.querySelector('.surface__nudge-control')?.getAttribute('aria-label') ?? ''
+      expect(label).toMatch(/\+0 m E, \+[1-9]\d* m N/)
+      // Reset position is available again.
+      const reset = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Reset position')
+      expect((reset as HTMLButtonElement).disabled).toBe(false)
+    })
+
+    it('D strafes to the right of the view and Shift is faster', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      await act(async () => {
+        key(frame, 'keydown', 'KeyD')
+        await wait(300)
+        key(frame, 'keyup', 'KeyD')
+        await wait(300)
+      })
+      const [e1, n1] = lastCall(scene)
+      expect(e1).toBeGreaterThan(0.3)
+      expect(n1).toBeCloseTo(0, 6)
+      scene.setLanderOffset.mockClear()
+      scene.currentLanderOffset.mockReturnValue({ eastM: 0, northM: 0 })
+      await act(async () => {
+        key(frame, 'keydown', 'KeyD', { shiftKey: true })
+        await wait(300)
+        key(frame, 'keyup', 'KeyD', { shiftKey: true })
+        await wait(300)
+      })
+      expect(lastCall(scene)[0]).toBeGreaterThan(e1 * 2)
+    })
+
+    it('does not walk with Ctrl, Meta or Alt, in an input or a slider, or with the focus on a button', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      const slider = container.querySelector('input[type="range"]') as HTMLInputElement
+      const select = container.querySelector('select') as HTMLSelectElement
+      const button = container.querySelector('button') as HTMLButtonElement
+      await act(async () => {
+        key(frame, 'keydown', 'KeyW', { ctrlKey: true })
+        key(frame, 'keydown', 'KeyA', { metaKey: true })
+        key(frame, 'keydown', 'KeyS', { altKey: true })
+        key(slider, 'keydown', 'KeyW')
+        key(select, 'keydown', 'KeyW')
+        key(button, 'keydown', 'KeyW')
+        await wait(150)
+      })
+      expect(scene.setLanderOffset).not.toHaveBeenCalled()
+    })
+
+    it('blur stops a walk at once and keeps the position', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      await act(async () => {
+        key(frame, 'keydown', 'KeyW')
+        await wait(200)
+        window.dispatchEvent(new Event('blur'))
+        await wait(50)
+      })
+      const calls = scene.setLanderOffset.mock.calls.length
+      expect(calls).toBeGreaterThan(0)
+      await act(async () => {
+        await wait(200)
+      })
+      expect(scene.setLanderOffset.mock.calls.length).toBe(calls)
+    })
+
+    it('in Simple the walk is visual only: no readouts or metrics, and Back to start appears', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1', variant: 'simple' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      scene.setLanderOffset.mockClear()
+      const textBefore = container.textContent
+      const find = (t: string) =>
+        Array.from(container.querySelectorAll('button')).find((b) => b.textContent === t) as HTMLButtonElement | undefined
+      expect(find('Back to start')).toBeUndefined()
+      await act(async () => {
+        key(frame, 'keydown', 'KeyW')
+        await wait(400)
+        key(frame, 'keyup', 'KeyW')
+        await wait(400)
+      })
+      expect(lastCall(scene)[1]).toBeGreaterThan(1)
+      for (const t of ['Offset', ' m N', 'Moved', 'Sun visible hours', 'Approximate']) {
+        expect(container.textContent).not.toContain(t)
+      }
+      expect(container.textContent?.replace('Back to start', '')).toBe(textBefore)
+      const back = find('Back to start')
+      expect(back).toBeDefined()
+      await act(async () => {
+        back?.click()
+      })
+      expect(scene.animateLanderTo).toHaveBeenLastCalledWith({ eastM: 0, northM: 0 }, expect.any(Number))
+      await act(async () => {
+        await wait(400)
+      })
+      expect(find('Back to start')).toBeUndefined()
+    })
+
+    it('in Overview WASD pans the view instead of moving the lander', async () => {
+      await act(async () => {
+        root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))
+      })
+      const frame = container.querySelector('.surface__frame') as HTMLElement
+      const scene = await getScene()
+      const overview = Array.from(container.querySelectorAll('[role="radio"]')).find(
+        (r) => r.textContent === 'Overview',
+      ) as HTMLButtonElement
+      await act(async () => {
+        overview.click()
+      })
+      scene.setLanderOffset.mockClear()
+      await act(async () => {
+        key(frame, 'keydown', 'KeyW')
+        await wait(200)
+        key(frame, 'keyup', 'KeyW')
+        await wait(400)
+      })
+      expect(scene.panBy).toHaveBeenCalled()
+      expect(scene.setLanderOffset).not.toHaveBeenCalled()
+    })
   })
 
   it('Face the lander works on the surface and in Overview', async () => {
