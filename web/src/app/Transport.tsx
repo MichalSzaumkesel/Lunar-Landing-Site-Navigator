@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { SPEEDS_H_PER_SEC } from '../config/presets'
 import { useHeldCursorKeys } from '../lib/useHeldCursorKeys'
+import { formatCursorH } from '../lib/formatHours'
 import { formatSpeed } from '../lib/speedLabel'
 import { scenarioCursorUtc } from '../state/selectors'
 import { useAppStore } from '../state/store'
@@ -61,10 +62,10 @@ export function Transport() {
         onKeyUp={held.onKeyUp}
         onBlur={held.onBlur}
         aria-label="Time cursor"
-        aria-valuetext={`${active ? scenarioCursorUtc(active, cursorH) + ', ' : ''}+${cursorH.toFixed(1)} h from window start`}
+        aria-valuetext={`${active ? scenarioCursorUtc(active, cursorH) + ', ' : ''}+${formatCursorH(cursorH)} h from window start`}
       />
       <span className="readout">
-        <span className="readout__utc">{active ? scenarioCursorUtc(active, cursorH) : ''} · </span>+{cursorH.toFixed(1)} h
+        <span className="readout__utc">{active ? scenarioCursorUtc(active, cursorH) : ''} · </span>+{formatCursorH(cursorH)} h
       </span>
     </footer>
   )

@@ -231,4 +231,22 @@ describe('SimpleView component', () => {
     expect(retryBtn).not.toBeNull()
     expect(retryBtn?.textContent).toBe('Try again')
   })
+
+  it('titles an unknown site "Unknown place" without the raw id and offers the picker, not a retry', async () => {
+    vi.spyOn(useSiteBundleModule, 'useSiteBundle').mockReturnValue({
+      status: 'error',
+      bundle: null,
+      error: 'Unknown site: bogus',
+    })
+
+    await act(async () => {
+      root.render(createElement(SimpleView))
+    })
+
+    expect(container.querySelector('.simple-card__title')?.textContent).toBe('Unknown place')
+    const errorAlert = container.querySelector('.simple-error[role="alert"]')
+    expect(errorAlert?.textContent).toContain('This place is not on the list. Choose another place above.')
+    expect(errorAlert?.textContent).not.toContain('bogus')
+    expect(errorAlert?.querySelector('button')).toBeNull()
+  })
 })

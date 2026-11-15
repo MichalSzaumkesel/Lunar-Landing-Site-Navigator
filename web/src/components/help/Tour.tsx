@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { MOTION_EASE, MOTION_MS, prefersReducedMotion } from '../../lib/motion'
 import { isFullyInView, scrollIntoUsableView, whenScrollSettled } from './scrollSettle'
 import { describeKeyTarget, tourKeyAction } from './tourKeys'
+import { placeTourCard } from './tourPlacement'
 import { useTour } from './useTour'
 import { sectionsForTarget } from '../../lib/disclosure'
 import './tour.css'
@@ -61,45 +62,14 @@ export function Tour({ className = '' }: TourProps) {
     const pad = 16
     const margin = 12
 
-    let top = rect.bottom + margin
-    let left = rect.left + (rect.width - cardW) / 2
-
     const placement = currentStep.placement ?? 'bottom'
-    if (placement === 'bottom') {
-      top = rect.bottom + margin
-      left = rect.left + (rect.width - cardW) / 2
-      // If overflowing bottom, try top
-      if (top + cardH > window.innerHeight - pad && rect.top - cardH - margin >= pad) {
-        top = rect.top - cardH - margin
-      }
-    } else if (placement === 'top') {
-      top = rect.top - cardH - margin
-      left = rect.left + (rect.width - cardW) / 2
-      // If overflowing top, try bottom
-      if (top < pad && rect.bottom + margin + cardH <= window.innerHeight - pad) {
-        top = rect.bottom + margin
-      }
-    } else if (placement === 'right') {
-      top = rect.top + (rect.height - cardH) / 2
-      left = rect.right + margin
-      // If overflowing right, try left
-      if (left + cardW > window.innerWidth - pad && rect.left - cardW - margin >= pad) {
-        left = rect.left - cardW - margin
-      }
-    } else if (placement === 'left') {
-      top = rect.top + (rect.height - cardH) / 2
-      left = rect.left - cardW - margin
-      // If overflowing left, try right
-      if (left < pad && rect.right + margin + cardW <= window.innerWidth - pad) {
-        left = rect.right + margin
-      }
+    const spot = {
+      left: Math.max(0, rect.left - SPOTLIGHT_PAD),
+      top: Math.max(0, rect.top - SPOTLIGHT_PAD),
+      right: Math.min(window.innerWidth, rect.right + SPOTLIGHT_PAD),
+      bottom: Math.min(window.innerHeight, rect.bottom + SPOTLIGHT_PAD),
     }
-
-    // Clamp inside viewport
-    left = Math.max(pad, Math.min(window.innerWidth - cardW - pad, left))
-    top = Math.max(pad, Math.min(window.innerHeight - cardH - pad, top))
-
-    setCardPos({ top, left })
+    setCardPos(placeTourCard({ w: cardW, h: cardH }, spot, { w: window.innerWidth, h: window.innerHeight }, placement, pad, margin))
   }, [isOpen, currentStep])
 
   // Step change: fade out, scroll with the overlay untouched, then place once and fade in

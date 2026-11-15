@@ -112,6 +112,25 @@ describe('DemoCaption component', () => {
     expect(container.querySelector('.demo-caption')).toBeNull()
   })
 
+  it('returns focus to the Demo button after Stop demo', async () => {
+    const trigger = document.createElement('button')
+    trigger.setAttribute('data-demo-trigger', '')
+    document.body.appendChild(trigger)
+    await act(async () => {
+      root.render(createElement(DemoCaption))
+    })
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+    const stopBtn = container.querySelector<HTMLButtonElement>('.demo-caption__stop')
+    stopBtn?.focus()
+    await act(async () => {
+      stopBtn?.click()
+    })
+    expect(document.activeElement).toBe(trigger)
+    trigger.remove()
+  })
+
   it('stops demo on Escape keydown', async () => {
     await act(async () => {
       root.render(createElement(DemoCaption))

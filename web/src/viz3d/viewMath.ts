@@ -104,8 +104,8 @@ export function lookAnglesTo(dx: number, dz: number, dy: number): { azimuthDeg: 
   }
 }
 
-/** Overlay wording in Simple: the same fixed phrases as the cards; hills are named only in brackets. */
-export function simpleSunText(visible: boolean, el: number): string {
+/** Overlay wording in Simple: the same fixed phrases as the cards. */
+export function simpleSunText(visible: boolean): string {
   if (visible) return 'Sun visible'
-  return el < 0 ? 'Sun below horizon' : 'Sun below horizon (hills)'
+  return 'Sun below horizon'
 }

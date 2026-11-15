@@ -905,7 +905,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
           <div className="surface__time">{fmtUtc(cursorMs)}</div>
           {simple ? (
             <div className={sunRead?.visible ? 'surface__state surface__state--on' : 'surface__state'}>
-              {sample && sunRead ? simpleSunText(sunRead.visible, sample.sun.el) : 'Outside data range'}
+              {sample && sunRead ? simpleSunText(sunRead.visible) : 'Outside data range'}
             </div>
           ) : sample && sunRead ? (
             <>

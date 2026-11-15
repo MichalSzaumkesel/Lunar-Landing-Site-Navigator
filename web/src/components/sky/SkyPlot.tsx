@@ -27,6 +27,7 @@ import {
 } from './geometry'
 import type { BodyReadout, SkyModel, SkyReadout } from './geometry'
 import './sky.css'
+import { siteErrorText } from '../../lib/siteError'
 
 const CARDINALS = [
   { az: 0, label: 'N' },
@@ -210,7 +211,7 @@ function SkyPlotView({ scenario, zoomSlot }: { scenario: Scenario; zoomSlot?: HT
   if (status === 'error') {
     body = (
       <div className="sky__frame sky__box sky__box--error" role="alert">
-        {error ?? 'Failed to load site data'}
+        {siteErrorText(error)}
       </div>
     )
   } else if (status === 'loading' || !bundle || !model) {

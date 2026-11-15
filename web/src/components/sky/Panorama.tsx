@@ -26,6 +26,7 @@ import {
 } from './panoramaGeometry'
 import type { PanoramaModel } from './panoramaGeometry'
 import './sky.css'
+import { siteErrorText } from '../../lib/siteError'
 
 const AZ_LABELS = [
   { az: 0, label: 'N' },
@@ -207,7 +208,7 @@ function PanoramaView({ scenario }: { scenario: Scenario }) {
   if (status === 'error') {
     return (
       <div className="sky__pano sky__pano--box sky__box sky__box--error" role="alert">
-        {error ?? 'Failed to load site data'}
+        {siteErrorText(error)}
       </div>
     )
   }

@@ -15,6 +15,19 @@ export function DemoCaption() {
     }
   }, [isRecording])
 
+  // When the demo ends (Stop button or Esc) the focused control disappears and focus would fall
+  // to <body>; hand it back to the Demo button in the top bar.
+  const wasActive = useRef(false)
+  useEffect(() => {
+    if (wasActive.current && !isActive) {
+      const ae = document.activeElement
+      if (!ae || ae === document.body) {
+        document.querySelector<HTMLButtonElement>('[data-demo-trigger]')?.focus({ preventScroll: true })
+      }
+    }
+    wasActive.current = isActive
+  }, [isActive])
+
   if (!isActive && !isRecording && countdown === null && !recorderError) {
     return null
   }
@@ -25,6 +38,11 @@ export function DemoCaption() {
     } else {
       setVariant('video30s')
     }
+  }
+
+  const handleRestart = () => {
+    restartDemo()
+    stopButtonRef.current?.focus({ preventScroll: true })
   }
 
   const handleStopAll = () => {
@@ -108,7 +126,7 @@ export function DemoCaption() {
           </button>
         )}
         {atEnd && !isRecording && (
-          <button type="button" className="demo-caption__btn" onClick={restartDemo} aria-label="Restart demo">
+          <button type="button" className="demo-caption__btn" onClick={handleRestart} aria-label="Restart demo">
             Restart
           </button>
         )}
