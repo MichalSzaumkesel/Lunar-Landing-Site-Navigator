@@ -430,7 +430,6 @@ export class SurfaceScene {
    * the lander centred when it moves; otherwise the move ends when the lander is centred.
    */
   centerOnLander(follow: boolean): void {
-    if (this.mode !== 'overview') return
     this.cancelCameraAnimation()
     this.startLock('lander', !follow)
   }
@@ -549,7 +548,23 @@ export class SurfaceScene {
 
   /** Returns false when a one-off move has arrived. */
   private trackLander(dt: number): boolean {
-    if (this.mode !== 'overview') return false
+    if (this.mode === 'surface') {
+      // Surface: the camera stays where it is and keeps turning towards the lander (also when it is nudged).
+      const lx = this.landerOffset.eastM
+      const lz = -this.landerOffset.northM
+      const ly = this.groundY(lx, lz)
+      const a = lookAnglesTo(
+        lx - this.camera.position.x,
+        lz - this.camera.position.z,
+        ly + LANDER_LOOK_HEIGHT_M - this.camera.position.y,
+      )
+      const instant = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
+      const dtEff = instant ? 10_000 : dt
+      this.yawDeg = dampAngleDeg(this.yawDeg, a.azimuthDeg, dtEff)
+      this.pitchDeg = dampValue(this.pitchDeg, Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, a.elevationDeg)), dtEff)
+      this.applyCamera()
+      return true
+    }
     const t = this.controls.target
     const gx = this.landerOffset.eastM
     const gz = -this.landerOffset.northM
