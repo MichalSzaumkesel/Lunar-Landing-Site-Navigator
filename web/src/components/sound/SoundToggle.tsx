@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
+import { SegmentedToggle, type SegmentedOption } from '../ui/SegmentedToggle'
 import { VolumeSlider } from './VolumeSlider'
 import {
   getSoundEngine,
@@ -12,8 +13,21 @@ import './sound.css'
 
 const SLIDE_MS = 200
 
-const MODES: { id: SoundMode; label: string; title: string }[] = [
-  { id: 'off', label: 'Off', title: 'Turn sound off' },
+function SpeakerIcon({ muted = false }: { muted?: boolean }): ReactElement {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+      <path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />
+      {muted ? (
+        <path d="M10.5 6l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      ) : (
+        <path d="M10.5 5.8a3.2 3.2 0 010 4.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      )}
+    </svg>
+  )
+}
+
+const MODES: SegmentedOption<SoundMode>[] = [
+  { id: 'off', label: 'Off', icon: <SpeakerIcon muted />, title: 'Turn sound off' },
   { id: 'ambient', label: 'Ambient', title: 'Calm ambient tone that follows Sun and Earth visibility' },
   { id: 'cues', label: 'Cues', title: 'Short tones when the Sun or Earth rises or sets during Play' },
 ]
@@ -70,23 +84,6 @@ export function SoundToggle({
     engine.setMode(newMode)
   }
 
-  const radioRefs = useRef<Partial<Record<SoundMode, HTMLButtonElement | null>>>({})
-
-  // WAI-ARIA radio group: one tab stop, arrows move focus and selection.
-  const onRadioKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
-    const idx = MODES.findIndex((m) => m.id === mode)
-    let next: number
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % MODES.length
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + MODES.length) % MODES.length
-    else if (e.key === 'Home') next = 0
-    else if (e.key === 'End') next = MODES.length - 1
-    else return
-    e.preventDefault()
-    const id = MODES[next].id
-    handleModeClick(id)
-    radioRefs.current[id]?.focus()
-  }
-
   const handleVolumeChange = (percent: number): void => {
     const val = percent / 100
     setVolume(val)
@@ -125,34 +122,14 @@ export function SoundToggle({
       aria-label="Sound controls"
     >
       <div className="sound-control__main">
-        <span className="sound-control__label" id="sound-mode-label">
-          Sound:
-        </span>
-        <div
+        <SegmentedToggle
           className="sound-control__modes"
-          role="radiogroup"
-          aria-labelledby="sound-mode-label"
-        >
-          {MODES.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              role="radio"
-              ref={(el) => {
-                radioRefs.current[m.id] = el
-              }}
-              aria-checked={mode === m.id}
-              tabIndex={mode === m.id ? 0 : -1}
-              className={`sound-btn ${mode === m.id ? 'sound-btn--active' : ''}`}
-              aria-label={`Sound: ${m.label}`}
-              title={m.title}
-              onClick={() => handleModeClick(m.id)}
-              onKeyDown={onRadioKeyDown}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
+          ariaLabel="Sound"
+          options={MODES}
+          value={mode}
+          onChange={handleModeClick}
+          fit
+        />
       </div>
 
       {mounted && (

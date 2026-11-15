@@ -70,7 +70,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Guided tour (`Tutorial` button) and a demo narration (`Demo` button).
 
 ### Sound
-- Off by default. Ambient and event-cue modes are available from the tools bar.
+- Off by default. A compact Off / Ambient / Cues control in the tools bar; a volume slider slides in when sound is on.
 - Web Audio synthesis only; no audio files are loaded.
 
 ## Quick Start
