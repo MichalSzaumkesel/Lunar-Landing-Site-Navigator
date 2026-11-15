@@ -2,6 +2,8 @@ import type { MissionRules, ScenarioMetrics, SiteBundle } from '../../lib/types'
 import type { MastDeltaResult } from '../../lib/mastDelta'
 import type { SkySample } from '../../lib/ephem'
 import { horizonAt } from '../../lib/horizon'
+import { formatShareRange } from '../../lib/horizonUncertainty'
+import type { HorizonShareRange, ShareRange } from '../../lib/horizonUncertainty'
 import { fmtNum } from '../sky/geometry'
 
 export interface PrintMetricRow {
@@ -75,11 +77,17 @@ export function formatMastGainText(delta: MastDeltaResult | null | undefined): s
   return 'No difference'
 }
 
+/** Appends "(lo–hi)" for the horizon-uncertainty range, when there is one. */
+function withRange(value: string, range: ShareRange | null | undefined): string {
+  return range ? `${value} (${formatShareRange(range)})` : value
+}
+
 /** Returns the compact table of the same metrics as the metrics panel. */
 export function getPrintMetricRows(
   metrics: ScenarioMetrics | null,
   cursorValues: { sunElDeg: number | null; sunClearanceDeg: number | null } | null,
   mastDeltaResult?: MastDeltaResult | null,
+  shareRange?: HorizonShareRange | null,
 ): PrintMetricRow[] {
   const sunEl = cursorValues?.sunElDeg
   const sunClearance = cursorValues?.sunClearanceDeg
@@ -100,7 +108,7 @@ export function getPrintMetricRows(
     {
       key: 'pct_sunlit',
       label: 'Sun visible',
-      value: metrics ? formatUnitValue(metrics.pct_sunlit, '%', 1) : OUTSIDE_RANGE,
+      value: withRange(metrics ? formatUnitValue(metrics.pct_sunlit, '%', 1) : OUTSIDE_RANGE, metrics ? shareRange?.sun : null),
       tip: 'Share of window samples where Sun centre is above terrain horizon.',
     },
     {
@@ -120,7 +128,7 @@ export function getPrintMetricRows(
     {
       key: 'pct_earth',
       label: 'Earth in view',
-      value: metrics ? formatUnitValue(metrics.pct_earth, '%', 1) : OUTSIDE_RANGE,
+      value: withRange(metrics ? formatUnitValue(metrics.pct_earth, '%', 1) : OUTSIDE_RANGE, metrics ? shareRange?.earth : null),
       tip: 'Share of window samples where Earth centre is above terrain horizon.',
     },
     {

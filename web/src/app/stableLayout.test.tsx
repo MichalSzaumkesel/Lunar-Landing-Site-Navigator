@@ -127,7 +127,7 @@ describe('Stable layout between Simple and Advanced modes', () => {
         trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
       })
       const items = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
-      expect(items.map((i) => i.disabled)).toEqual([false, true, true])
+      expect(items.map((i) => i.disabled)).toEqual([false, true, true, true])
     })
   })
 

@@ -94,6 +94,13 @@
   fill: var(--terrain);
 }
 
+.sky__band {
+  fill: var(--terrain-edge);
+  fill-opacity: 0.3;
+  stroke: none;
+  pointer-events: none;
+}
+
 .sky__horizon {
   animation: horizon-fade var(--motion-duration-fast) ease;
   fill: none;

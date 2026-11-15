@@ -2,7 +2,10 @@ import { useMemo } from 'react'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import type { SkyEvent } from '../../lib/events'
 import type { ObserverHeightM, ScenarioMetrics, SiteBundle } from '../../lib/types'
-import { scenarioCursorMs } from '../../state/selectors'
+import { formatShareRange, uncertaintyTip } from '../../lib/horizonUncertainty'
+import type { ShareRange } from '../../lib/horizonUncertainty'
+import { useHorizonShareRange } from '../../lib/useScenarioMetrics'
+import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { describeBody, pickMask } from '../sky/geometry'
@@ -39,17 +42,26 @@ function Headline({ body, countdown }: { body: CountdownBody; countdown: Countdo
   )
 }
 
-function Share({ body, label, value, tip, detail, change }: {
+function Share({ body, label, value, tip, detail, change, range, uncertaintyDeg }: {
   body: CountdownBody
   label: string
   value: number
   tip: string
   detail: string
   change: string | null
+  range: ShareRange | null
+  uncertaintyDeg: number | null
 }) {
   return (
     <div className={`countdown countdown--${body}`} title={tip}>
-      <span className="countdown__value">{`${label} ${value.toFixed(1)} %`}</span>
+      <span className="countdown__value">
+        {`${label} ${value.toFixed(1)} %`}
+        {range && uncertaintyDeg !== null && (
+          <span className="countdown__range" title={uncertaintyTip(uncertaintyDeg)}>
+            {` (${formatShareRange(range)})`}
+          </span>
+        )}
+      </span>
       <span className="countdown__utc">{detail}</span>
       {change && <span className="countdown__utc">{`vs slip 0: ${change}`}</span>}
     </div>
@@ -60,6 +72,8 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
   const cursorH = useAppStore((s) => s.cursorH)
   const split = useMemo(() => (events ? splitEvents(events) : null), [events])
   const mask = useMemo(() => (bundle ? pickMask(bundle, heightM) : null), [bundle, heightM])
+  const win = scenarioWindowMs(scenario)
+  const shareRange = useHorizonShareRange(bundle, heightM, win.startMs, win.endMs)
 
   if (!bundle || !split || !mask) {
     return <div className="countdowns countdowns--loading" aria-busy="true" />
@@ -86,6 +100,8 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             tip="pct_sunlit: share of samples in the window where the Sun centre is above the terrain horizon."
             detail={longestDarkLine(metrics.longest_dark_h)}
             change={change ? formatChange(change.sunH, change.sunPp) : null}
+            range={shareRange?.sun ?? null}
+            uncertaintyDeg={shareRange?.uncertaintyDeg ?? null}
           />
           <Share
             body="earth"
@@ -94,6 +110,8 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             tip="pct_earth: share of samples in the window where the Earth centre is above the terrain horizon."
             detail={longestNoEarthLine(metrics.longest_no_earth_h)}
             change={change ? formatChange(change.earthH, change.earthPp) : null}
+            range={shareRange?.earth ?? null}
+            uncertaintyDeg={shareRange?.uncertaintyDeg ?? null}
           />
         </>
       )}

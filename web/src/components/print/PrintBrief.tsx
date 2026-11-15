@@ -9,7 +9,9 @@ import type {
 import type { MastDeltaResult } from '../../lib/mastDelta'
 import { sampleAt } from '../../lib/ephem'
 import { mastDelta } from '../../lib/mastDelta'
-import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import { horizonsQueryText } from '../../lib/horizonsQuery'
+import type { HorizonShareRange } from '../../lib/horizonUncertainty'
+import { useHorizonShareRange, useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -50,6 +52,8 @@ interface ScenarioRenderData {
   cursorValues: { sunElDeg: number | null; sunClearanceDeg: number | null }
   rulesResult: ReturnType<typeof evaluateMissionRules>
   provenance: string
+  shareRange: HorizonShareRange | null
+  horizonsQuery: string | null
   dateRangeText: string
   coordsText: string
 }
@@ -76,6 +80,9 @@ function useScenarioRenderData(
 
   const computedMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, endMs)
   const metrics = metricsOverride !== undefined ? metricsOverride : computedMetrics
+  // Only for the metrics this brief computes itself; an overridden metrics object has no matching range.
+  const computedRange = useHorizonShareRange(bundle, observerHeightM, startMs, endMs)
+  const shareRange = metricsOverride !== undefined ? null : computedRange
 
   // Rules apply to the mission interval from landing, not to the whole scenario window (contract section 3).
   const missionEndMs = startMs + missionRules.missionDurationH * 3_600_000
@@ -145,6 +152,8 @@ function useScenarioRenderData(
     cursorValues,
     rulesResult,
     provenance,
+    shareRange,
+    horizonsQuery: horizonsQueryText(bundle?.ephem),
     dateRangeText,
     coordsText,
   }
@@ -253,7 +262,7 @@ export function PrintBrief({
   )
 
   const metricRowsList = scenarioDataList.map((d) =>
-    getPrintMetricRows(d.metrics, d.cursorValues, d.mastResult),
+    getPrintMetricRows(d.metrics, d.cursorValues, d.mastResult, d.shareRange),
   )
 
   const templateRows = metricRowsList[0] ?? []
@@ -372,6 +381,8 @@ export function PrintBrief({
                     colSpan={1 + scenarioDataList.length}
                   >
                     Scenario Metrics (Contract §3)
+                    {scenarioDataList.some((d) => d.shareRange) &&
+                      ' · Range in brackets: horizon raised or lowered by its uncertainty; excludes LOLA height and geolocation error.'}
                   </td>
                 </tr>
 
@@ -410,6 +421,18 @@ export function PrintBrief({
                     </td>
                   ))}
                 </tr>
+                {scenarioDataList.some((d) => d.horizonsQuery) && (
+                  <tr className="print-table__row">
+                    <th className="print-table__row-label" scope="row">
+                      JPL Horizons query
+                    </th>
+                    {scenarioDataList.map((d) => (
+                      <td key={d.scenario.id} className="print-table__cell print-table__cell--provenance">
+                        {d.horizonsQuery ?? 'Not recorded for this site.'}
+                      </td>
+                    ))}
+                  </tr>
+                )}
               </tbody>
             </table>
           </main>

@@ -211,6 +211,20 @@ describe('buildSkyModel', () => {
     expect(m.sunTrackPath.startsWith('M')).toBe(true)
   })
 
+  it('draws an uncertainty band only when it is present and wide enough to see', () => {
+    const ephem = makeEphem(48, () => 1, () => 45)
+    const flat = makeHorizon((i) => 1 + (i % 2))
+    expect(buildSkyModel({ horizon: flat, ephem }, 2, t0, t0 + 47 * H).bandPath).toBe('')
+    // zoom 5: 2 * 0.15 deg is 15 px
+    const withU = { ...flat, uncertainty_deg: 0.15 }
+    const m = buildSkyModel({ horizon: withU, ephem }, 2, t0, t0 + 47 * H)
+    expect(m.zoomEl).toBe(5)
+    expect(m.bandPath.length).toBeGreaterThan(m.horizonPath.length)
+    // zoom 90: the same band is under 1 px, so it is skipped
+    const zenith = makeEphem(24, (k) => k * 3.9, () => 90)
+    expect(buildSkyModel({ horizon: { ...makeHorizon(() => 0.2), uncertainty_deg: 0.15 }, ephem: zenith }, 2, t0, t0 + 23 * H).bandPath).toBe('')
+  })
+
   it('falls back to the first mask when the height is missing', () => {
     const horizon = makeHorizon(() => 1)
     const ephem = makeEphem(4, () => 0, () => 0)

@@ -24,6 +24,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Up to four scenario cards (site and date per card) in the scenario board, with a compare table.
 - Presets, in the menu of the Add scenario button: *Apollo 11 vs South Pole*, *South pole*, and *Same site, 14 days later*.
 - Metrics per card: Sun visible, longest dark stretch, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
+- Horizon uncertainty: where a horizon file carries `uncertainty_deg`, the Sun visible and Earth in view values show a range (horizon raised and lowered by that angle) and the polar plot and panorama draw a thin band around the horizon. It excludes LOLA height and geolocation error; no range is shown for sites without the field.
 - Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 
 ### Time
@@ -60,6 +61,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Share link: the workspace state (scenarios, dates, slip, observer height, view) is kept in the URL.
 - CSV export of the hourly time series (UTC time, Sun and Earth azimuth and elevation, visibility).
 - Dossier export for printing.
+- "Copy Horizons query" (About the data, and Share and export in Advanced mode): copies the JPL Horizons query recorded in the site's ephemeris file as stored, so the Sun and Earth positions can be reproduced. The dossier prints it too.
 - "Record video" in the demo narration, which saves a WebM file of the browser tab.
 
 ### Accessibility

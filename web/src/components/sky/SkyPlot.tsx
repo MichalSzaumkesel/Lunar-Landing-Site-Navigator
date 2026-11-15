@@ -62,6 +62,7 @@ const SkyTop = memo(function SkyTop({ model }: { model: SkyModel }) {
   return (
     <g>
       <path className="sky__terrain" d={model.terrainPath} fillRule="evenodd" />
+      {model.bandPath && <path className="sky__band" d={model.bandPath} fillRule="evenodd" />}
       <path key={model.horizonPath} className="sky__horizon" d={model.horizonPath} />
       <circle className="sky__rim" r={RIM_R} />
       {model.rings.map((ring) => {

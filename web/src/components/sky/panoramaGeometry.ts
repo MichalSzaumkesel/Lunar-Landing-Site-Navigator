@@ -2,6 +2,7 @@
 import type { EphemFile, SiteBundle } from '../../lib/types'
 import { horizonAt } from '../../lib/horizon'
 import {
+  MIN_BAND_PX,
   RIM_MARKER_BELOW_DEG,
   TRACK_BREAK_AZ_JUMP_DEG,
   TRACK_BREAK_BELOW_DEG,
@@ -43,6 +44,8 @@ export interface PanoramaModel {
   /** Terrain silhouette: filled between the horizon curve and the bottom edge. */
   terrainPath: string
   horizonPath: string
+  /** Band of +-uncertainty_deg around the horizon; '' when absent or too thin to see. */
+  bandPath: string
   sunTrackPath: string
   earthTrackPath: string
   /** Strip pixels per degree, horizontal and vertical. */
@@ -100,6 +103,14 @@ export function buildPanoramaModel(
     })
     horizonPath += `L${f1(PANO_W)},${f1(elToY(Math.max(mask[0], 0), zoomEl))}`
   }
+  let bandPath = ''
+  const u = horizon.uncertainty_deg
+  if (mask.length > 0 && typeof u === 'number' && Number.isFinite(u) && u > 0 && (PANO_H / zoomEl) * 2 * u >= MIN_BAND_PX) {
+    const edge = (delta: number) => mask.map((el, i) => `${f1(azToX(i * azStepDeg))},${f1(elToY(Math.max(el + delta, 0), zoomEl))}`)
+    const up = edge(u)
+    const down = edge(-u).reverse()
+    bandPath = `M${up.join('L')}L${down.join('L')}Z`
+  }
   const terrainPath = horizonPath ? `${horizonPath}L${PANO_W},${PANO_H}L0,${PANO_H}Z` : ''
 
   const track = (b: EphemFile['sun']) => stripSegments(b.az, b.el, k0, k1, zoomEl)
@@ -110,6 +121,7 @@ export function buildPanoramaModel(
     ticks,
     terrainPath,
     horizonPath,
+    bandPath,
     sunTrackPath: track(ephem.sun),
     earthTrackPath: track(ephem.earth),
     xPerDeg: PANO_W / 360,
