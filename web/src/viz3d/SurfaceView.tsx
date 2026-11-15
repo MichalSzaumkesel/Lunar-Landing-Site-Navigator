@@ -20,7 +20,13 @@ import { heightAt } from './terrain'
 import { horizonFromTerrain } from './terrainHorizon'
 import { cancelLocalSunlitGrid, localSunlitGridAsync } from './localIllumClient'
 import { cancelBestSpotSearch, findBestSpotAsync } from './bestSpotClient'
-import { clampSearchRadius, formatResultSentence, formatSimpleResultSentence } from './bestSpot'
+import {
+  clampSearchRadius,
+  formatResultSentence,
+  formatSimpleResultSentence,
+  hasUsefulGain,
+  NO_BETTER_SPOT_MESSAGE,
+} from './bestSpot'
 import type { BestSpotResult } from './bestSpot'
 import { createHeatmapTexture } from './heatmapTexture'
 import { LanderPopover } from './LanderPopover'
@@ -734,6 +740,16 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
     }
   }, [])
 
+  /** Sun visible hours at a candidate offset, from its own horizon (not the debounced one of the current spot). */
+  const candidateSunHours = (offset: OffsetM): number | null => {
+    try {
+      const mask = horizonFromTerrain(heights, terrain.size_px, terrain.spacing_m, offset.eastM, offset.northM, observerHeightM, { rays: 360 })
+      return computeSunVisibleHours(bundle.ephem, mask, 1.0, startMs, endMs)
+    } catch {
+      return null
+    }
+  }
+
   const handleFindBestSpot = async () => {
     if (isSearching) return
     setIsSearching(true)
@@ -779,6 +795,10 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
             ? 'Outside ephemeris coverage'
             : 'No flat spot found in this radius',
         )
+        setBestSpotResult(null)
+      } else if (origSunHours !== null && !hasUsefulGain(candidateSunHours(result.offset), origSunHours)) {
+        // Judged on the same numbers the sentence shows, so a result can never read "+0 h".
+        setSearchMessage(NO_BETTER_SPOT_MESSAGE)
         setBestSpotResult(null)
       } else {
         setSearchMessage(null)

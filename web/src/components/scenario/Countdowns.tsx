@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import type { SkyEvent } from '../../lib/events'
 import type { ObserverHeightM, ScenarioMetrics, SiteBundle } from '../../lib/types'
-import { formatShareRange, uncertaintyTip } from '../../lib/horizonUncertainty'
+import { formatShareRange, shareRangeVisible, uncertaintyTip } from '../../lib/horizonUncertainty'
 import type { ShareRange } from '../../lib/horizonUncertainty'
 import { useHorizonShareRange } from '../../lib/useScenarioMetrics'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
@@ -57,7 +57,7 @@ function Share({ body, label, value, tip, detail, change, range, uncertaintyDeg 
     <div className={`countdown countdown--${body}`} title={tip}>
       <span className="countdown__value">
         <SwapText value={`${label} ${value.toFixed(1)} %`} />
-        {range && uncertaintyDeg !== null && (
+        {shareRangeVisible(range) && uncertaintyDeg !== null && (
           <span className="countdown__range" title={uncertaintyTip(uncertaintyDeg)}>
             {` (${formatShareRange(range)})`}
           </span>
@@ -104,7 +104,7 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             body="sun"
             label="Sun visible"
             value={metrics.pct_sunlit}
-            tip="pct_sunlit: share of samples in the window where the Sun centre is above the terrain horizon."
+            tip="Share of samples in the window where the Sun centre is above the terrain horizon."
             detail={longestDarkLine(metrics.longest_dark_h)}
             change={change ? formatChange(change.sunH, change.sunPp) : null}
             range={shareRange?.sun ?? null}
@@ -114,7 +114,7 @@ export function Countdowns({ scenario, bundle, events, heightM, metrics, change 
             body="earth"
             label="Earth in view"
             value={metrics.pct_earth}
-            tip="pct_earth: share of samples in the window where the Earth centre is above the terrain horizon."
+            tip="Share of samples in the window where the Earth centre is above the terrain horizon."
             detail={longestNoEarthLine(metrics.longest_no_earth_h)}
             change={change ? formatChange(change.earthH, change.earthPp) : null}
             range={shareRange?.earth ?? null}

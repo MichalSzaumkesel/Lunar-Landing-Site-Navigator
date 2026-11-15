@@ -80,6 +80,11 @@ export function formatShareRange(range: ShareRange): string {
   return `${range.lo.toFixed(1)}–${range.hi.toFixed(1)}`
 }
 
+/** True when the range adds information: its two ends differ at the displayed precision (one decimal). */
+export function shareRangeVisible(range: ShareRange | null | undefined): range is ShareRange {
+  return !!range && range.lo.toFixed(1) !== range.hi.toFixed(1)
+}
+
 /** Tooltip of the range, quoting what the shipped file says the uncertainty covers. */
 export function uncertaintyTip(uncertaintyDeg: number): string {
   return (

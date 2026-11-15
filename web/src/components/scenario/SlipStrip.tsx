@@ -64,7 +64,7 @@ export function SlipStrip({ scenario, bundle }: { scenario: Scenario; bundle: Si
         <SwapText value={sentence} />
       </p>
       <p className="slipstrip__legend">
-        Colour: Sun visible, dark to bright. Dot: mission rules met. Hatched: no data. Click a cell to set the slip.
+        Colour: Sun visible, dark to bright. Dot: mission rules met. Hatched: no data. Click a cell, or use the slider.
       </p>
     </div>
   )

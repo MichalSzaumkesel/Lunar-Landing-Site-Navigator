@@ -5,6 +5,7 @@ import {
   horizonShareRange,
   horizonUncertaintyDeg,
   shiftMask,
+  shareRangeVisible,
   uncertaintyTip,
 } from './horizonUncertainty.ts'
 import { computeMetrics } from './metrics.ts'
@@ -120,5 +121,14 @@ describe('horizon uncertainty', () => {
     const tip = uncertaintyTip(0.15)
     expect(tip).toContain('±0.15°')
     expect(tip).toContain('excludes LOLA height and geolocation error')
+  })
+})
+
+describe('shareRangeVisible', () => {
+  it('hides ranges whose ends are equal or equal at one decimal', () => {
+    expect(shareRangeVisible({ lo: 100, hi: 100 })).toBe(false)
+    expect(shareRangeVisible({ lo: 63.91, hi: 63.94 })).toBe(false)
+    expect(shareRangeVisible(null)).toBe(false)
+    expect(shareRangeVisible({ lo: 63.9, hi: 67.8 })).toBe(true)
   })
 })

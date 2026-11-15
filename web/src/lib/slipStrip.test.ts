@@ -50,9 +50,27 @@ describe('stripSentence', () => {
     expect(stripSentence(cells([-3, -2, -1, 0, 1, 2, 3, 4, 5]), 0, true)).toBe(
       'Mission rules hold for slips from -3 to +5 days.',
     )
-    expect(stripSentence(cells([2]), 0, true)).toBe('Mission rules hold for a slip of +2 days.')
+    expect(stripSentence(cells([2]), 2, true)).toBe('Mission rules hold for a slip of +2 days.')
     expect(stripSentence(cells([]), 0, true)).toBe('No slip between -60 and +60 days meets the mission rules.')
     expect(stripSentence(cells([]), 0, false)).toMatch(/only shows Sun visible/)
+  })
+
+  it('says when the current slip does not meet the rules', () => {
+    const pass = Array.from({ length: 10 }, (_, i) => 28 + i) // +28..+37
+    expect(stripSentence(cells(pass, 20, 45), 40, true)).toBe(
+      'Mission rules hold for slips from +28 to +37 days. Current slip +40 d does not meet them.',
+    )
+    expect(stripSentence(cells([2]), 0, true)).toBe(
+      'Mission rules hold for a slip of +2 days. Current slip 0 d does not meet them.',
+    )
+    // inside the passing run: no extra sentence
+    expect(stripSentence(cells(pass, 20, 45), 30, true)).toBe('Mission rules hold for slips from +28 to +37 days.')
+  })
+
+  it('does not claim a verdict for a slip without data', () => {
+    const c = cells([1, 2])
+    c[10 + 5] = cell(5, null, false)
+    expect(stripSentence(c, 5, true)).toBe('Mission rules hold for slips from +1 to +2 days. Current slip +5 d has no data.')
   })
 })
 

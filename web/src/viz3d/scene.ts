@@ -102,6 +102,10 @@ export interface SkyState {
 const SUN_INTENSITY = 3.2 // about albedo * cos(incidence) before tone mapping
 const EARTHSHINE_MAX = 0.3 // Earth light on the Moon at full Earth, relative units
 const AMBIENT = 0.035
+// Overview looks down on the whole patch at any time of day; a soft sky fill keeps terrain and lander readable
+// at night. Visual aid only, not a measurement.
+const AMBIENT_OVERVIEW = 0.2
+const BEACON_H = 700 // m, overview lander pin
 const FAR_M = 200_000
 const SURFACE_FOV = 60
 const OVERVIEW_FOV = 45
@@ -168,6 +172,7 @@ export class SurfaceScene {
   private readonly sunFar = new THREE.DirectionalLight(0xfff2dc, 0)
   private readonly sunNear = new THREE.DirectionalLight(0xfff2dc, 0)
   private readonly earthLight = new THREE.DirectionalLight(0xa6c6ff, 0)
+  private readonly ambient = new THREE.AmbientLight(0x9aa6c0, AMBIENT * SUN_INTENSITY)
   private readonly sky = new THREE.Group()
   private readonly shared = createSharedUniforms()
   private readonly envTarget: THREE.WebGLRenderTarget
@@ -191,6 +196,11 @@ export class SurfaceScene {
   private textureMs = 0
   private terrain: THREE.Mesh | null = null
   private ring: THREE.Mesh | null = null
+  /** Overview only: a bright downward pin over the lander, which is a few metres wide and invisible from 10 km. */
+  private readonly beacon = new THREE.Mesh(
+    new THREE.ConeGeometry(70, BEACON_H, 16).rotateX(Math.PI),
+    new THREE.MeshBasicMaterial({ color: 0xffc233, toneMapped: false }),
+  )
   private bounds = new THREE.Box3()
 
   private mode: ViewMode = 'surface'
@@ -289,7 +299,7 @@ export class SurfaceScene {
       light.shadow.radius = 1.6
     }
     this.scene.add(this.sunNear, this.sunNear.target, this.sunFar, this.sunFar.target, this.earthLight)
-    this.scene.add(new THREE.AmbientLight(0x9aa6c0, AMBIENT * SUN_INTENSITY))
+    this.scene.add(this.ambient)
     this.shared.uNearR.value = tier.nearRadiusM
 
     // Sky: everything here follows the camera, so it stays at infinity.
@@ -1254,10 +1264,13 @@ export class SurfaceScene {
       this.ring = buildMarkerRing((rx, rz) => this.groundY(rx + x0, rz + z0))
       this.ring.position.set(x0, 0, z0)
       this.ring.visible = this.mode === 'overview'
+      this.ring.add(this.beacon)
+      this.beacon.position.set(0, this.groundY(x0, z0) + BEACON_H / 2, 0)
       this.scene.add(this.ring)
       return
     }
     this.ring.position.set(x0, 0, z0)
+    this.beacon.position.set(0, this.groundY(x0, z0) + BEACON_H / 2, 0)
     this.ring.visible = this.mode === 'overview'
     if (this.ring.visible) {
       const posAttr = this.ring.geometry.getAttribute('position') as THREE.BufferAttribute
@@ -1380,6 +1393,7 @@ export class SurfaceScene {
     }
     // The skirt is a wall around the observer; seen from the overview camera it would be a curtain.
     this.skirt.mesh.visible = surface
+    this.ambient.intensity = (surface ? AMBIENT : AMBIENT_OVERVIEW) * SUN_INTENSITY
     // Haze is for a low observer; from the overview camera it would flatten the whole patch.
     this.shared.uHaze.value.z = surface ? HAZE_MAX : 0
     this.camera.fov = surface ? SURFACE_FOV : OVERVIEW_FOV
@@ -1429,6 +1443,11 @@ export class SurfaceScene {
     this.cancelCameraAnimation()
     this.cancelLanderAnimation()
     this.pointerDownPos = { x: e.clientX, y: e.clientY, time: performance.now() }
+    // An outside click that only dismissed a popover must not also pick terrain; drag-look still works.
+    if (this.canvas.dataset.swallowClick) {
+      delete this.canvas.dataset.swallowClick
+      this.pointerDownPos = null
+    }
     if (this.mode !== 'surface') return
     this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY }
     this.canvas.setPointerCapture(e.pointerId)

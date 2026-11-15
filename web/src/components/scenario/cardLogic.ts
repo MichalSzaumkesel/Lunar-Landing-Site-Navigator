@@ -2,6 +2,7 @@
 import { DATA_END_MS, DATA_START_MS, DAY_MS, HOUR_MS } from '../../config/dataRange'
 import type { SkyEvent, SkyEventKind } from '../../lib/events'
 import type { MissionRules, ScenarioMetrics, Site, SiteCategory } from '../../lib/types'
+import { BOTH_DERIVED_TIP } from '../../lib/bothVisible'
 import { fmtHours, fmtNum } from '../sky/geometry'
 
 export const DURATION_DAYS = [3, 7, 10, 14, 30, 60] as const
@@ -123,7 +124,7 @@ export function splitEvents(events: readonly SkyEvent[]): SplitEvents {
   return { sun, earth }
 }
 
-/** First event at or after `ms` in a time-sorted list (binary search), or undefined; matches contract section 3 (t >= t_ref). */
+/** First event at or after `ms` in a time-sorted list (binary search), or undefined; at or after the reference time. */
 export function nextEventAfter(list: readonly SkyEvent[], ms: number): SkyEvent | undefined {
   let lo = 0
   let hi = list.length
@@ -178,13 +179,13 @@ export const EVENT_LABEL: Record<SkyEventKind, string> = {
 
 export const EVENT_DEFINITION: Record<SkyEventKind, string> = {
   sunset:
-    'Sunset: the Sun centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Sunset: the Sun centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples.',
   sunrise:
-    'Sunrise: the Sun centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Sunrise: the Sun centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples.',
   earthset:
-    'Earthset: the Earth centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Earthset: the Earth centre goes from above to below the terrain horizon. Time interpolated linearly between hourly samples.',
   earthrise:
-    'Earthrise: the Earth centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples (contract section 3).',
+    'Earthrise: the Earth centre goes from below to above the terrain horizon. Time interpolated linearly between hourly samples.',
 }
 
 // --- Metric rows ---
@@ -194,6 +195,8 @@ export interface MetricRow {
   label: string
   value: string
   tip: string
+  /** Computed in this app, not one of the shared metric set. */
+  derived?: boolean
 }
 
 const pct = (v: number) => `${fmtNum(v, 1)} %`
@@ -206,13 +209,13 @@ export function cursorMetricRows(sunElDeg: number | null, sunClearanceDeg: numbe
       key: 'sun_el_deg',
       label: 'Sun elevation at cursor',
       value: sunElDeg === null ? '—' : `${fmtNum(sunElDeg, 2, true)} deg`,
-      tip: 'sun_el_deg: elevation of the Sun centre at the cursor time, above the local horizontal. Terrain is ignored.',
+      tip: 'Elevation of the Sun centre at the cursor time, above the local horizontal. Terrain is ignored.',
     },
     {
       key: 'sun_clearance_deg',
       label: 'Sun clearance at cursor',
       value: sunClearanceDeg === null ? '—' : `${fmtNum(sunClearanceDeg, 2, true)} deg`,
-      tip: 'sun_clearance_deg: Sun elevation minus the terrain horizon elevation at its azimuth, at the cursor time.',
+      tip: 'Sun elevation minus the terrain horizon elevation at its azimuth, at the cursor time.',
     },
   ]
 }
@@ -224,37 +227,38 @@ export function windowMetricRows(m: ScenarioMetrics): MetricRow[] {
       key: 'pct_sunlit',
       label: 'Sun visible',
       value: pct(m.pct_sunlit),
-      tip: 'pct_sunlit: share of samples in the window where the Sun centre is above the terrain horizon (visible disc fraction at least 50 %).',
+      tip: 'Share of samples in the window where the Sun centre is above the terrain horizon (visible disc fraction at least 50 %).',
     },
     {
       key: 'mean_sun_frac',
       label: 'Mean visible Sun disc',
       value: pct(m.mean_sun_frac),
-      tip: 'mean_sun_frac: mean visible fraction of the Sun disc over the window. The horizon is treated as locally straight across the disc.',
+      tip: 'Mean visible fraction of the Sun disc over the window. The horizon is treated as locally straight across the disc.',
     },
     {
       key: 'longest_dark_h',
       label: 'Longest dark stretch',
       value: hours(m.longest_dark_h),
-      tip: 'longest_dark_h: longest run of consecutive samples with the Sun below the terrain horizon, times the sample step.',
+      tip: 'Longest run of consecutive samples with the Sun below the terrain horizon, times the sample step.',
     },
     {
       key: 'pct_earth',
       label: 'Earth in view',
       value: pct(m.pct_earth),
-      tip: 'pct_earth: share of samples in the window where the Earth centre is above the terrain horizon (visible disc fraction at least 50 %).',
+      tip: 'Share of samples in the window where the Earth centre is above the terrain horizon (visible disc fraction at least 50 %).',
     },
     {
       key: 'longest_no_earth_h',
       label: 'Longest without Earth',
       value: hours(m.longest_no_earth_h),
-      tip: 'longest_no_earth_h: longest run of consecutive samples with the Earth below the terrain horizon, times the sample step.',
+      tip: 'Longest run of consecutive samples with the Earth below the terrain horizon, times the sample step.',
     },
     {
       key: 'pct_both',
       label: 'Sun and Earth together',
       value: pct(m.pct_both),
-      tip: 'pct_both: share of samples in the window where both the Sun and the Earth centres are above the terrain horizon.',
+      tip: `Share of samples in the window where both the Sun and the Earth centres are above the terrain horizon. ${BOTH_DERIVED_TIP}`,
+      derived: true,
     },
   ]
 }

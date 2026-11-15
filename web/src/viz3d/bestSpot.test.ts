@@ -6,6 +6,8 @@ import {
   compassDirection8,
   formatResultSentence,
   formatSimpleResultSentence,
+  hasUsefulGain,
+  NO_BETTER_SPOT_MESSAGE,
   slopeDeg,
 } from './bestSpot'
 import { findBestSpotAsync, cancelBestSpotSearch } from './bestSpotClient'
@@ -418,5 +420,20 @@ describe('formatSimpleResultSentence', () => {
     expect(formatSimpleResultSentence({ eastM: 0, northM: 0 }, 0)).toBe(
       'The current spot is already among the best nearby for Sun visible.',
     )
+  })
+})
+
+describe('hasUsefulGain', () => {
+  it('rejects zero, negative and unknown gains and accepts whole-hour gains', () => {
+    expect(hasUsefulGain(421, 421)).toBe(false)
+    expect(hasUsefulGain(421.3, 420.8)).toBe(false)
+    expect(hasUsefulGain(400, 421)).toBe(false)
+    expect(hasUsefulGain(null, 421)).toBe(false)
+    expect(hasUsefulGain(474, null)).toBe(false)
+    expect(hasUsefulGain(474, 421)).toBe(true)
+  })
+
+  it('has the no-gain message', () => {
+    expect(NO_BETTER_SPOT_MESSAGE).toBe('No better spot found nearby')
   })
 })

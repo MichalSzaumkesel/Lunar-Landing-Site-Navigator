@@ -25,6 +25,16 @@ vi.mock('./bestSpotClient', () => ({
   findBestSpotAsync: vi.fn(),
 }))
 
+// The original point is fully shadowed and any moved point is open, so a found spot has a real gain.
+vi.mock('./terrainHorizon', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('./terrainHorizon')>()
+  return {
+    ...orig,
+    horizonFromTerrain: (...args: Parameters<typeof orig.horizonFromTerrain>) =>
+      new Float32Array(360).fill(args[3] === 0 && args[4] === 0 ? 90 : -90),
+  }
+})
+
 vi.mock('./heatmapTexture', () => {
   return {
     createHeatmapTexture: vi.fn().mockReturnValue({
