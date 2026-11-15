@@ -11,6 +11,13 @@ describe('corner buttons', () => {
     expect(simple).not.toMatch(/\.sky-help__marker\s*\{[^}]*width:\s*20px/)
   })
 
+  it('3D badges sit left of the corner button and the map loading uses two comets', () => {
+    const surface = readFileSync('src/viz3d/surface.css', 'utf8')
+    expect(surface).toMatch(/\.surface__badges\s*\{[^}]*right:\s*calc\(var\(--corner-btn-size/)
+    expect(surface).toMatch(/\.surface__mapbtn\[data-loading\]::after/)
+    expect(surface).toMatch(/prefers-reduced-motion[\s\S]*\.surface__mapbtn\[data-loading\]/)
+  })
+
   it('does not size the fullscreen target with 100vw', () => {
     expect(css).not.toMatch(/100vw/)
   })

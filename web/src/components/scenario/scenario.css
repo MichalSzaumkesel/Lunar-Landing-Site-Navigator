@@ -627,11 +627,6 @@
   }
 }
 
-/* Keep the 3D badges clear of the full screen button. */
-.views__stage .surface__badges {
-  right: calc(var(--corner-btn-size, 32px) + var(--space-3));
-}
-
 /* Like Simple: only the 3D frame is shown in full screen, its extra controls stay in the card. */
 .views[data-fullscreen='true'] .surface > :not(.surface__frame) {
   display: none;

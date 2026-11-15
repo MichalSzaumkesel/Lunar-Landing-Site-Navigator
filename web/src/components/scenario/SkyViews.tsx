@@ -110,17 +110,20 @@ export function SkyViews({ scenarioId, siteName }: { scenarioId: string; siteNam
                 <ViewBoundary>
                   <Suspense
                     fallback={
-                      <div className="views__message" aria-busy="true">
-                        Loading 3D view
-                      </div>
+                      <>
+                        <div className="views__message" aria-busy="true">
+                          Loading 3D view
+                        </div>
+                        <div className="views__fs">{fsButton}</div>
+                      </>
                     }
                   >
-                    <SurfaceView scenarioId={scenarioId} />
+                    <SurfaceView scenarioId={scenarioId} cornerSlot={fsButton} />
                   </Suspense>
                 </ViewBoundary>
               )}
             </div>
-            <div className="views__fs">{fsButton}</div>
+            {view !== '3d' && <div className="views__fs">{fsButton}</div>}
           </div>
         </>
       )}
