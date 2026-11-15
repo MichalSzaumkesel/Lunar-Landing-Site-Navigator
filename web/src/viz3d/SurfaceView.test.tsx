@@ -348,6 +348,20 @@ describe('SurfaceView 3D View Fixes', () => {
     expect(texts).not.toContain('Approximate (terrain patch only)')
   })
 
+  it('renders the corner slot (full screen button) inside the 3D frame, next to the badges', async () => {
+    await act(async () => {
+      root.render(
+        createElement(SurfaceView, {
+          scenarioId: 'sc1',
+          cornerSlot: createElement('button', { type: 'button', 'aria-label': 'Full screen' }),
+        }),
+      )
+    })
+    const frame = container.querySelector('.surface__frame')
+    expect(frame?.querySelector('.surface__corner button[aria-label="Full screen"]')).not.toBeNull()
+    expect(container.querySelectorAll('.surface__side button[aria-label="Full screen"]')).toHaveLength(0)
+  })
+
   it('renders vertical exaggeration slider with aria-label="Vertical exaggeration"', async () => {
     await act(async () => {
       root.render(createElement(SurfaceView, { scenarioId: 'sc1' }))

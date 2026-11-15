@@ -113,9 +113,15 @@ interface StageProps {
   bundle: SiteBundle
   terrain: TerrainFile
   heights: Float32Array
+  cornerSlot?: ReactNode
 }
 
-function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps) {
+/** Top right corner of the frame: hosts the full screen button passed in by the card. */
+function Corner({ slot }: { slot?: ReactNode }) {
+  return slot ? <div className="surface__corner">{slot}</div> : null
+}
+
+function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }: StageProps) {
   const holderRef = useRef<HTMLDivElement>(null)
   const [scene, setScene] = useState<SurfaceScene | null>(null)
   const [mode, setMode] = useState<ViewMode>('surface')
@@ -746,6 +752,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights }: StageProps
             </button>
           </div>
         )}
+        <Corner slot={cornerSlot} />
         {!simple && <Badges bundle={bundle} edgeWarning={isClamped} moved={!isAtOrigin} />}
         <div className="surface__overlay surface__overlay--tl">
           <div className="surface__time">{fmtUtc(cursorMs)}</div>
@@ -1127,7 +1134,7 @@ function FaceSlot({ show, children }: { show: boolean; children: ReactNode }) {
   )
 }
 
-function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: boolean }) {
+function SurfaceViewInner({ scenario, simple, cornerSlot }: { scenario: Scenario; simple: boolean; cornerSlot?: ReactNode }) {
   const { status, bundle, error } = useSiteBundle(scenario.siteId)
   const terrain = bundle?.terrain ?? null
   const heights = useTerrainHeights(terrain)
@@ -1136,15 +1143,21 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
   if (status === 'error') {
     body = (
       <div className="surface__frame surface__box surface__box--error" role="alert">
+        <Corner slot={cornerSlot} />
         {error ?? 'Failed to load site data'}
       </div>
     )
   } else if (status === 'loading' || !bundle) {
-    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading 3D view" />
+    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading 3D view">
+        <Corner slot={cornerSlot} />
+      </div>
   } else if (!terrain) {
     body = (
       <>
-        <div className="surface__frame surface__box">No terrain for this site</div>
+        <div className="surface__frame surface__box">
+          <Corner slot={cornerSlot} />
+          No terrain for this site
+        </div>
         <div className="surface__controls">
           <button
             type="button"
@@ -1160,11 +1173,14 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
   } else if (heights.status === 'error') {
     body = (
       <div className="surface__frame surface__box surface__box--error" role="alert">
+        <Corner slot={cornerSlot} />
         {heights.error ?? 'Failed to load terrain'}
       </div>
     )
   } else if (heights.status !== 'ready' || !heights.heights) {
-    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading terrain" />
+    body = <div className="surface__frame surface__box surface__skeleton" role="status" aria-busy="true" aria-label="Loading terrain">
+        <Corner slot={cornerSlot} />
+      </div>
   } else {
     body = (
       <SurfaceStage
@@ -1174,6 +1190,7 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
         bundle={bundle}
         terrain={terrain}
         heights={heights.heights}
+        cornerSlot={cornerSlot}
       />
     )
   }
@@ -1181,8 +1198,17 @@ function SurfaceViewInner({ scenario, simple }: { scenario: Scenario; simple: bo
   return <div className={simple ? 'surface surface--simple' : 'surface'}>{body}</div>
 }
 
-export function SurfaceView({ scenarioId, variant = 'full' }: { scenarioId: string; variant?: SurfaceVariant }) {
+export function SurfaceView({
+  scenarioId,
+  variant = 'full',
+  cornerSlot,
+}: {
+  scenarioId: string
+  variant?: SurfaceVariant
+  /** Rendered in the top right corner of the 3D frame (the card's full screen button). */
+  cornerSlot?: ReactNode
+}) {
   const scenario = useAppStore((s) => s.scenarios.find((x) => x.id === scenarioId))
   if (!scenario) return null
-  return <SurfaceViewInner scenario={scenario} simple={variant === 'simple'} />
+  return <SurfaceViewInner scenario={scenario} simple={variant === 'simple'} cornerSlot={cornerSlot} />
 }

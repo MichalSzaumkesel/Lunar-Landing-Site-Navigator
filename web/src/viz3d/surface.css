@@ -46,10 +46,19 @@
   outline-offset: -2px;
 }
 
-.surface__badges {
+/* Top right corner: the card's full screen button (32px token), badges sit to its left. */
+.surface__corner {
   position: absolute;
   top: 8px;
   right: 8px;
+  z-index: 2;
+}
+
+.surface__badges {
+  position: absolute;
+  top: 8px;
+  right: calc(var(--corner-btn-size, 32px) + 16px);
+  max-width: calc(100% - var(--corner-btn-size, 32px) - 24px);
   z-index: 1;
   display: flex;
   flex-wrap: wrap;
@@ -345,6 +354,8 @@
 @media (max-width: 600px) {
   .surface__badges {
     top: 3.5rem;
+    right: 8px;
+    max-width: calc(100% - 16px);
   }
   .surface__overlay--br {
     display: none;
@@ -721,20 +732,78 @@
 }
 
 
-/* Sunlight map toggle while the map is computing: travelling dashed border */
-.surface__controls button.surface__mapbtn[data-loading] {
-  position: relative;
-  border-color: transparent;
-  background:
-    linear-gradient(var(--panel-2), var(--panel-2)) padding-box,
-    repeating-linear-gradient(90deg, var(--sun) 0 8px, transparent 8px 16px) border-box;
-  background-size: auto, 32px 100%;
-  animation: mapbtn-march 0.8s linear infinite;
+/*
+ * Sunlight map toggle while the map is computing: two short bright segments ("comets") chase each
+ * other along the button outline (offset-path on ::before / ::after, so layout is untouched).
+ * --mapbtn-p is the leading comet's position on the outline. Its keyframes use different easing
+ * per phase, so the pair speeds up and slows down every ~2 s, and --mapbtn-gap (the distance
+ * to the second comet) breathes on its own period.
+ */
+@property --mapbtn-p {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
 }
 
-@keyframes mapbtn-march {
-  to {
-    background-position: 0 0, 32px 0;
+@property --mapbtn-gap {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 45%;
+}
+
+.surface__controls button.surface__mapbtn[data-loading] {
+  position: relative;
+  animation:
+    mapbtn-run 4.4s linear infinite,
+    mapbtn-gap 3.1s ease-in-out infinite;
+}
+
+.surface__controls button.surface__mapbtn[data-loading]::before,
+.surface__controls button.surface__mapbtn[data-loading]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 3px;
+  margin: 0;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(90deg, transparent, var(--sun) 55%, #fff6d6);
+  box-shadow: 0 0 6px 1px rgba(255, 194, 51, 0.65);
+  offset-path: inset(0 round 8px);
+  offset-rotate: auto;
+  offset-anchor: 100% 50%;
+  offset-distance: var(--mapbtn-p);
+}
+
+.surface__controls button.surface__mapbtn[data-loading]::after {
+  offset-distance: calc(var(--mapbtn-p) + var(--mapbtn-gap));
+}
+
+/* fast, slow, fast, slow: eased turns between phases, net one lap per 4.4 s */
+@keyframes mapbtn-run {
+  0% {
+    --mapbtn-p: 0%;
+    animation-timing-function: cubic-bezier(0.45, 0.2, 0.55, 0.9);
+  }
+  50% {
+    --mapbtn-p: 70%;
+    animation-timing-function: cubic-bezier(0.45, 0.1, 0.55, 0.8);
+  }
+  100% {
+    --mapbtn-p: 100%;
+  }
+}
+
+@keyframes mapbtn-gap {
+  0%,
+  100% {
+    --mapbtn-gap: 38%;
+  }
+  50% {
+    --mapbtn-gap: 54%;
   }
 }
 
@@ -743,6 +812,10 @@
     animation: none;
     border-color: var(--sun);
     background: rgba(255, 194, 51, 0.18);
+  }
+  .surface__controls button.surface__mapbtn[data-loading]::before,
+  .surface__controls button.surface__mapbtn[data-loading]::after {
+    display: none;
   }
 }
 
@@ -959,22 +1032,27 @@
 /* Wide card: controls in a column next to the frame; the frame is the only tall element */
 @container (min-width: 46rem) {
   .surface:not(.surface--simple) {
-    --surface-chrome: 11rem;
+    --surface-chrome: 13rem;
+    --surface-h: clamp(23.75rem, calc(100dvh - var(--surface-chrome)), 44rem);
     display: grid;
     grid-template-columns: minmax(0, 1fr) 19rem;
     align-items: start;
     gap: 0.75rem;
   }
 
+  /* The column is as tall as the frame: sections spread out, the Lander row sits at the bottom.
+     Content taller than the frame (a result card) scrolls inside the column. */
   .surface:not(.surface--simple) .surface__side {
-    max-height: var(--surface-h);
+    height: var(--surface-h);
     overflow-y: auto;
-    /* the full screen button sits in the top right corner of the card */
-    padding: calc(var(--corner-btn-size, 28px) + var(--space-2, 8px)) 2px 0 0;
+    padding-right: 2px;
+    justify-content: space-between;
   }
 
-  .surface:not(.surface--simple) .surface__badges {
-    right: 8px;
+  .surface:not(.surface--simple) .surface__side > .surface__controls {
+    flex: 1 1 auto;
+    align-content: space-between;
+    row-gap: 0.4rem;
   }
 
   .surface:not(.surface--simple) .surface__controls {
