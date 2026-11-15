@@ -72,6 +72,7 @@
 
 .card__heading {
   min-width: 0;
+  max-width: 100%;
 }
 
 .card__title {
@@ -461,9 +462,17 @@
   font-size: 14px;
 }
 
+.site-select {
+  min-width: 0;
+}
+
+/* A long site name must not set the card width: the select shrinks and truncates it. */
 .site-select select {
   min-height: 40px;
+  min-width: 0;
   max-width: 100%;
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
 }
 
 /* Summary row at the top of the card: four numbers visible on load */
@@ -537,6 +546,7 @@
 @media (max-width: 520px) {
   .card__header {
     flex-direction: column;
+    align-items: stretch;
     min-height: 0;
   }
   .card__aside {
