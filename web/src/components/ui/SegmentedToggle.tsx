@@ -85,7 +85,7 @@ export function SegmentedToggle<T extends string>({
           }}
         >
           {o.icon}
-          {o.label}
+          <span className="segtoggle__label">{o.label}</span>
         </button>
       ))}
     </div>

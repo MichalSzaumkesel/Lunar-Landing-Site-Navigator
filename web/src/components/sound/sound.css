@@ -28,7 +28,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-2, 8px);
+  gap: 4px;
+  padding: 0 6px;
   min-height: 0;
   min-width: 0;
   font-size: 0.875rem;
@@ -39,6 +40,11 @@
 .sound-control__modes button[role='radio'][aria-checked='true'] {
   color: var(--text);
   font-weight: 500;
+}
+
+.sound-control__modes button[role='radio'] svg {
+  margin-right: 0;
+  vertical-align: 0;
 }
 
 /* Mounted only while sound is on. Sits left of the switch, so the switch and Share never move */
