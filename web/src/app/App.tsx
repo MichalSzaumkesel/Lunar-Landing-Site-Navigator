@@ -14,6 +14,7 @@ import { Tools } from './Tools'
 import { TopBar } from './TopBar'
 import { Transport } from './Transport'
 import { useShortcuts } from './useShortcuts'
+import './landscape.css'
 import './panels.css'
 
 export default function App() {

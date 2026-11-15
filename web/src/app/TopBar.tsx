@@ -45,7 +45,7 @@ export function TopBar() {
       <div className="topbar__mode">
         <div className="group seg" role="group" aria-label="Mode" data-tour="mode-switch">
           {MODES.map((m) => (
-            <button key={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>
+            <button key={m.id} data-mode={m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>
               {m.label}
             </button>
           ))}
@@ -78,7 +78,13 @@ export function TopBar() {
           data-tour="help-button"
           aria-label="Open the tutorial"
           onClick={() => {
-            if (isDemoActive) stopDemo()
+            if (isDemoActive) {
+              // Stopping restores the level the visitor came from; a mode change closes an open tour,
+              // so the tour opens once that restore has been rendered.
+              stopDemo()
+              window.setTimeout(() => openTour(0), 0)
+              return
+            }
             openTour(0)
           }}
         >

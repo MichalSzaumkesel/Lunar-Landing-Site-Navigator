@@ -255,7 +255,8 @@ export class SurfaceScene {
     this.renderer.shadowMap.type = THREE.PCFShadowMap
     this.canvas = this.renderer.domElement
     this.canvas.style.touchAction = 'none'
-    this.canvas.tabIndex = 0
+    // Focusable by click only: the labelled frame around the canvas is the one tab stop; keys bubble up to it.
+    this.canvas.tabIndex = -1
     container.appendChild(this.canvas)
 
     this.scene.background = new THREE.Color(0x000000)

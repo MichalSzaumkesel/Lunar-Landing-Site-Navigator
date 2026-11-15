@@ -193,7 +193,7 @@
 }
 
 /* Bottom sheet on phones. */
-@media (max-width: 599px) {
+@media (max-width: 599px), (max-height: 500px) {
   .place-backdrop {
     display: block;
     position: fixed;
@@ -221,6 +221,20 @@
 
   .place-panel[data-state='closed'] {
     animation: place-sheet-out var(--motion-duration-normal) var(--motion-ease-in) forwards;
+  }
+}
+
+/* Landscape phone: the dropdown would have about 50 px of room, so the list becomes a panel that fills the screen height. */
+@media (max-height: 500px) {
+  .place-panel {
+    top: var(--space-2);
+    bottom: var(--space-2);
+    left: 0;
+    right: 0;
+    width: min(40rem, calc(100vw - 2 * var(--space-2)));
+    max-height: none;
+    margin-inline: auto;
+    border-radius: var(--radius);
   }
 }
 
@@ -402,6 +416,31 @@
   width: 100%;
   min-width: 9.5rem;
   max-width: 240px;
+}
+
+/* Phone: the date goes under the title and window text, so a long place name keeps the full width. */
+@media (max-width: 480px) {
+  .simple-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .simple-card__aside {
+    align-items: stretch;
+  }
+
+  .simple-date {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2, 8px);
+  }
+
+  .simple-date__input {
+    flex: 1 1 9.5rem;
+    max-width: none;
+    width: auto;
+  }
 }
 
 .simple-summary {

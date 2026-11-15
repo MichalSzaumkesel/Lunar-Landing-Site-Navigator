@@ -61,6 +61,7 @@ import {
   SIZE_MIN,
   SIZE_STEP,
   sizeLabel,
+  simpleSunText,
   sizeValueText,
 } from './viewMath'
 import './surface.css'
@@ -84,11 +85,6 @@ function LookHint() {
       WASD to move, arrows or drag to look.
     </div>
   )
-}
-
-function simpleSunText(visible: boolean, el: number): string {
-  if (visible) return 'Sun visible'
-  return el < 0 ? 'Sun below the horizon' : 'Sun hidden behind hills'
 }
 
 function faceTitle(body: 'Sun' | 'Earth' | 'lander', mode: ViewMode, hasSample: boolean): string {
@@ -836,8 +832,9 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
         className="surface__frame"
         // Arrow keys on the 3D view only turn the camera: no lander move, no time seek.
         data-no-shortcuts=""
+        // The frame is the single tab stop of the 3D view (the canvas is focusable by click only);
         // WASD walks and arrows turn the view while the canvas or the frame has focus.
-        {...(simple ? { tabIndex: 0 } : {})}
+        tabIndex={0}
         role="group"
         aria-label="3D view. WASD moves, arrow keys turn the view."
         onKeyDown={(e) => handleFrameKey(e, true)}

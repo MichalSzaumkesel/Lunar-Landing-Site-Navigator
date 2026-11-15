@@ -103,3 +103,9 @@ export function lookAnglesTo(dx: number, dz: number, dy: number): { azimuthDeg: 
     elevationDeg: (Math.atan2(dy, Math.hypot(dx, dz)) * 180) / Math.PI,
   }
 }
+
+/** Overlay wording in Simple: the same fixed phrases as the cards; hills are named only in brackets. */
+export function simpleSunText(visible: boolean, el: number): string {
+  if (visible) return 'Sun visible'
+  return el < 0 ? 'Sun below horizon' : 'Sun below horizon (hills)'
+}

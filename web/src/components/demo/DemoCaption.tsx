@@ -4,7 +4,7 @@ import { useVideoRecorder } from './useVideoRecorder'
 import './demo.css'
 
 export function DemoCaption() {
-  const { isActive, variant, caption, stopDemo, setVariant } = useDemo()
+  const { isActive, variant, caption, atEnd, restartDemo, stopDemo, setVariant } = useDemo()
   const { isRecording, countdown, recorderError, startRecording, stopRecording, clearError } =
     useVideoRecorder()
   const stopButtonRef = useRef<HTMLButtonElement>(null)
@@ -105,6 +105,11 @@ export function DemoCaption() {
             aria-label="Dismiss error"
           >
             Dismiss
+          </button>
+        )}
+        {atEnd && !isRecording && (
+          <button type="button" className="demo-caption__btn" onClick={restartDemo} aria-label="Restart demo">
+            Restart
           </button>
         )}
         <span className="demo-caption__hint">Esc to stop</span>

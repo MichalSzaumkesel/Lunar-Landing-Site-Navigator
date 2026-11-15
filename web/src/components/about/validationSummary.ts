@@ -28,10 +28,22 @@ const TITLES: Record<string, string> = {
   illumination_heatmap_reference: 'Local illumination heatmap vs NASA LOLA maps',
   metrics_crosscheck: 'Metrics cross-check',
   orientation: 'Polar orientation vs the IAU gazetteer',
+  terrain: 'Terrain data sanity checks',
+}
+
+/** Plain label for a group id that has no entry above: "some_new_kind" becomes "Some new kind". */
+function sentenceCase(raw: string): string {
+  const text = raw.replace(/_/g, ' ').trim()
+  return text ? text[0].toUpperCase() + text.slice(1) : raw
 }
 
 function titleOf(kind: string): string {
-  return TITLES[kind] ?? kind.replace(/_/g, ' ')
+  return TITLES[kind] ?? sentenceCase(kind)
+}
+
+/** Readable form of a check id for the list ("terrain_sanity_polar" becomes "Terrain sanity polar"). */
+export function checkLabel(id: string): string {
+  return sentenceCase(id)
 }
 
 /** Returns null when the value is not a validation file with at least one check. */

@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { HORIZONS_QUERY_MISSING, horizonsQueryText } from '../../lib/horizonsQuery'
+import { useClampedPopup } from '../../lib/popupClamp'
 import { usePresence } from '../../lib/usePresence'
 import { SwapText } from '../ui/SwapText'
 import { useSiteBundle } from '../../lib/useSiteBundle'
@@ -86,6 +87,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
   const menuId = useId()
 
   const presence = usePresence(open)
+  useClampedPopup(menuRef, triggerRef, presence.mounted)
 
   // The query is read from the active scenario's ephemeris file; the click copies it as stored.
   const activeSiteId = useAppStore((st) => (st.scenarios.find((x) => x.id === st.activeScenarioId) ?? st.scenarios[0])?.siteId ?? '')
@@ -225,7 +227,11 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={presence.mounted ? menuId : undefined}
-        title="Copy a link, export CSV, copy the Horizons query or open the printable dossier"
+        title={
+          advancedDisabled
+            ? 'Copy a link to this place and date'
+            : 'Copy a link, export CSV, copy the Horizons query or open the printable dossier'
+        }
         onClick={() => {
           resetNotes()
           if (open) close(false)
@@ -275,7 +281,9 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
             <span className="share-menu__text">
               <span className="share-menu__title">Copy link</span>
               <span className="share-menu__desc">
-                Copies a link that restores these scenarios, dates and rules.
+                {advancedDisabled
+                  ? 'Copies a link to this place and date.'
+                  : 'Copies a link that restores these scenarios, dates and rules.'}
               </span>
             </span>
           </button>

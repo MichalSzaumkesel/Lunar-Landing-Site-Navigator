@@ -5,6 +5,7 @@ import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TopBar } from '../../app/TopBar'
 import { useTourStore } from '../help/tourState'
+import { useTour } from '../help/useTour'
 import { useDemoStore } from './demoState'
 import { useAppStore } from '../../state/store'
 
@@ -87,24 +88,52 @@ describe('TopBar Demo button', () => {
     expect(useAppStore.getState().playing).toBe(false)
   })
 
-  it('clicking Tutorial button while demo is active stops demo before opening tour', async () => {
-    useDemoStore.setState({ isActive: true })
-    useTourStore.setState({ isOpen: false })
+  it('clicking Tutorial button while demo is active stops demo, restores the level and then opens the tour', async () => {
+    vi.useFakeTimers()
+    try {
+      // The demo switched a Simple visitor to Advanced; stopping restores Simple, which closes an open tour.
+      const app = useAppStore.getState()
+      useAppStore.setState({ mode: 'advanced' })
+      useDemoStore.setState({
+        isActive: true,
+        snapshot: {
+          scenarios: app.scenarios,
+          mode: 'simple',
+          cursorH: 0,
+          activeScenarioId: app.activeScenarioId,
+          activeTabId: null,
+        },
+      })
+      useTourStore.setState({ isOpen: false })
 
-    await act(async () => {
-      root.render(createElement(TopBar))
-    })
+      await act(async () => {
+        root.render(createElement('div', null, createElement(TopBar), createElement(TourProbe)))
+      })
 
-    const tourBtn = Array.from(container.querySelectorAll('button')).find((b) =>
-      b.textContent?.includes('Tutorial'),
-    )
-    expect(tourBtn).toBeDefined()
+      const tourBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Tutorial'),
+      )
+      expect(tourBtn).toBeDefined()
 
-    await act(async () => {
-      tourBtn?.click()
-    })
+      await act(async () => {
+        tourBtn?.click()
+      })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50)
+      })
 
-    expect(useDemoStore.getState().isActive).toBe(false)
-    expect(useTourStore.getState().isOpen).toBe(true)
+      expect(useDemoStore.getState().isActive).toBe(false)
+      expect(useAppStore.getState().mode).toBe('simple')
+      expect(useTourStore.getState().isOpen).toBe(true)
+    } finally {
+      vi.useRealTimers()
+      useAppStore.setState({ mode: 'simple' })
+    }
   })
 })
+
+/** Mounts the same mode-change effect the real tour has (useTour closes an open tour when the level changes). */
+function TourProbe() {
+  useTour()
+  return null
+}

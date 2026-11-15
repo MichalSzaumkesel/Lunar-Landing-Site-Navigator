@@ -10,6 +10,7 @@ import {
   horizonGlowStrength,
   overviewFaceTarget,
   lookAnglesTo,
+  simpleSunText,
   sizeLabel,
   sizeValueText,
 } from './viewMath'
@@ -136,5 +137,14 @@ describe('lookAnglesTo', () => {
     expect(lookAnglesTo(0, 10, 0).azimuthDeg).toBeCloseTo(180)
     expect(lookAnglesTo(-10, 0, 0).azimuthDeg).toBeCloseTo(270)
     expect(lookAnglesTo(0, -10, -10).elevationDeg).toBeCloseTo(-45)
+  })
+})
+
+describe('simpleSunText', () => {
+  it('uses the fixed Sun phrases, hills only in brackets', () => {
+    expect(simpleSunText(true, 12)).toBe('Sun visible')
+    expect(simpleSunText(false, -4)).toBe('Sun below horizon')
+    expect(simpleSunText(false, 2)).toBe('Sun below horizon (hills)')
+    expect(simpleSunText(false, 2)).not.toMatch(/hidden|the horizon/)
   })
 })

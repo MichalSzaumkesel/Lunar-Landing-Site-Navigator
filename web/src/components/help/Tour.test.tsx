@@ -264,6 +264,109 @@ describe('Tour component', () => {
     expect(useTourStore.getState().isOpen).toBe(false)
   })
 
+  describe('keys while the tour is open', () => {
+    const key = (target: EventTarget, k: string) => {
+      const e = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true })
+      target.dispatchEvent(e)
+      return e
+    }
+    const open = async () => {
+      await act(async () => {
+        root.render(createElement(Tour))
+      })
+      await act(async () => {
+        useTourStore.getState().openTour(0)
+      })
+    }
+
+    it('Back stays focusable (aria-disabled) on step 1, so focus is never dropped to the page', async () => {
+      await open()
+      const back = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Back') as HTMLButtonElement
+      expect(back.disabled).toBe(false)
+      expect(back.getAttribute('aria-disabled')).toBe('true')
+
+      const next = container.querySelector<HTMLButtonElement>('button.primary') as HTMLButtonElement
+      await act(async () => {
+        next.click()
+      })
+      expect(back.getAttribute('aria-disabled')).toBe('false')
+      back.focus()
+      await act(async () => {
+        back.click()
+      })
+      expect(useTourStore.getState().stepIndex).toBe(0)
+      // Back is now inactive but still holds focus, and Escape works from there
+      expect(document.activeElement).toBe(back)
+      await act(async () => {
+        key(back, 'Escape')
+      })
+      expect(useTourStore.getState().isOpen).toBe(false)
+    })
+
+    it('an inactive Back does nothing when clicked', async () => {
+      await open()
+      const back = Array.from(container.querySelectorAll('button')).find((b) => b.textContent === 'Back') as HTMLButtonElement
+      await act(async () => {
+        back.click()
+      })
+      expect(useTourStore.getState().stepIndex).toBe(0)
+      expect(useTourStore.getState().isOpen).toBe(true)
+    })
+
+    it('Escape and the arrows work with focus on the page body, outside the card', async () => {
+      await open()
+      ;(document.activeElement as HTMLElement | null)?.blur()
+      expect(document.activeElement).toBe(document.body)
+
+      const right = key(document.body, 'ArrowRight')
+      await act(async () => {})
+      expect(right.defaultPrevented).toBe(true)
+      expect(useTourStore.getState().stepIndex).toBe(1)
+
+      key(document.body, 'ArrowLeft')
+      await act(async () => {})
+      expect(useTourStore.getState().stepIndex).toBe(0)
+
+      await act(async () => {
+        key(document.body, 'Escape')
+      })
+      expect(useTourStore.getState().isOpen).toBe(false)
+    })
+
+    it('leaves Escape to an open menu and the arrows to a slider or a text field', async () => {
+      await open()
+      const menu = document.createElement('div')
+      menu.setAttribute('role', 'menu')
+      menu.innerHTML = '<button role="menuitem">Item</button>'
+      const range = document.createElement('input')
+      range.type = 'range'
+      const text = document.createElement('input')
+      text.type = 'text'
+      document.body.append(menu, range, text)
+      try {
+        const item = menu.firstElementChild as HTMLElement
+        expect(key(item, 'Escape').defaultPrevented).toBe(false)
+        expect(useTourStore.getState().isOpen).toBe(true)
+        key(range, 'ArrowRight')
+        key(text, 'ArrowRight')
+        expect(useTourStore.getState().stepIndex).toBe(0)
+      } finally {
+        menu.remove()
+        range.remove()
+        text.remove()
+      }
+    })
+
+    it('does not listen once the tour is closed', async () => {
+      await open()
+      await act(async () => {
+        useTourStore.getState().closeTour()
+      })
+      const e = key(document.body, 'ArrowRight')
+      expect(e.defaultPrevented).toBe(false)
+    })
+  })
+
   it('renders aria-live polite region with step number and title on step change', async () => {
     await act(async () => {
       root.render(createElement(Tour))

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { windowGroups, formatDegrees, formatMastGain, formatPercent } from './simpleSummary'
+import { windowGroups, formatDegrees, formatHighestElevation, formatMastGain, formatPercent } from './simpleSummary'
 import { computeWindowDetails } from './windowDetails'
 import type { SiteBundle } from '../../lib/types'
 
@@ -12,6 +12,23 @@ describe('detail formatters', () => {
     expect(formatPercent(36.6)).toBe('37%')
     expect(formatPercent(140)).toBe('100%')
     expect(formatPercent(undefined)).toBe('Not available')
+  })
+
+  it('does not round a value below the zenith up to 90', () => {
+    expect(formatDegrees(89.4)).toBe('89°')
+    expect(formatDegrees(89.7)).toBe('89°')
+    expect(formatDegrees(89.99)).toBe('89°')
+    expect(formatDegrees(90)).toBe('90°')
+    expect(formatDegrees(87.2)).toBe('87°')
+  })
+
+  it('says "Never above the horizon" instead of a negative highest elevation', () => {
+    expect(formatHighestElevation(-38.4)).toBe('Never above the horizon')
+    expect(formatHighestElevation(-0.2)).toBe('Never above the horizon')
+    expect(formatHighestElevation(0)).toBe('Never above the horizon')
+    expect(formatHighestElevation(0.6)).toBe('1°')
+    expect(formatHighestElevation(89.7)).toBe('89°')
+    expect(formatHighestElevation(null)).toBe('Not available')
   })
 
   it('formats the mast gain', () => {
@@ -38,6 +55,20 @@ describe('windowGroups', () => {
     expect(groups[1].rows.map((r) => r.id)).toEqual(['earth', 'noEarth', 'maxEarth'])
     expect(groups[0].rows[0].value).toBe('51% of 30 days')
     expect(groups[0].rows[2].value).toBe('5°')
+  })
+
+  it('shows the far-side wording for Earth (and the Sun) that never rise', () => {
+    const groups = windowGroups(metrics, 720, {
+      maxSunElDeg: -3.2,
+      sunPartlyHiddenPct: null,
+      mastGainH: null,
+      maxEarthElDeg: -38.1,
+      earthLitPct: null,
+      maxHillDeg: null,
+    })
+    expect(groups[1].rows[2].label).toBe('Highest Earth above the horizon')
+    expect(groups[1].rows[2].value).toBe('Never above the horizon')
+    expect(groups[0].rows[2].value).toBe('Never above the horizon')
   })
 
   it('shows Not available for missing data', () => {

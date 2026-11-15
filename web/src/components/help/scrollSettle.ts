@@ -1,9 +1,34 @@
+import { usableViewBand, type ViewBand } from '../../lib/viewBand'
 const MAX_WAIT_MS = 900
 const STABLE_MS = 100
 
-export function isFullyInView(el: Element): boolean {
+export { usableViewBand, type ViewBand } from '../../lib/viewBand'
+
+export function isFullyInView(el: Element, band: ViewBand = usableViewBand()): boolean {
   const r = el.getBoundingClientRect()
-  return r.top >= 0 && r.left >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth
+  return r.top >= band.top && r.left >= 0 && r.bottom <= band.bottom && r.right <= window.innerWidth
+}
+
+/**
+ * Scrolls a target into the usable band: centred when it fits, aligned to the top when it is taller
+ * than the band. Uses scroll margins so the sticky footer is left out of the centring. Returns a restore function.
+ */
+export function scrollIntoUsableView(el: Element, behavior: ScrollBehavior): () => void {
+  const band = usableViewBand()
+  const covered = window.innerHeight - band.bottom
+  const tooTall = el.getBoundingClientRect().height > band.bottom - band.top - 16
+  const style = (el as HTMLElement).style
+  const prev = { bottom: style?.scrollMarginBottom ?? '', top: style?.scrollMarginTop ?? '' }
+  if (style) {
+    style.scrollMarginBottom = tooTall ? '0px' : `${covered}px`
+    style.scrollMarginTop = tooTall ? '8px' : '0px'
+  }
+  el.scrollIntoView?.({ block: tooTall ? 'start' : 'center', inline: 'nearest', behavior })
+  return () => {
+    if (!style) return
+    style.scrollMarginBottom = prev.bottom
+    style.scrollMarginTop = prev.top
+  }
 }
 
 // Calls done once the smooth scroll has finished; returns a cancel function.
