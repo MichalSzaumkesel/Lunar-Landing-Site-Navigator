@@ -60,12 +60,12 @@ export function computeBothVisible(
   return { pct: (count / n) * 100, longestH: longest * (ephem.step_minutes / 60), samples: n }
 }
 
-/** "62% of window; longest 40 h" (whole percent; hours, or days from 48 h). */
+/** "62.5 % of window; longest 40 h" (one decimal like the metric rows; hours, or days from 48 h). */
 export function formatBothVisible(b: BothVisible): string {
-  const pct = Math.round(b.pct)
+  const pct = b.pct.toFixed(1)
   const h = Math.round(b.longestH)
   const span = h >= 48 ? `${Math.round(h / 24)} d` : `${h} h`
-  return `${pct}% of window; longest ${span}`
+  return `${pct} % of window; longest ${span}`
 }
 
 export const BOTH_DERIVED_TIP =

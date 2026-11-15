@@ -93,7 +93,7 @@ function LoupeFrame({ bundle, heightM, cursorMs, target }: {
         </g>
         <rect className="sky__frame-line" width={LOUPE_SIZE} height={LOUPE_SIZE} />
       </svg>
-      <div className="loupe__caption" title="Visible disc fraction per contract section 3; the horizon is treated as locally straight across the disc.">
+      <div className="loupe__caption" title="Visible disc fraction; the horizon is treated as locally straight across the disc.">
         {caption}
       </div>
     </>

@@ -137,7 +137,7 @@ describe('printHelpers', () => {
       expect(map.longest_no_earth_h).toBe('0 h')
       expect(map.pct_both).toBe('78.4 %')
       expect(map.mast_gain).toBe('+3.2 h Sun visible')
-      expect(map.both_derived).toBe('78% of window; longest 30 h')
+      expect(map.both_derived).toBe('78.4 % of window; longest 30 h')
       expect(rows.find((r) => r.key === 'both_derived')!.label).toMatch(/\(derived\)$/)
     })
 

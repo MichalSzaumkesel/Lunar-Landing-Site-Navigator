@@ -3,7 +3,7 @@ import type { MissionRules, ScenarioMetrics, SiteBundle } from '../../lib/types'
 import type { MastDeltaResult } from '../../lib/mastDelta'
 import type { SkySample } from '../../lib/ephem'
 import { horizonAt } from '../../lib/horizon'
-import { formatShareRange } from '../../lib/horizonUncertainty'
+import { formatShareRange, shareRangeVisible } from '../../lib/horizonUncertainty'
 import type { HorizonShareRange, ShareRange } from '../../lib/horizonUncertainty'
 import { fmtNum } from '../sky/geometry'
 
@@ -80,7 +80,7 @@ export function formatMastGainText(delta: MastDeltaResult | null | undefined): s
 
 /** Appends "(lo–hi)" for the horizon-uncertainty range, when there is one. */
 function withRange(value: string, range: ShareRange | null | undefined): string {
-  return range ? `${value} (${formatShareRange(range)})` : value
+  return shareRangeVisible(range) ? `${value} (${formatShareRange(range)})` : value
 }
 
 /** Returns the compact table of the same metrics as the metrics panel. */

@@ -41,6 +41,20 @@
   font-size: 1rem;
 }
 
+.about__copy {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--earth);
+  border-radius: 6px;
+  background: rgba(74, 168, 255, 0.14);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.about__copy:hover:not(:disabled) {
+  background: rgba(74, 168, 255, 0.26);
+}
+
 .about__count {
   font-weight: 600;
 }

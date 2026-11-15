@@ -92,8 +92,8 @@ describe('computeBothVisible', () => {
 
 describe('formatBothVisible', () => {
   it('formats the share and the longest stretch', () => {
-    expect(formatBothVisible({ pct: 62.5, longestH: 3, samples: 8 })).toBe('63% of window; longest 3 h')
-    expect(formatBothVisible({ pct: 10, longestH: 72, samples: 100 })).toBe('10% of window; longest 3 d')
+    expect(formatBothVisible({ pct: 62.5, longestH: 3, samples: 8 })).toBe('62.5 % of window; longest 3 h')
+    expect(formatBothVisible({ pct: 10, longestH: 72, samples: 100 })).toBe('10.0 % of window; longest 3 d')
   })
   it('explains that it is derived from the same samples', () => {
     expect(BOTH_DERIVED_TIP).toMatch(/Derived/)

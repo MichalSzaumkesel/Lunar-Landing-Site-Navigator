@@ -42,6 +42,7 @@ export const CSV_HEADERS = [
   'time_to_earthset_h',
   'sun_el_deg',
   'sun_clearance_deg',
+  // Only columns that are our own derived values carry the _derived suffix; pct_both is a shared metric.
   'longest_both_h_derived',
 ] as const
 

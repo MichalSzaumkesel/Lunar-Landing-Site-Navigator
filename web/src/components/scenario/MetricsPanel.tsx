@@ -22,7 +22,10 @@ function Item({ row, swap = false }: { row: MetricRow; swap?: boolean }) {
   return (
     <div className="metrics__item" title={isClearance ? plainTip : row.tip}>
       <dt title={isClearance ? plainTip : undefined}>{row.label}</dt>
-      <dd>{swap ? <SwapText value={row.value} /> : row.value}</dd>
+      <dd>
+        {swap ? <SwapText value={row.value} /> : row.value}
+        {row.derived && <span className="metrics__derived">derived</span>}
+      </dd>
     </div>
   )
 }

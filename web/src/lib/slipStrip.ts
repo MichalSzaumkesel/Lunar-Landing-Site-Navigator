@@ -105,8 +105,18 @@ export function stripSentence(cells: readonly SlipCell[], current: number, hasRu
   if (!hasRules) return 'The strip only shows Sun visible; there are no mission rules to check.'
   const r = passingRange(cells, current)
   if (!r) return `No slip between -${max} and +${max} days meets the mission rules.`
-  if (r.from === r.to) return `Mission rules hold for a slip of ${signed(r.from)} days.`
-  return `Mission rules hold for slips from ${signed(r.from)} to ${signed(r.to)} days.`
+  const rule =
+    r.from === r.to
+      ? `Mission rules hold for a slip of ${signed(r.from)} days.`
+      : `Mission rules hold for slips from ${signed(r.from)} to ${signed(r.to)} days.`
+  // Say so when the slip in use is outside the passing run (or fails on its own, e.g. between two runs).
+  if (current < r.from || current > r.to) {
+    const cur = cells.find((c) => c.slip === current)
+    // No data at the current slip: do not claim a verdict.
+    if (cur && !cur.hasData) return `${rule} Current slip ${signed(current)} d has no data.`
+    return `${rule} Current slip ${signed(current)} d does not meet them.`
+  }
+  return rule
 }
 
 /** Memo key: everything the cells depend on, and nothing about the slip or the cursor. */

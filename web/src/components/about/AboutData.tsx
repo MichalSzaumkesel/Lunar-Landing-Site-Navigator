@@ -85,7 +85,7 @@ function HorizonsQuery() {
         The ephemeris file of {bundle.site.name} records the JPL Horizons query that produced the Sun and Earth positions.
       </p>
       <p>
-        <button type="button" className="ghost" disabled={!available} title={available ? undefined : HORIZONS_QUERY_MISSING} onClick={onCopy}>
+        <button type="button" className="about__copy" disabled={!available} title={available ? undefined : HORIZONS_QUERY_MISSING} onClick={onCopy}>
           Copy Horizons query
         </button>{' '}
         <span role="status" aria-live="polite">{available ? note : HORIZONS_QUERY_MISSING}</span>
