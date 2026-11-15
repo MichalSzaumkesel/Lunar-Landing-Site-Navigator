@@ -29,7 +29,7 @@ export function useTour() {
     return Boolean(document.querySelector(selector)) || sectionsForTarget(selector).length > 0
   }, [])
 
-  // Switching level closes an open tour; it never opens by itself (see TourChip).
+  // Switching level closes an open tour; it never opens by itself (the first visit is handled by TourAutoStart).
   useEffect(() => {
     if (useTourStore.getState().isOpen) closeTour()
   }, [mode, closeTour])

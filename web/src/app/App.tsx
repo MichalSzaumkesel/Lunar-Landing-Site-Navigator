@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { DemoCaption } from '../components/demo/DemoCaption'
 import { Tour } from '../components/help/Tour'
-import { TourChip } from '../components/help/TourChip'
+import { TourAutoStart } from '../components/help/TourAutoStart'
 import { ScenarioBoard } from '../components/scenario/ScenarioBoard'
 import { SimpleView } from '../components/simple/SimpleView'
 import { useEventSounds } from '../components/sound/useEventSounds'
@@ -31,7 +31,7 @@ export default function App() {
   return (
     <div className="app">
       <TopBar />
-      <TourChip />
+      <TourAutoStart />
       <main className="shell">
         <div className="board__toolbar">
           <div className="board__scenarios" ref={setToolbarSlot} />
