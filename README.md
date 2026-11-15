@@ -4,6 +4,8 @@ Lunar Landing Site Navigator is a browser tool for comparing lunar landing sites
 
 NASA Space Apps Challenge 2026, Rzeszów local event.
 
+Demo video (30 s): https://www.youtube.com/watch?v=TBfeCfEaTEU
+
 ## Screenshots
 
 ![Compare: scenario cards side by side](docs/screenshots/01-compare-scenario-cards.png)
