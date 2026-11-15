@@ -50,7 +50,8 @@ Demo video (30 s): https://www.youtube.com/watch?v=TBfeCfEaTEU
 ### 3D
 - Terrain view loaded on demand (`React.lazy`), so the first screen does not load three.js.
 - Shadows updated from the Sun position at the time cursor.
-- Two camera modes: On the surface and Overview; quick views and tracking lock toward the lander, Sun or Earth.
+- Two camera modes: On the surface and Overview; Face the lander, Sun or Earth, and hold a button for about half a second to lock the camera on it.
+- Full screen for every view; in 3D the controls float over the canvas and hide when idle.
 - Walk the surface with W, A, S, D (Shift for a faster pace) relative to the view; arrow keys and dragging only look around. Walking moves the lander and the local horizon is recalculated when you stop (Simple mode: the walk is visual only, with a Back to start control). In Overview, WASD pans the view.
 - Movable lander: click the terrain, or nudge it with the arrow keys in the Lander panel (Shift for larger steps).
 - "Sunlight map" over the patch and "Find spot with most Sun visible" search with a radius of 500 m, 1 km or 2 km, run in a Web Worker.
@@ -60,7 +61,7 @@ Demo video (30 s): https://www.youtube.com/watch?v=TBfeCfEaTEU
 - Mission rules: mission length, minimum Sun share, maximum dark stretch, Earth in view at landing and Earth share. Presets for 72 h, 168 h and 336 h stays; the reset button restores the 240 h example.
 - Mission bar on the timeline: green when the candidate landing meets all rules, red with the failing rule named when it does not.
 - Window finder: a site-by-date matrix of landing windows, computed in a Web Worker.
-- Moon map: orthographic view of the Moon with site markers, the subsolar point and the day/night terminator.
+- Moon map: a 3D globe and a flat map of the Moon with site markers, the subsolar point and the day/night terminator, plus a polar map of the south pole with a shaded basemap. Pick a point on either view to add a custom site.
 - Site library with status, coordinates and provenance.
 - Custom site coordinates (latitude and longitude). See Data below for how these are labelled.
 
@@ -77,7 +78,7 @@ Demo video (30 s): https://www.youtube.com/watch?v=TBfeCfEaTEU
 - `prefers-reduced-motion` is respected; demo mode and playback start only on a user action.
 - Opening: a plain link starts in Simple mode; use `?m=a` (or the mode switch) for Advanced, which the presets need.
 - Simple mode: switchable Polar, Panorama and 3D views with plain-language summaries for teaching and public demonstrations.
-- Guided tour (`Tutorial` button) and a demo narration (`Demo` button).
+- Guided tour: it opens by itself on a visitor's first visit (once per level; `?tour=0` turns it off), and the `Tutorial` button starts it again. A demo narration is behind the `Demo` button.
 
 ### Sound
 - Off by default. A compact Off / Ambient / Cues control (each option has its own speaker icon) in the tools bar; a volume slider slides in when sound is on.
@@ -106,7 +107,7 @@ npm run gen:mocks  # regenerate the synthetic mock datasets
 
 ## Data
 
-- **Contract**: data files follow [docs/contract.md](docs/contract.md) (contract version 1.1.1). Times are UTC, angles in degrees, longitude east-positive, azimuth measured from north clockwise.
+- **Contract**: data files follow [docs/contract.md](docs/contract.md) (contract version 1.3.0). Times are UTC, angles in degrees, longitude east-positive, azimuth measured from north clockwise.
 - **Real and mock data**: the app reads real datasets from `web/public/data/` (`sites.json`, `ephem/`, `horizon/`, `terrain/`, `earth_orientation.json`). The loader (`web/src/lib/loader.ts`) falls back to synthetic datasets in `web/public/data/mock/` for each site whose real files are missing, and `VITE_USE_MOCK=1` forces mock data everywhere.
 - **Labels**:
   - Synthetic data is marked with a `Synthetic data` badge.
@@ -147,6 +148,7 @@ The workflow [.github/workflows/deploy-web.yml](.github/workflows/deploy-web.yml
 ├── validation/               # Validation scripts, results and metric fixtures
 ├── .github/workflows/
 │   └── deploy-web.yml        # Deployment workflow
+├── video/                    # 30-second submission video: storyboard, requirements and capture scripts
 ├── docs/
 │   ├── contract.md           # Data contract between the data and web scopes
 │   ├── demo-script.md        # Live demo script and 30-second video storyboard
