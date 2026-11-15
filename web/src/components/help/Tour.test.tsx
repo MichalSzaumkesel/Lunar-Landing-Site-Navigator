@@ -96,7 +96,7 @@ describe('Tour component', () => {
       })
       expect(card().classList.contains('tour-card--on')).toBe(true)
       expect(cutout()?.classList.contains('tour-cutout--on')).toBe(true)
-      expect((cutout() as HTMLElement).style.top).toBe('296px')
+      expect((cutout() as HTMLElement).style.transform).toContain('296px')
     })
 
     it('keeps the spotlight (the only dimming layer) mounted while the step changes', async () => {
@@ -110,6 +110,52 @@ describe('Tour component', () => {
       expect(cutout()).toBe(frame)
       await advance(5)
       expect(cutout()).toBe(frame)
+    })
+
+    describe('spotlight glide', () => {
+      let animate: ReturnType<typeof vi.fn>
+      beforeEach(() => {
+        animate = vi.fn()
+        Element.prototype.animate = animate as never
+      })
+      afterEach(() => {
+        delete (Element.prototype as { animate?: unknown }).animate
+      })
+
+      const settledAt = async (r: typeof outOfView, step: number) => {
+        rect = r
+        await act(async () => {
+          useTourStore.getState().openTour(step)
+        })
+        await advance(400)
+      }
+      const inView = { top: 100, bottom: 140, left: 10, right: 110, width: 100, height: 40 }
+      const elsewhere = { top: 300, bottom: 360, left: 400, right: 600, width: 200, height: 60 }
+
+      it('glides from the old rect to the new one with transform only, once per step', async () => {
+        await mount(false)
+        await settledAt(inView, 0)
+        expect(animate).not.toHaveBeenCalled()
+        await settledAt(elsewhere, 1)
+        expect(animate).toHaveBeenCalledTimes(1)
+        const [frames, options] = animate.mock.calls[0]
+        expect(Object.keys(frames[0])).toEqual(['transform'])
+        expect(frames[0].transform).toContain('translate(6px, 96px)')
+        expect(frames[1].transform).toBe('translate(396px, 296px)')
+        expect(options.duration).toBeLessThanOrEqual(350)
+        // Position is always a transform, never an inline top or left
+        const style = (cutout() as HTMLElement).style
+        expect(style.top).toBe('')
+        expect(style.left).toBe('')
+        expect(style.transform).toBe('translate(396px, 296px)')
+      })
+
+      it('does not glide with reduced motion', async () => {
+        await mount(true)
+        await settledAt(inView, 0)
+        await settledAt(elsewhere, 1)
+        expect(animate).not.toHaveBeenCalled()
+      })
     })
 
     it('falls back to polling the target rect when scrollend is missing', async () => {

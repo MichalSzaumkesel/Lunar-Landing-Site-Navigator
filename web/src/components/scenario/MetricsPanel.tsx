@@ -10,17 +10,19 @@ import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import { describeBody, fmtHours, pickMask } from '../sky/geometry'
 import { ElevationChart } from '../chart/ElevationChart'
+import { SwapText } from '../ui/SwapText'
 import { cursorMetricRows, windowMetricRows } from './cardLogic'
 import type { MetricRow } from './cardLogic'
 import './scenario.css'
 
-function Item({ row }: { row: MetricRow }) {
+/** `swap`: the value fades in when it changes. Only for window values, never for the cursor rows. */
+function Item({ row, swap = false }: { row: MetricRow; swap?: boolean }) {
   const isClearance = /clearance/i.test(row.label)
   const plainTip = 'how far the centre of the Sun is above the terrain'
   return (
     <div className="metrics__item" title={isClearance ? plainTip : row.tip}>
       <dt title={isClearance ? plainTip : undefined}>{row.label}</dt>
-      <dd>{row.value}</dd>
+      <dd>{swap ? <SwapText value={row.value} /> : row.value}</dd>
     </div>
   )
 }
@@ -46,7 +48,7 @@ const WindowRows = memo(function WindowRows({ rows }: { rows: MetricRow[] }) {
   return (
     <>
       {rows.map((row) => (
-        <Item key={row.key} row={row} />
+        <Item key={row.key} row={row} swap />
       ))}
     </>
   )
@@ -98,13 +100,15 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
             title="Extra hours with the Sun centre above the terrain horizon when the observer stands 10 m above the ground instead of 2 m."
           >
             <dt>10 m mast vs 2 m</dt>
-            <dd>{mastGainText}</dd>
+            <dd>
+              <SwapText value={mastGainText} />
+            </dd>
           </div>
         )}
       </dl>
       {both && (
         <p className="metrics__both" title={BOTH_DERIVED_TIP}>
-          Sun visible and Earth in view together: {formatBothVisible(both)}
+          Sun visible and Earth in view together: <SwapText value={formatBothVisible(both)} />
           <span className="metrics__derived">derived</span>
         </p>
       )}

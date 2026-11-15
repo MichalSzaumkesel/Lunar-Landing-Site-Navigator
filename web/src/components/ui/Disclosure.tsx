@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useDisclosure } from '../../lib/disclosure'
 import type { SectionKey } from '../../lib/disclosure'
 import { usePresence } from '../../lib/usePresence'
+import { SwapText } from './SwapText'
 import './disclosure.css'
 
 export interface DisclosureProps {
@@ -36,7 +37,11 @@ export function Disclosure({ sectionKey, title, hint, summary, children }: Discl
             <path d="M5 3l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="disc__title">{title}</span>
-          {line && <span className="disc__summary">{line}</span>}
+          {line && (
+            <span className="disc__summary">
+              <SwapText value={line} />
+            </span>
+          )}
         </button>
       </h3>
       <div id={panelId} role="region" aria-label={title}>

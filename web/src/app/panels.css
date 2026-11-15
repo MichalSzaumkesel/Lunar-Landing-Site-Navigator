@@ -6,8 +6,10 @@
   padding: var(--space-2, 8px) var(--space-5, 24px) var(--space-4, 16px);
 }
 
+/* Switching Simple and Advanced: the new body fades in (the old one is replaced at once, so the
+   page height never holds two layouts). Opacity only. */
 .shell > * {
-  animation: shell-fade-in var(--motion-duration-fast, 120ms) ease;
+  animation: content-in var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .shell > .board__toolbar {
@@ -64,16 +66,7 @@
 
 .panels__body {
   min-width: 0;
-  animation: panel-fade-in var(--motion-duration-fast, 120ms) ease-out;
-}
-
-@keyframes panel-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  animation: content-in var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .panel-stack {

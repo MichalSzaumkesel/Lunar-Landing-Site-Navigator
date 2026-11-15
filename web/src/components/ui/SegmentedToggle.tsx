@@ -42,7 +42,7 @@ export function SegmentedToggle<T extends string>({
       const btn = root.querySelectorAll<HTMLElement>('button[role="radio"]')[index]
       if (!btn) return
       root.style.setProperty('--seg-x', `${btn.offsetLeft}px`)
-      root.style.setProperty('--seg-w', `${btn.offsetWidth}px`)
+      root.style.setProperty('--seg-sx', String(btn.offsetWidth / 100))
     }
     place()
     if (typeof ResizeObserver === 'undefined') return

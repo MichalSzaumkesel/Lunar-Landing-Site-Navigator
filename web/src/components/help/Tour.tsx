@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { MOTION_EASE, MOTION_MS, prefersReducedMotion } from '../../lib/motion'
 import { isFullyInView, whenScrollSettled } from './scrollSettle'
 import { useTour } from './useTour'
 import { sectionsForTarget } from '../../lib/disclosure'
 import './tour.css'
 
 // A collapsed section expands with an animation; the step measures its target after it ends.
-const SECTION_OPEN_MS = 200
-const FADE_OUT_MS = 120
-
-function reducedMotion(): boolean {
-  return (
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  )
-}
+const SECTION_OPEN_MS = MOTION_MS.normal + 20
+const FADE_OUT_MS = MOTION_MS.fast
+const SPOTLIGHT_PAD = 4
+const reducedMotion = prefersReducedMotion
 
 export interface TourProps {
   className?: string
@@ -41,6 +37,9 @@ export function Tour({ className = '' }: TourProps) {
   const [readyIndex, setReadyIndex] = useState(-1)
   const ready = isOpen && readyIndex === stepIndex
   const settledRef = useRef(false)
+  const cutoutRef = useRef<HTMLDivElement | null>(null)
+  const shownRect = useRef<DOMRect | null>(null)
+  const shownStep = useRef(-1)
   const [cardPos, setCardPos] = useState<{ top: number; left: number }>({ top: 100, left: 100 })
 
   // Measure and position the popover card and cutout
@@ -153,6 +152,34 @@ export function Tour({ className = '' }: TourProps) {
     }
   }, [isOpen, updatePosition])
 
+  // Spotlight glide between steps: FLIP from the rect it showed to the new one, transform only.
+  // Scroll and resize updates inside one step move it directly.
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      shownRect.current = null
+      shownStep.current = -1
+      return
+    }
+    const el = cutoutRef.current
+    if (!el || !targetRect) return
+    const prev = shownRect.current
+    // Step changed but nothing measured yet: the spotlight still shows the old rect
+    if (prev === targetRect) return
+    const stepChanged = shownStep.current !== stepIndex
+    shownRect.current = targetRect
+    shownStep.current = stepIndex
+    if (!prev || !stepChanged || reducedMotion() || typeof el.animate !== 'function') return
+    const w = targetRect.width + SPOTLIGHT_PAD * 2
+    const h = targetRect.height + SPOTLIGHT_PAD * 2
+    if (w <= 0 || h <= 0) return
+    const clamp = (v: number) => Math.min(5, Math.max(0.2, v))
+    const sx = clamp((prev.width + SPOTLIGHT_PAD * 2) / w)
+    const sy = clamp((prev.height + SPOTLIGHT_PAD * 2) / h)
+    const from = `translate(${prev.left - SPOTLIGHT_PAD}px, ${prev.top - SPOTLIGHT_PAD}px) scale(${sx}, ${sy})`
+    const to = `translate(${targetRect.left - SPOTLIGHT_PAD}px, ${targetRect.top - SPOTLIGHT_PAD}px)`
+    el.animate([{ transform: from }, { transform: to }], { duration: MOTION_MS.normal, easing: MOTION_EASE.inOut })
+  }, [isOpen, targetRect, stepIndex])
+
   // Focus card dialog (tabindex="-1") only when the tour opens
   const prevOpenRef = useRef(false)
   useEffect(() => {
@@ -203,18 +230,18 @@ export function Tour({ className = '' }: TourProps) {
     <>
       {/* One persistent dimming layer: the shadow of the spotlight frame. It never fades between steps. */}
       <div
+        ref={cutoutRef}
         className={`tour-cutout${ready && targetRect ? ' tour-cutout--on' : ''}`}
         data-testid="tour-spotlight"
         aria-hidden="true"
         style={
           targetRect
             ? {
-                top: `${targetRect.top - 4}px`,
-                left: `${targetRect.left - 4}px`,
-                width: `${targetRect.width + 8}px`,
-                height: `${targetRect.height + 8}px`,
+                transform: `translate(${targetRect.left - SPOTLIGHT_PAD}px, ${targetRect.top - SPOTLIGHT_PAD}px)`,
+                width: `${targetRect.width + SPOTLIGHT_PAD * 2}px`,
+                height: `${targetRect.height + SPOTLIGHT_PAD * 2}px`,
               }
-            : { top: '50%', left: '50%', width: '0px', height: '0px' }
+            : { transform: 'translate(50vw, 50vh)', width: '0px', height: '0px' }
         }
       />
 
@@ -227,10 +254,7 @@ export function Tour({ className = '' }: TourProps) {
         tabIndex={-1}
         data-tour-open=""
         className={`tour-card${ready ? ' tour-card--on' : ''} ${className}`.trim()}
-        style={{
-          top: `${cardPos.top}px`,
-          left: `${cardPos.left}px`,
-        }}
+        style={{ transform: `translate(${cardPos.left}px, ${cardPos.top}px)` }}
         onKeyDown={handleKeyDown}
       >
         <div className="tour-sr-only" aria-live="polite" aria-atomic="true">

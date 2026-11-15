@@ -45,7 +45,11 @@
   --badge-synthetic: var(--warn);
   --badge-approximate: var(--sun);
 
-  /* Motion tokens: calm, purposeful, projector-safe (120-250ms for UI) */
+  /* Motion tokens: the one shared set. Calm, purposeful, projector-safe: nothing runs longer than
+     --motion-duration-slow (hard cap 350 ms, enforced by motionGuard.test.ts).
+     fast: hover, focus, press, colour flips, value swaps, tooltips, exits.
+     normal: enter of popups, dialogs, cards, collapses, tour spotlight.
+     slow: sliding highlights, sheets. */
   --motion-duration-fast: 120ms;
   --motion-duration-normal: 180ms;
   --motion-duration-slow: 240ms;
@@ -104,6 +108,23 @@
   overflow: hidden;
 }
 
+/* Static values that change (never values that follow the Play cursor): SwapText re-creates the
+   element with this class, so the new text fades in. Opacity only, so nothing moves. */
+@keyframes swap-in {
+  from { opacity: 0.2; }
+}
+.swap-text {
+  animation: swap-in var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+/* Content that replaces a skeleton or a view: fades in once on mount */
+@keyframes content-in {
+  from { opacity: 0.25; }
+}
+.content-in {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -136,15 +157,22 @@ button {
   min-height: 2.5rem;
   min-width: 2.5rem;
   cursor: pointer;
-  transition: background-color var(--motion-duration-fast) ease,
-              border-color var(--motion-duration-fast) ease,
-              color var(--motion-duration-fast) ease,
-              box-shadow var(--motion-duration-fast) ease,
-              transform var(--motion-duration-fast) ease;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-default),
+              border-color var(--motion-duration-fast) var(--motion-ease-default),
+              color var(--motion-duration-fast) var(--motion-ease-default),
+              box-shadow var(--motion-duration-fast) var(--motion-ease-default),
+              opacity var(--motion-duration-fast) var(--motion-ease-default),
+              transform var(--motion-duration-fast) var(--motion-ease-default);
 }
 
-button:hover {
+button:hover:where(:not(:disabled)) {
   border-color: var(--muted);
+}
+
+/* Disabled and enabled share one look, so a state flip fades instead of snapping */
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 button:active:not(:disabled) {
@@ -163,11 +191,12 @@ button.primary {
   color: #1a1300;
   border-color: var(--sun);
   font-weight: 650;
-  transition: background-color var(--motion-duration-fast) ease,
-              border-color var(--motion-duration-fast) ease,
-              color var(--motion-duration-fast) ease,
-              box-shadow var(--motion-duration-normal) ease,
-              transform 100ms ease;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-default),
+              border-color var(--motion-duration-fast) var(--motion-ease-default),
+              color var(--motion-duration-fast) var(--motion-ease-default),
+              box-shadow var(--motion-duration-normal) var(--motion-ease-default),
+              opacity var(--motion-duration-fast) var(--motion-ease-default),
+              transform var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 button.primary:active:not(:disabled) {
@@ -183,19 +212,11 @@ button.ghost {
   background: transparent;
   border-color: transparent;
   color: var(--muted);
-  transition: background-color var(--motion-duration-fast) ease,
-              border-color var(--motion-duration-fast) ease,
-              color var(--motion-duration-fast) ease;
 }
 
 button.ghost:hover:not(:disabled) {
   color: var(--text);
   border-color: var(--control-border);
-}
-
-button.ghost:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* Add-style action: tinted, not the amber primary reserved for Play */
@@ -246,7 +267,19 @@ button.accent:hover:not(:disabled) {
 /* Toolbar stability between Simple and Advanced: reserve space without shifting */
 .toolbar-hidden {
   visibility: hidden !important;
+  opacity: 0;
   pointer-events: none !important;
+}
+
+/* Observer height fades in and out with the mode instead of popping; visibility waits for the fade */
+[data-tour='observer-height'] {
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-default),
+              visibility 0s linear 0s;
+}
+
+[data-tour='observer-height'].toolbar-hidden {
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-default),
+              visibility 0s linear var(--motion-duration-normal);
 }
 
 /* Mode switch button stability: fixed min-width so text bolding never alters button or group width */
@@ -270,12 +303,40 @@ select {
   min-height: 2.5rem;
   padding: 0.45rem 0.75rem;
   color-scheme: dark;
-  transition: border-color var(--motion-duration-fast) ease,
-              background-color var(--motion-duration-fast) ease;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-default),
+              background-color var(--motion-duration-fast) var(--motion-ease-default),
+              opacity var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+select:hover:where(:not(:disabled)) {
+  border-color: var(--muted);
+}
+
+select:disabled {
+  opacity: 0.5;
 }
 
 input[type='range'] {
   min-height: 2.5rem;
+}
+
+/* Text and date fields: the same hover and focus feedback as selects (focus ring itself stays instant) */
+input:where(:not([type='range'], [type='checkbox'], [type='radio'])) {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-default),
+              background-color var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+input:where(:not([type='range'], [type='checkbox'], [type='radio'])):hover:where(:not(:disabled)) {
+  border-color: var(--muted);
+}
+
+a {
+  transition: color var(--motion-duration-fast) var(--motion-ease-default),
+              opacity var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+summary {
+  transition: color var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 button[aria-pressed='true'] {
@@ -283,9 +344,6 @@ button[aria-pressed='true'] {
   border-color: var(--earth);
   color: #02111f;
   font-weight: 650;
-  transition: background-color var(--motion-duration-fast) ease,
-              border-color var(--motion-duration-fast) ease,
-              color var(--motion-duration-fast) ease;
 }
 
 /* Layout */
@@ -515,8 +573,10 @@ button[aria-pressed='true'] {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

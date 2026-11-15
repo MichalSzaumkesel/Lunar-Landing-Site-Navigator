@@ -6,6 +6,7 @@ import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
 import type { SiteBundle } from '../../lib/types'
 import { viridisRgb } from '../../viz3d/landerHelpers'
+import { SwapText } from '../ui/SwapText'
 import './scenario.css'
 
 const SLIPS = slipValues()
@@ -60,7 +61,7 @@ export function SlipStrip({ scenario, bundle }: { scenario: Scenario; bundle: Si
         <span>+{MAX_SLIP_DAYS}</span>
       </div>
       <p className="slipstrip__note" aria-live="polite">
-        {sentence}
+        <SwapText value={sentence} />
       </p>
       <p className="slipstrip__legend">
         Colour: Sun visible, dark to bright. Dot: mission rules met. Hatched: no data. Click a cell to set the slip.

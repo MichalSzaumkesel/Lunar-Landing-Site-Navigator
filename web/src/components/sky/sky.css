@@ -399,8 +399,28 @@
   }
 }
 
-/* Rise and set flips only; colour changes never move with the playback cursor */
+/* Rise and set flips only: a colour change at the moment the Sun or Earth crosses the horizon.
+   Nothing here tweens a value that follows the playback cursor. */
 .sky__dot {
-  transition: background-color var(--motion-duration-normal, 180ms) ease,
-              border-color var(--motion-duration-normal, 180ms) ease;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-default),
+              border-color var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+.sky__state {
+  transition: color var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+/* The plot, panorama and readout replace their skeleton with a fade (the skeleton holds the size) */
+.sky__frame:not(.sky__box),
+.sky__pano:not(.sky__box),
+.sky__readout:not(.sky__readout--loading) {
+  animation: content-in var(--motion-duration-normal) var(--motion-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky__frame:not(.sky__box),
+  .sky__pano:not(.sky__box),
+  .sky__readout:not(.sky__readout--loading) {
+    animation: none;
+  }
 }

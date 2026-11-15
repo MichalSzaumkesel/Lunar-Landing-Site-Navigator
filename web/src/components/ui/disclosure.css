@@ -32,7 +32,7 @@
 .disc__chevron {
   flex: none;
   color: var(--muted);
-  transition: transform var(--motion-duration-fast, 120ms) ease;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-default);
 }
 
 .disc[data-open='true'] > .disc__heading .disc__chevron {
@@ -46,6 +46,8 @@
 
 .disc__summary {
   min-width: 0;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-default),
+              visibility 0s linear 0s;
   overflow: hidden;
   color: var(--muted);
   font-size: 0.875rem;
@@ -54,8 +56,12 @@
   white-space: nowrap;
 }
 
+/* Hidden, not removed: the row keeps its height and the summary fades while the body opens */
 .disc[data-open='true'] > .disc__heading .disc__summary {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-default),
+              visibility 0s linear var(--motion-duration-fast);
 }
 
 .disc__body {
