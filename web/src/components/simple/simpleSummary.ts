@@ -103,7 +103,7 @@ export function formatCountdown(rawHours: number): string {
 }
 
 /** Short span for the longest dark stretch: "6 hours" or "15 days". */
-function formatSpan(rawHours: number): string {
+export function formatSpan(rawHours: number): string {
   const h = Math.round(Math.max(0, rawHours))
   if (h < 48) return h === 1 ? '1 hour' : `${h} hours`
   const days = Math.round(h / 24)

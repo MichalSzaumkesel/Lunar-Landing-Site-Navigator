@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { computeBothVisible, type BothVisible } from './bothVisible'
 import { computeMetrics } from './metrics'
 import { horizonShareRange } from './horizonUncertainty'
 import type { HorizonShareRange } from './horizonUncertainty'
@@ -51,4 +52,17 @@ export function useHorizonShareRange(
   endMs: number,
 ): HorizonShareRange | null {
   return useMemo(() => (bundle ? horizonShareRange(bundle, heightM, startMs, endMs) : null), [bundle, heightM, startMs, endMs])
+}
+
+/** Derived "Sun visible and Earth in view together" values of a window; see lib/bothVisible. */
+export function useBothVisible(
+  bundle: SiteBundle | null,
+  heightM: ObserverHeightM,
+  startMs: number,
+  endMs: number,
+): BothVisible | null {
+  return useMemo(
+    () => (bundle ? computeBothVisible(bundle, { observerHeightM: heightM, startMs, endMs }) : null),
+    [bundle, heightM, startMs, endMs],
+  )
 }

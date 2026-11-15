@@ -26,6 +26,8 @@ Guide for the live jury demo (2 minutes) and the 30-second video. Every number i
 | **1:30 - 1:45** | Open the **Window finder** tab in the lower panel. Change one value in the **Mission rules** form, for example the **Mission length**. | "Window finder pokazuje, które lądowisko i które daty spełniają założenia misji. Zmiana reguły od razu aktualizuje matrycę." |
 | **1:45 - 2:00** | Switch to **Simple** mode. Open the **Share and export** menu and click **Copy link**. End. | "Dla odbiorców nietechnicznych jest tryb Simple z podsumowaniami prostym językiem. Stan można udostępnić jako link. Dane syntetyczne są oznaczone, a aplikacja mówi *Sun visible* i *Earth in view*, bez obietnic o mocy czy łączności." |
 
+Optional beat (10 s, after the Compare preset): open the Compare table, read the one-line "what differs" sentence aloud and point to the derived row "Sun and Earth together" (read values from the screen; say it is derived from the same samples).
+
 ## 30-Second Video Storyboard
 
 Use the **Demo** button, then the **Video 30 s** variant, and the **Record video** control in the narration bar. It saves a WebM file (`lunar-landing-navigator-demo.webm`) from the browser tab. Record in a window sized to 1920×1080.

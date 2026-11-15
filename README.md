@@ -25,6 +25,8 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Presets, in the menu of the Add scenario button: *Apollo 11 vs South Pole*, *South pole*, and *Same site, 14 days later*.
 - Metrics per card: Sun visible, longest dark stretch, Earth in view, and countdowns to the next Sun and Earth events. Every metric has a tooltip with its definition.
 - Horizon uncertainty: where a horizon file carries `uncertainty_deg`, the Sun visible and Earth in view values show a range (horizon raised and lowered by that angle) and the polar plot and panorama draw a thin band around the horizon. It excludes LOLA height and geolocation error; no range is shown for sites without the field.
+- Sun visible and Earth in view together: share of the window and the longest stretch in which both hold at once. It is labelled "derived" (computed from the same samples, outside the contract metrics) and appears in the Advanced metrics, the Compare table, the CSV export and the print dossier. The timeline shows it as the "Both" band.
+- Compare table: a neutral one-line summary of what differs between two scenarios (points of Sun visible, dark stretch, Earth in view). It never says which is better.
 - Observer height switch (2 m or 10 m) with the extra Sun hours of a 10 m mast shown against 2 m.
 
 ### Time

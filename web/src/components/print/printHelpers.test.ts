@@ -123,9 +123,9 @@ describe('printHelpers', () => {
       longestDark10H: 10,
     }
 
-    it('formats all 9 metrics with correct units when data is present', () => {
-      const rows = getPrintMetricRows(mockMetrics, mockCursor, mockMast)
-      expect(rows).toHaveLength(9)
+    it('formats all 10 metrics with correct units when data is present', () => {
+      const rows = getPrintMetricRows(mockMetrics, mockCursor, mockMast, null, { pct: 78.4, longestH: 30, samples: 720 })
+      expect(rows).toHaveLength(10)
 
       const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
       expect(map.sun_el_deg).toBe('+2.15 deg')
@@ -137,11 +137,13 @@ describe('printHelpers', () => {
       expect(map.longest_no_earth_h).toBe('0 h')
       expect(map.pct_both).toBe('78.4 %')
       expect(map.mast_gain).toBe('+3.2 h Sun visible')
+      expect(map.both_derived).toBe('78% of window; longest 30 h')
+      expect(rows.find((r) => r.key === 'both_derived')!.label).toMatch(/\(derived\)$/)
     })
 
     it('returns outside data range for all metrics when data is null', () => {
       const rows = getPrintMetricRows(null, null, null)
-      expect(rows).toHaveLength(9)
+      expect(rows).toHaveLength(10)
       for (const row of rows) {
         expect(row.value).toBe('outside data range')
       }

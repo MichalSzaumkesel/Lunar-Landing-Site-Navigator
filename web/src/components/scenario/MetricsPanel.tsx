@@ -3,7 +3,8 @@ import { memo, useMemo } from 'react'
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { mastDelta } from '../../lib/mastDelta'
 import type { ObserverHeightM, SiteBundle } from '../../lib/types'
-import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import { BOTH_DERIVED_TIP, formatBothVisible } from '../../lib/bothVisible'
+import { useBothVisible, useScenarioMetrics } from '../../lib/useScenarioMetrics'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
 import type { Scenario } from '../../state/types'
@@ -62,6 +63,7 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
   const { startMs, endMs } = scenarioWindowMs(scenario)
   // Once per bundle, observer height and window; the cursor never recomputes it.
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
+  const both = useBothVisible(bundle, heightM, startMs, endMs)
   const rows = useMemo(() => (metrics ? windowMetricRows(metrics) : null), [metrics])
   const delta = useMemo(
     () => (bundle ? mastDelta(bundle, startMs, endMs) : null),
@@ -100,6 +102,12 @@ export function MetricsPanel({ scenario, bundle, heightM }: {
           </div>
         )}
       </dl>
+      {both && (
+        <p className="metrics__both" title={BOTH_DERIVED_TIP}>
+          Sun visible and Earth in view together: {formatBothVisible(both)}
+          <span className="metrics__derived">derived</span>
+        </p>
+      )}
       <p className="metrics__note">
         This tool shows geometry only: Sun visible and Earth in view above the local terrain horizon.
       </p>

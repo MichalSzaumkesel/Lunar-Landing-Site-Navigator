@@ -11,7 +11,8 @@ import { sampleAt } from '../../lib/ephem'
 import { mastDelta } from '../../lib/mastDelta'
 import { horizonsQueryText } from '../../lib/horizonsQuery'
 import type { HorizonShareRange } from '../../lib/horizonUncertainty'
-import { useHorizonShareRange, useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import { useBothVisible, useHorizonShareRange, useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import type { BothVisible } from '../../lib/bothVisible'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -49,6 +50,7 @@ interface ScenarioRenderData {
   cursorMs: number
   metrics: ScenarioMetrics | null
   mastResult: MastDeltaResult | null
+  bothVisible: BothVisible | null
   cursorValues: { sunElDeg: number | null; sunClearanceDeg: number | null }
   rulesResult: ReturnType<typeof evaluateMissionRules>
   provenance: string
@@ -88,6 +90,8 @@ function useScenarioRenderData(
   const missionEndMs = startMs + missionRules.missionDurationH * 3_600_000
   const missionMetrics = useScenarioMetrics(bundle, observerHeightM, startMs, missionEndMs)
   const ruleMetrics = metricsOverride !== undefined ? metricsOverride : missionMetrics
+
+  const bothVisible = useBothVisible(bundle, observerHeightM, startMs, endMs)
 
   const mastResult = useMemo(() => {
     if (!bundle || !scenario) return null
@@ -149,6 +153,7 @@ function useScenarioRenderData(
     cursorMs,
     metrics,
     mastResult,
+    bothVisible,
     cursorValues,
     rulesResult,
     provenance,
@@ -262,7 +267,7 @@ export function PrintBrief({
   )
 
   const metricRowsList = scenarioDataList.map((d) =>
-    getPrintMetricRows(d.metrics, d.cursorValues, d.mastResult, d.shareRange),
+    getPrintMetricRows(d.metrics, d.cursorValues, d.mastResult, d.shareRange, d.bothVisible),
   )
 
   const templateRows = metricRowsList[0] ?? []

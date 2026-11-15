@@ -1,5 +1,6 @@
 // Pure logic for the scenario comparison table (W22).
 // Calculates comparison criteria, column sorting, better-value highlights, and value formatting.
+import { BOTH_DERIVED_TIP, computeBothVisible, type BothVisible } from '../../lib/bothVisible'
 import { ephemCoverage } from '../../lib/ephem'
 import { horizonAt } from '../../lib/horizon'
 import { computeMetrics, pickMaskFor } from '../../lib/metrics'
@@ -17,6 +18,8 @@ export type CompareCriterionId =
   | 'time_to_earthset_h'
   | 'highest_horizon_el_deg'
   | 'min_sun_clearance_deg'
+  | 'pct_both'
+  | 'longest_both_h'
 
 export interface CompareCriterion {
   id: CompareCriterionId
@@ -24,9 +27,11 @@ export interface CompareCriterion {
   unit: string
   tooltip: string
   better: 'higher' | 'lower'
+  /** Computed in this app from the same samples, not a contract metric. */
+  derived?: boolean
 }
 
-/** The 8 comparison criteria computed from lib/metrics.ts and bundle horizon/ephemeris. */
+/** The comparison criteria computed from lib/metrics.ts and bundle horizon/ephemeris. */
 export const COMPARE_CRITERIA: readonly CompareCriterion[] = [
   {
     id: 'pct_sunlit',
@@ -83,6 +88,22 @@ export const COMPARE_CRITERIA: readonly CompareCriterion[] = [
     unit: 'deg',
     tooltip: 'Lowest elevation of the Sun centre relative to the local terrain horizon during the window, in degrees.',
     better: 'higher',
+  },
+  {
+    id: 'pct_both',
+    label: 'Sun and Earth together (% of window)',
+    unit: '%',
+    tooltip: `Sun visible and Earth in view at the same time. ${BOTH_DERIVED_TIP}`,
+    better: 'higher',
+    derived: true,
+  },
+  {
+    id: 'longest_both_h',
+    label: 'Longest Sun and Earth together',
+    unit: 'h',
+    tooltip: `Longest run of consecutive samples with the Sun visible and the Earth in view. ${BOTH_DERIVED_TIP}`,
+    better: 'higher',
+    derived: true,
   },
 ] as const
 
@@ -164,9 +185,11 @@ export function formatCriterionValue(
   switch (id) {
     case 'pct_sunlit':
     case 'pct_earth':
+    case 'pct_both':
       return `${fmtNum(value, 1)} %`
     case 'longest_dark_h':
     case 'longest_no_earth_h':
+    case 'longest_both_h':
       return `${fmtNum(value, Number.isInteger(value) ? 0 : 1)} h`
     case 'time_to_sunset_h':
     case 'time_to_earthset_h':
@@ -187,11 +210,13 @@ export interface ScenarioCompareData {
   metrics: ScenarioMetrics | null
   highestHorizonDeg: number | null
   minSunClearanceDeg: number | null
+  /** Derived Sun and Earth together values of the window; null while loading or outside range. */
+  bothVisible: BothVisible | null
   values: Record<CompareCriterionId, number | null>
   displayValues: Record<CompareCriterionId, string>
 }
 
-/** Evaluates all 8 criteria for a single scenario. */
+/** Evaluates all criteria for a single scenario. */
 export function computeScenarioValues(
   scenario: Scenario,
   bundle: SiteBundle | null,
@@ -212,6 +237,7 @@ export function computeScenarioValues(
       metrics: null,
       highestHorizonDeg: null,
       minSunClearanceDeg: null,
+      bothVisible: null,
       values: emptyValues,
       displayValues: emptyDisplay,
     }
@@ -240,6 +266,7 @@ export function computeScenarioValues(
       metrics: null,
       highestHorizonDeg: null,
       minSunClearanceDeg: null,
+      bothVisible: null,
       values: emptyValues,
       displayValues: emptyDisplay,
     }
@@ -247,6 +274,7 @@ export function computeScenarioValues(
 
   const highestHorizonDeg = computeHighestHorizon(bundle.horizon, observerHeightM)
   const minSunClearanceDeg = computeMinSunClearance(bundle, observerHeightM, startMs, endMs)
+  const bothVisible = computeBothVisible(bundle, { observerHeightM, startMs, endMs })
 
   const values: Record<CompareCriterionId, number | null> = {
     pct_sunlit: metrics.pct_sunlit,
@@ -257,6 +285,8 @@ export function computeScenarioValues(
     time_to_earthset_h: metrics.time_to_earthset_h,
     highest_horizon_el_deg: highestHorizonDeg,
     min_sun_clearance_deg: minSunClearanceDeg,
+    pct_both: bothVisible?.pct ?? null,
+    longest_both_h: bothVisible?.longestH ?? null,
   }
 
   const displayValues: Record<CompareCriterionId, string> = {
@@ -268,6 +298,8 @@ export function computeScenarioValues(
     time_to_earthset_h: formatCriterionValue('time_to_earthset_h', values.time_to_earthset_h, metrics),
     highest_horizon_el_deg: formatCriterionValue('highest_horizon_el_deg', values.highest_horizon_el_deg, metrics),
     min_sun_clearance_deg: formatCriterionValue('min_sun_clearance_deg', values.min_sun_clearance_deg, metrics),
+    pct_both: formatCriterionValue('pct_both', values.pct_both, metrics),
+    longest_both_h: formatCriterionValue('longest_both_h', values.longest_both_h, metrics),
   }
 
   return {
@@ -277,6 +309,7 @@ export function computeScenarioValues(
     metrics,
     highestHorizonDeg,
     minSunClearanceDeg,
+    bothVisible,
     values,
     displayValues,
   }

@@ -104,8 +104,14 @@ describe('scenariosToCsv', () => {
     const firstLine = csv.split('\r\n')[0]
     expect(firstLine).toBe(CSV_HEADERS.join(','))
     expect(firstLine).toBe(
-      'site_name,site_id,lat,lon,start_utc,end_utc,slip_days,observer_height_m,synthetic,approximate,pct_sunlit,mean_sun_frac,longest_dark_h,pct_earth,longest_no_earth_h,pct_both,next_sunset_utc,next_sunrise_utc,next_earthset_utc,next_earthrise_utc,time_to_sunset_h,time_to_earthset_h,sun_el_deg,sun_clearance_deg',
+      'site_name,site_id,lat,lon,start_utc,end_utc,slip_days,observer_height_m,synthetic,approximate,pct_sunlit,mean_sun_frac,longest_dark_h,pct_earth,longest_no_earth_h,pct_both,next_sunset_utc,next_sunrise_utc,next_earthset_utc,next_earthrise_utc,time_to_sunset_h,time_to_earthset_h,sun_el_deg,sun_clearance_deg,longest_both_h_derived',
     )
+  })
+
+  it('writes the derived longest stretch in the last column', () => {
+    const withBoth = scenariosToCsv([{ ...sampleRow, bothVisible: { pct: 70, longestH: 41.5, samples: 240 } }])
+    expect(withBoth.split('\r\n')[1].endsWith(',41.5')).toBe(true)
+    expect(scenariosToCsv([sampleRow]).split('\r\n')[1].endsWith(',')).toBe(true)
   })
 
   it('uses \\r\\n line endings for all rows including the last', () => {
