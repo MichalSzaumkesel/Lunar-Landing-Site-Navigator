@@ -803,9 +803,12 @@
   gap: 6px;
   max-width: calc(100% - 16px);
   max-height: calc(100% - var(--corner-btn-size, 32px) - 24px);
+  /* The wrapper is as big as the (hidden) panel: it must never swallow drags and clicks meant for the canvas. */
+  pointer-events: none;
 }
 
 .surface__lander-btn {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -843,6 +846,7 @@
 }
 
 .surface__lander-panel[data-state='open'] {
+  pointer-events: auto;
   transition-delay: 0s;
 }
 
