@@ -60,9 +60,16 @@ export function useFullscreen(targetRef: RefObject<HTMLElement | null>): Fullscr
   useEffect(() => {
     if (mode !== 'native') return
     const doc = document as FsDocument
+    const el = targetRef.current
     const sync = () => setActive(fsElement(doc) !== null && fsElement(doc) === targetRef.current)
+    // Read the real state once: the owner may have been (re)mounted while already fullscreen.
+    sync()
     EVENTS.forEach((e) => document.addEventListener(e, sync))
-    return () => EVENTS.forEach((e) => document.removeEventListener(e, sync))
+    return () => {
+      EVENTS.forEach((e) => document.removeEventListener(e, sync))
+      // An owner unmounting while it is the fullscreen element must not leave the page stuck.
+      if (fsElement(doc) !== null && fsElement(doc) === el) void (doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.())
+    }
   }, [mode, targetRef])
 
   useEffect(() => {

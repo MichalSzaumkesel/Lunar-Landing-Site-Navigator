@@ -49,3 +49,11 @@
   border-radius: 0;
   background: var(--bg, #05070d);
 }
+
+/* Fixed exit control for stages that opt in: above the view, never clipped by the card. */
+.fs-button--exit {
+  position: absolute;
+  top: var(--space-2, 8px);
+  right: var(--space-3, 12px);
+  z-index: 20;
+}
