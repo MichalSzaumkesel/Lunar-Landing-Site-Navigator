@@ -52,15 +52,16 @@ describe('SoundToggle', () => {
     expect(document.activeElement).toBe(radios()[2])
   })
 
-  it('renders with label "Sound:" and Off/Ambient/Cues buttons, default Off', async () => {
+  it('renders an unlabelled-by-text radiogroup named Sound with Off/Ambient/Cues buttons, default Off', async () => {
     const engine = createSoundEngine()
 
     await act(async () => {
       root.render(createElement(SoundToggle, { engine }))
     })
 
-    const label = container.querySelector('#sound-mode-label')
-    expect(label?.textContent?.trim()).toBe('Sound:')
+    expect(container.textContent).not.toContain('Sound:')
+    const group = container.querySelector('[role="radiogroup"]')
+    expect(group?.getAttribute('aria-label')).toBe('Sound')
 
     const buttons = container.querySelectorAll<HTMLButtonElement>('button')
     expect(buttons.length).toBe(3)

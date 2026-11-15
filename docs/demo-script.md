@@ -7,7 +7,7 @@ Guide for the live jury demo (2 minutes) and the 30-second video. Every number i
 - [ ] **Full screen (`F11`)**: hide browser tabs and the taskbar.
 - [ ] **Zoom 90% (`Ctrl -`)**: scenario cards and the timeline fit a 1080p projector without horizontal scrolling.
 - [ ] **Tour off (`?tour=0`)**: open the app at `/?m=a&tour=0` (a plain link opens Simple; presets need Advanced) so the guided tour does not cover the opening slide.
-- [ ] **Sound off**: the sound control in the tools bar shows `Sound: Off` (the default).
+- [ ] **Sound off**: the sound control in the tools bar shows the `Off` segment selected (the default).
 - [ ] **Data loaded**: the demo sites `apollo_11`, `southpole_landed` and `artemis_region_1` have loaded. Check the site badges before the talk.
 - [ ] **Offline test**: after the data has loaded, switch DevTools to Offline and confirm the scenario, Play and the demo sites still work in the open tab. Do not reload: there is no service worker, so a reload while offline fails. Then go back online.
 - [ ] **Backup tab**: keep a second tab open at `/?m=s&tour=0` (`m=s` opens Simple mode, which is also the default without `m=`) as a fallback.

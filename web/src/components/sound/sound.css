@@ -11,55 +11,34 @@
   gap: var(--space-2, 8px);
 }
 
-.sound-control__label {
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 0.875rem;
-  user-select: none;
-}
-
 .sound-control__modes {
-  display: inline-flex;
   height: 2.5rem;
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  overflow: hidden;
+  box-sizing: border-box;
+  padding: 2px;
+  border-color: var(--control-border);
   background: var(--panel-2);
 }
 
-.sound-btn {
-  background: transparent;
-  color: var(--muted);
-  border: none;
-  border-right: 1px solid var(--control-border);
-  border-radius: 0;
-  padding: 0 var(--space-3, 12px);
+.sound-control__modes .segtoggle__thumb {
+  top: 2px;
+  bottom: 2px;
+}
+
+.sound-control__modes button[role='radio'] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-2, 8px);
   min-height: 0;
-  min-width: 2.5rem;
+  min-width: 0;
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
+  font-weight: 500;
+  color: var(--muted);
 }
 
-.sound-btn:last-child {
-  border-right: none;
-}
-
-.sound-btn:hover:not(.sound-btn--active) {
+.sound-control__modes button[role='radio'][aria-checked='true'] {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.sound-btn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
-  z-index: 1;
-}
-
-.sound-btn--active {
-  background: var(--line, #2a3550);
-  color: var(--text);
-  box-shadow: inset 0 0 0 1px var(--control-border);
+  font-weight: 500;
 }
 
 /* Mounted only while sound is on. Sits left of the switch, so the switch and Share never move */
