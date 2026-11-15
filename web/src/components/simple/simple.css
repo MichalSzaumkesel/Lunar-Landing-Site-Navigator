@@ -804,10 +804,6 @@
   min-height: 0;
 }
 
-.simple-sky-wrap[data-fullscreen='true'] .surface > :not(.surface__frame) {
-  display: none;
-}
-
 /* Keep the 3D badges clear of the (?) and full screen buttons. */
 .simple-stage .surface__badges {
   right: 72px;

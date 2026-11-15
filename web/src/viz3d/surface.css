@@ -1116,3 +1116,74 @@
   flex-wrap: nowrap;
   padding: 2px;
 }
+
+/* Full screen: the controls float over the bottom of the canvas and hide after a few seconds idle
+   (data-chrome is set by useFullscreenChrome). Same components, restyled. */
+.surface.surface[data-chrome] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.surface.surface[data-chrome] > .surface__side {
+  position: absolute;
+  inset: auto 0.5rem 0.5rem 0.5rem;
+  z-index: 6;
+  height: auto;
+  max-height: 55%;
+  overflow-y: auto;
+  padding: 0.5rem;
+  justify-content: flex-start;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(8, 11, 20, 0.86);
+  backdrop-filter: blur(6px);
+  transition: opacity var(--motion-duration-normal, 0.2s) ease, transform var(--motion-duration-normal, 0.2s) ease;
+}
+
+.surface.surface[data-chrome='hidden'] > .surface__side {
+  opacity: 0;
+  transform: translateY(0.5rem);
+  pointer-events: none;
+}
+
+.surface.surface[data-chrome] .surface__controls {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
+  gap: 0.4rem 0.75rem;
+}
+
+.surface.surface[data-chrome] .surface__controls > * {
+  grid-column: auto;
+  flex: 0 1 auto;
+}
+
+.surface.surface[data-chrome] .surface__controls > .surface__faces,
+.surface.surface[data-chrome] .surface__controls > .surface__faces--inline {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.surface.surface[data-chrome] .surface__controls .surface__faces--inline .lockbtn {
+  width: auto;
+  font-size: 0.8125rem;
+}
+
+.surface.surface[data-chrome] .surface__controls > label.group {
+  flex: 1 1 14rem;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto;
+  grid-template-areas: 'label slider value';
+}
+
+.surface.surface[data-chrome] .surface__controls > .group[role='group'] {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .surface.surface[data-chrome] .surface__controls > label.group {
+    flex-basis: 100%;
+  }
+}

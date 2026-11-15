@@ -690,10 +690,7 @@
   }
 }
 
-/* Like Simple: only the 3D frame is shown in full screen, its extra controls stay in the card. */
-.views[data-fullscreen='true'] .surface > :not(.surface__frame) {
-  display: none;
-}
+/* The 3D controls float over the canvas in full screen (see surface.css, data-chrome). */
 
 /* Slip tolerance strip */
 .slipstrip {

@@ -30,6 +30,7 @@ import {
 import type { BestSpotResult } from './bestSpot'
 import { createHeatmapTexture } from './heatmapTexture'
 import { LanderPopover } from './LanderPopover'
+import { useFullscreenChrome } from './useFullscreenChrome'
 import { MapButtonRing } from './MapButtonRing'
 import {
   cellIndexAt,
@@ -1277,6 +1278,8 @@ function SurfaceViewInner({ scenario, simple, cornerSlot }: { scenario: Scenario
   const { status, bundle, error } = useSiteBundle(scenario.siteId)
   const terrain = bundle?.terrain ?? null
   const heights = useTerrainHeights(terrain)
+  const rootRef = useRef<HTMLDivElement>(null)
+  useFullscreenChrome(rootRef)
 
   let body
   if (status === 'error') {
@@ -1324,7 +1327,11 @@ function SurfaceViewInner({ scenario, simple, cornerSlot }: { scenario: Scenario
     )
   }
 
-  return <div className={simple ? 'surface surface--simple' : 'surface'}>{body}</div>
+  return (
+    <div ref={rootRef} className={simple ? 'surface surface--simple' : 'surface'}>
+      {body}
+    </div>
+  )
 }
 
 export function SurfaceView({
