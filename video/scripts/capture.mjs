@@ -157,6 +157,8 @@ const shots = {
     await page.mouse.down(); await sleep(900); await page.mouse.up()
     await sleep(1500)
     await fullscreen3d(page)
+    // Opening shot is the bare Moon: hide the app's own status text (date, Sun visible/below horizon) top-left.
+    await page.addStyleTag({ content: '.surface__overlay--tl { opacity: 0 !important; }' })
     await page.mouse.move(960, 1079)
     const rec = new Rec(env, 'hook')
     await rec.start()

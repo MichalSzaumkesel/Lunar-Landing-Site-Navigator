@@ -27,7 +27,7 @@ const srcOf = (id) => {
 
 // Per-shot look: dissolves, dimming behind big text, status chip window.
 const LOOK = {
-  hook: { dim: [[100, 0], [112, 0.62], [194, 0.7]], blur: [[100, 0], [114, 5]], chip: [14, 100] },
+  hook: { dim: [[100, 0], [112, 0.62], [194, 0.7]], blur: [[100, 0], [114, 5]] },
   compare: { xfade: 8 },
   slip: { xfade: 6 },
   surface: { xfade: 6, chip: [50, 108], chipY: 400, cam: [{ f: 0, cx: 960, cy: 640, z: 1.0 }, { f: 109, cx: 960, cy: 640, z: 1.05 }] },
