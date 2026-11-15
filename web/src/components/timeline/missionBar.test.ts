@@ -5,6 +5,7 @@ import {
   clampMissionStartH,
   evaluateMissionRulesAt,
   missionBarDecision,
+  missionBarLabel,
   missionKeyStepH,
 } from './missionBar'
 
@@ -270,5 +271,19 @@ describe('evaluateMissionRulesAt', () => {
     const draggingMidSampleMs = startMs + 10.3 * 3600_000
     const dragRes = evaluateMissionRulesAt(bundle, baseRules, draggingMidSampleMs)
     expect(dragRes.valid).toBe(true)
+  })
+})
+
+describe('missionBarLabel', () => {
+  it('keeps the long form when there is room', () => {
+    expect(missionBarLabel(false, 'Min % Sun visible', true, 400)).toBe('Rules not met: Min % Sun visible')
+    expect(missionBarLabel(true, null, true, 10)).toBe('Rules met')
+  })
+
+  it('shortens step by step so the text never overflows the room', () => {
+    expect(missionBarLabel(false, 'Min % Sun visible', false, 150)).toBe('Fail: Min % Sun visible')
+    expect(missionBarLabel(false, 'Min % Sun visible', false, 100)).toBe('Fail')
+    expect(missionBarLabel(false, 'Min % Sun visible', true, 100)).toBe('Rules not met')
+    expect(missionBarLabel(false, 'Min % Sun visible', true, 20)).toBe('Fail')
   })
 })

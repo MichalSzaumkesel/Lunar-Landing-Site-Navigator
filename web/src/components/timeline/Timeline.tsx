@@ -10,6 +10,7 @@ import { clampStartUtc } from '../scenario/cardLogic'
 import {
   clampMissionStartH,
   evaluateMissionRulesAt,
+  missionBarLabel,
   missionKeyStepH,
 } from './missionBar'
 import {
@@ -338,6 +339,10 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
   const barX = r2(LEFT + (clampedStartH / durationH) * plotW)
   const barW = r2(Math.max(4, Math.min(plotW, (missionRules.missionDurationH / durationH) * plotW)))
   const textInside = barW >= 140
+  const labelRightRoom = LEFT + plotW - (barX + barW + 8)
+  const labelLeftRoom = barX - 8 - LEFT
+  const labelOnLeft = !textInside && labelRightRoom < 80 && labelLeftRoom > labelRightRoom
+  const labelAvailPx = textInside ? barW - 26 : Math.max(labelRightRoom, labelOnLeft ? labelLeftRoom : 0)
 
   let body
   if (status === 'error') {
@@ -506,18 +511,12 @@ function TimelineView({ scenario }: { scenario: Scenario }) {
                   )}
                   <text
                     className={`tl__bar-label tl__bar-label--${evalRes.color}`}
-                    x={textInside ? barX + 22 : barX + barW + 8 > LEFT + plotW - 80 ? Math.max(LEFT + 4, barX - 8) : barX + barW + 8}
+                    x={textInside ? barX + 22 : labelOnLeft ? barX - 8 : barX + barW + 8}
                     y={missionY + MISSION_H / 2}
-                    textAnchor={textInside ? 'start' : barX + barW + 8 > LEFT + plotW - 80 ? 'end' : 'start'}
+                    textAnchor={textInside || !labelOnLeft ? 'start' : 'end'}
                     dominantBaseline="central"
                   >
-                    {evalRes.valid
-                      ? evalRes.label
-                      : textInside
-                        ? `Rules not met: ${evalRes.failingRule ?? ''}`
-                        : evalRes.failingRule
-                          ? `Fail: ${evalRes.failingRule}`
-                          : 'Fail'}
+                    {missionBarLabel(evalRes.valid, evalRes.failingRule, textInside, labelAvailPx)}
                   </text>
                 </g>
                 <defs>
