@@ -30,6 +30,7 @@ NASA Space Apps Challenge 2026, Rzeszów local event.
 - Play and pause with speeds of 1, 6, 12, 24, 72 and 168 hours per second.
 - Time cursor and scrubber; scenarios with different dates play in step on a relative timeline.
 - Mission slip of up to ±60 days per scenario.
+- Slip tolerance strip under the slip slider (Advanced, "Dates and slip"): Sun visible for every slip from -60 to +60 days, a marker where the mission rules are met, and one sentence with the range of slips that hold. Click a cell to set the slip.
 - All times are UTC, shown in ISO 8601 with a trailing `Z`.
 
 ### Sky
