@@ -408,6 +408,81 @@
   gap: 0.5rem;
 }
 
+/* Spot search chips on the 3D frame (bottom-left stack): progress, error and the result card */
+.surface__spotchips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.surface__chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  max-width: min(22rem, 60vw);
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(7, 9, 15, 0.72);
+  color: var(--text);
+  font-size: 0.75rem;
+  line-height: 1.25;
+  pointer-events: auto;
+}
+
+.surface__chip--error {
+  color: var(--sun);
+}
+
+.surface__chip--result {
+  border-color: var(--sun);
+}
+
+.surface__chip button {
+  min-height: 1.5rem;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.surface__chip .surface__chip-x {
+  min-width: 1.5rem;
+  padding: 0;
+}
+
+.surface__chip-text {
+  flex: 1 1 9rem;
+  min-width: 0;
+}
+
+.surface__chip-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.surface__chip-compare {
+  flex: 1 1 100%;
+  font-family: var(--mono);
+}
+
+.surface__approx {
+  flex: none;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: help;
+}
+
+@media (max-width: 600px) {
+  .surface__chip {
+    max-width: 100%;
+  }
+}
+
 /* Sunniest spot result card & notifications */
 .surface__result-card {
   animation: surface-card-in var(--motion-duration-normal) var(--motion-ease-out);
@@ -431,69 +506,11 @@
   }
 }
 
-.surface__result-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.surface__result-badges .badge {
-  background: var(--panel-2);
-  font-size: 0.75rem;
-}
-
 .surface__result-sentence {
   font-size: 0.9375rem;
   line-height: 1.4;
   color: var(--text);
   font-weight: 500;
-}
-
-.surface__result-compare {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-3);
-  background: var(--panel-2);
-  border-radius: var(--radius);
-  font-family: var(--mono);
-  font-size: 0.875rem;
-}
-
-.surface__compare-col {
-  display: flex;
-  gap: var(--space-1);
-  align-items: center;
-}
-
-.surface__compare-label {
-  color: var(--muted);
-}
-
-.surface__result-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-1);
-}
-
-.surface__best-spot-alert {
-  padding: var(--space-2) var(--space-3);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  color: var(--sun);
-  font-size: 0.875rem;
-}
-
-.surface__search-progress {
-  padding: var(--space-2) var(--space-3);
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.875rem;
 }
 
 .surface__hint {
@@ -737,7 +754,8 @@
  * two bright segments that chase each other around the border. The overlay never affects layout; the
  * button's own border stays as a static dim outline underneath.
  */
-.surface__controls button.surface__mapbtn {
+.surface__controls button.surface__mapbtn,
+.surface__controls button.surface__findbtn {
   position: relative;
 }
 
@@ -763,7 +781,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .surface__controls button.surface__mapbtn[data-loading] {
+  .surface__controls button.surface__mapbtn[data-loading],
+  .surface__controls button.surface__findbtn[data-loading] {
     border-color: var(--sun);
     background: rgba(255, 194, 51, 0.18);
   }

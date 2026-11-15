@@ -515,11 +515,12 @@ describe('SurfaceView 3D View Fixes', () => {
       findBtn?.click()
     })
 
-    const resultCard = container.querySelector('.surface__result-card')
+    const resultCard = container.querySelector('.surface__chip--result')
     expect(resultCard).not.toBeNull()
+    expect(resultCard?.closest('.surface__frame')).not.toBeNull()
     expect(resultCard?.getAttribute('role')).toBe('status')
-    expect(resultCard?.getAttribute('aria-live')).toBe('polite')
     expect(resultCard?.getAttribute('aria-label')).toBe('Best spot result')
+    expect(container.querySelector('.surface__controls .surface__chip')).toBeNull()
   })
 
   it('displays "Outside ephemeris coverage" when search returns no result on out-of-range dates', async () => {
@@ -556,8 +557,9 @@ describe('SurfaceView 3D View Fixes', () => {
       findBtn?.click()
     })
 
-    const alert = container.querySelector('.surface__best-spot-alert')
+    const alert = container.querySelector('.surface__chip--error')
     expect(alert).not.toBeNull()
-    expect(alert?.textContent).toBe('Outside ephemeris coverage')
+    expect(alert?.getAttribute('role')).toBe('alert')
+    expect(alert?.textContent).toContain('Outside ephemeris coverage')
   })
 })
