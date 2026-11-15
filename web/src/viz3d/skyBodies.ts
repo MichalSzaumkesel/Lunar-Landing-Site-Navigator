@@ -3,6 +3,8 @@ import { mulberry32 } from './noise'
 import { horizonGlowStrength } from './viewMath'
 import { buildStarData } from './textures'
 import { skirtPositions } from './skirt'
+import { FADE_OFF, FX_FULL } from './bodyFade'
+import type { BodyFx } from './bodyFade'
 
 export { mulberry32 }
 
@@ -185,19 +187,21 @@ void main() {
 // Limb darkening: the disc is brightest in the middle and redder and darker at the rim.
 const SUN_CORE_FRAG = `
 uniform float uIntensity;
+uniform float uFade;
 varying vec3 vN;
 varying vec3 vVd;
 void main() {
   float mu = clamp( dot( normalize( vN ), normalize( vVd ) ), 0.0, 1.0 );
   float limb = 1.0 - 0.62 * ( 1.0 - mu );
   vec3 base = mix( vec3( 1.0, 0.45, 0.18 ), vec3( 1.0, 0.93, 0.8 ), pow( mu, 0.45 ) );
-  gl_FragColor = vec4( base * limb * uIntensity, 1.0 );
+  gl_FragColor = vec4( base * limb * uIntensity, uFade );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`
 const SUN_GLOW_VERT = HINT_VERT
 const SUN_GLOW_FRAG = `
 uniform float uRho;
+uniform float uFade;
 uniform float uStreak;
 uniform vec3 uColor;
 varying vec2 vP;
@@ -208,7 +212,7 @@ void main() {
   float q = rho / 2.8;
   float halo = ( 2.2 / pow( 1.0 + q * q, 1.25 ) + 0.07 * exp( - rho / 10.0 ) ) * edge;
   float streak = uStreak * 0.35 * exp( - abs( vP.y ) * uRho * 1.1 ) * exp( - abs( vP.x ) * 3.0 ) * edge;
-  gl_FragColor = vec4( uColor * ( halo + streak ), 1.0 );
+  gl_FragColor = vec4( uColor * ( halo + streak ) * uFade, 1.0 );
   #include <colorspace_fragment>
 }`
 
@@ -217,13 +221,16 @@ export interface SunRig {
   core: THREE.Mesh
   glow: THREE.Mesh
   hint: THREE.Mesh
+  /** Shared by the disc and the glare: 0 (gone) to 1 (fully shown). */
+  fade: { value: number }
 }
 
 export function buildSun(glare: boolean): SunRig {
+  const fade = { value: 1 }
   const core = new THREE.Mesh(
     new THREE.SphereGeometry(1, 48, 24),
     new THREE.ShaderMaterial({
-      uniforms: { uIntensity: { value: 10 } },
+      uniforms: { uIntensity: { value: 10 }, uFade: fade },
       vertexShader: SUN_CORE_VERT,
       fragmentShader: SUN_CORE_FRAG,
     }),
@@ -234,6 +241,7 @@ export function buildSun(glare: boolean): SunRig {
     new THREE.ShaderMaterial({
       uniforms: {
         uRho: { value: GLOW_RHO },
+        uFade: fade,
         uStreak: { value: glare ? 1 : 0 },
         uColor: { value: new THREE.Vector3(1.0, 0.86, 0.62) },
       },
@@ -249,25 +257,31 @@ export function buildSun(glare: boolean): SunRig {
   const root = new THREE.Group()
   root.add(core, glow)
   for (const m of [core, glow]) m.frustumCulled = false
-  return { root, core, glow, hint }
+  return { root, core, glow, hint, fade }
 }
 
 export function setSunGlare(rig: SunRig, glare: boolean): void {
   ;(rig.glow.material as THREE.ShaderMaterial).uniforms.uStreak.value = glare ? 1 : 0
 }
 
-export function placeSun(rig: SunRig, p: BodyPlacement): void {
-  const hide = hiddenByHorizon(p)
-  rig.root.visible = !hide
-  if (!hide && p.dir) {
-    const r = SKY_DIST_M * Math.sin(p.angRadiusDeg * DEG)
+/**
+ * `fx` is the eased blend of the body (see bodyFade.ts): while it fades the disc is drawn translucent
+ * and slightly smaller, and the horizon hint takes over; the position is always exact.
+ */
+export function placeSun(rig: SunRig, p: BodyPlacement, fx: BodyFx = FX_FULL): void {
+  const on = Boolean(p.dir) && fx.opacity > FADE_OFF
+  rig.root.visible = on
+  rig.fade.value = fx.opacity
+  ;(rig.core.material as THREE.ShaderMaterial).transparent = fx.opacity < 1
+  if (on && p.dir) {
+    const r = SKY_DIST_M * Math.sin(p.angRadiusDeg * DEG) * fx.scale
     rig.root.position.copy(p.dir).multiplyScalar(SKY_DIST_M)
     const glowHalf = Math.min(r * GLOW_RHO, SKY_DIST_M * Math.tan(GLOW_MAX_DEG * DEG))
     rig.core.scale.setScalar(r)
     rig.glow.scale.setScalar(glowHalf)
     ;(rig.glow.material as THREE.ShaderMaterial).uniforms.uRho.value = glowHalf / r
   }
-  placeHint(rig.hint, p.hintDir, p.dir ? horizonGlowStrength(p.clearanceDeg, p.angRadiusDeg) : 0)
+  placeHint(rig.hint, p.hintDir, p.dir ? horizonGlowStrength(p.clearanceDeg, p.angRadiusDeg) * (1 - fx.opacity) : 0)
 }
 
 /** Keep the glare plane square to the camera. */
@@ -296,6 +310,7 @@ uniform vec3 uFallback;
 uniform float uHasTex;
 uniform float uSpin;
 uniform float uSunI;
+uniform float uFade;
 varying vec3 vN;
 varying vec3 vV;
 varying vec2 vUv;
@@ -324,7 +339,7 @@ void main() {
   col += vec3( 1.0, 0.95, 0.85 ) * spec * uSunI * 0.3;
   float fres = pow( 1.0 - max( dot( N, V ), 0.0 ), 3.2 );
   col += vec3( 0.28, 0.52, 1.0 ) * fres * ( 0.1 + 0.9 * smoothstep( -0.3, 0.35, ndl ) ) * 1.5;
-  gl_FragColor = vec4( col, 1.0 );
+  gl_FragColor = vec4( col, uFade );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`
@@ -333,6 +348,7 @@ uniform sampler2D tCloud;
 uniform vec3 uSun;
 uniform float uSpin;
 uniform float uSunI;
+uniform float uFade;
 varying vec3 vN;
 varying vec3 vV;
 varying vec2 vUv;
@@ -340,7 +356,7 @@ void main() {
   vec3 N = normalize( vN );
   float ndl = dot( N, uSun );
   vec3 c = texture2D( tCloud, vec2( vUv.x + uSpin, vUv.y ) ).rgb;
-  float a = smoothstep( 0.1, 0.85, dot( c, vec3( 0.333 ) ) ) * 0.94;
+  float a = smoothstep( 0.1, 0.85, dot( c, vec3( 0.333 ) ) ) * 0.94 * uFade;
   float diffuse = max( ndl, 0.0 ) * smoothstep( -0.06, 0.1, ndl );
   vec3 col = vec3( 0.95 ) * ( uSunI * 0.9 * diffuse + 0.045 );
   gl_FragColor = vec4( col, a );
@@ -351,6 +367,7 @@ void main() {
 const ATMO_FRAG = `
 uniform vec3 uSun;
 uniform float uLimb;
+uniform float uFade;
 varying vec3 vN;
 varying vec3 vV;
 void main() {
@@ -358,7 +375,7 @@ void main() {
   float nv = dot( N, normalize( vV ) );
   float t = smoothstep( 0.0, uLimb, - nv );
   float day = smoothstep( -0.35, 0.35, dot( N, uSun ) );
-  vec3 col = vec3( 0.3, 0.55, 1.0 ) * pow( t, 2.2 ) * ( 0.1 + 0.9 * day ) * 1.2;
+  vec3 col = vec3( 0.3, 0.55, 1.0 ) * pow( t, 2.2 ) * ( 0.1 + 0.9 * day ) * 1.2 * uFade;
   gl_FragColor = vec4( col, 1.0 );
   #include <colorspace_fragment>
 }`
@@ -374,6 +391,8 @@ export interface EarthRig {
   clouds: THREE.Mesh
   atmosphere: THREE.Mesh
   hint: THREE.Mesh
+  /** Shared by the planet, clouds and atmosphere: 0 (gone) to 1 (fully shown). */
+  fade: { value: number }
 }
 
 export interface EarthOptions {
@@ -402,6 +421,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
   const sunI = { value: 2.8 }
   const sun = { value: new THREE.Vector3(0, 1, 0) }
   const spin = { value: 0 }
+  const fade = { value: 1 }
   const sphere = new THREE.SphereGeometry(1, 64, 32)
 
   const planetMat = new THREE.ShaderMaterial({
@@ -411,6 +431,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
       uSun: sun,
       uSpin: spin,
       uSunI: sunI,
+      uFade: fade,
       uHasTex: { value: 0 },
       uFallback: { value: new THREE.Color(EARTH_FALLBACK) },
     },
@@ -421,7 +442,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
   planet.name = 'earth-disc'
 
   const cloudMat = new THREE.ShaderMaterial({
-    uniforms: { tCloud: { value: placeholderTexture() }, uSun: sun, uSpin: spin, uSunI: sunI },
+    uniforms: { tCloud: { value: placeholderTexture() }, uSun: sun, uSpin: spin, uSunI: sunI, uFade: fade },
     vertexShader: EARTH_VERT,
     fragmentShader: CLOUD_FRAG,
     transparent: true,
@@ -435,7 +456,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
   const atmosphere = new THREE.Mesh(
     new THREE.SphereGeometry(ATMO_RADIUS, 48, 24),
     new THREE.ShaderMaterial({
-      uniforms: { uSun: sun, uLimb: { value: Math.sqrt(1 - 1 / (ATMO_RADIUS * ATMO_RADIUS)) } },
+      uniforms: { uSun: sun, uFade: fade, uLimb: { value: Math.sqrt(1 - 1 / (ATMO_RADIUS * ATMO_RADIUS)) } },
       vertexShader: EARTH_VERT,
       fragmentShader: ATMO_FRAG,
       side: THREE.BackSide,
@@ -489,7 +510,7 @@ export function buildEarth(opts: EarthOptions): EarthRig {
   }
 
   const hint = buildHint(new THREE.Vector3(0.34, 0.58, 1.0))
-  return { root, planet, clouds, atmosphere, hint }
+  return { root, planet, clouds, atmosphere, hint, fade }
 }
 
 /** `sunDir` is the Sun direction (three.js axes) the lit side faces; `spinTurns` is the picture's turn in 0..1. */
@@ -509,14 +530,16 @@ export function orientEarth(rig: EarthRig, m: readonly number[] | null): void {
   }
 }
 
-export function placeEarth(rig: EarthRig, p: BodyPlacement): void {
-  const hide = hiddenByHorizon(p)
-  rig.root.visible = !hide
-  if (!hide && p.dir) {
+export function placeEarth(rig: EarthRig, p: BodyPlacement, fx: BodyFx = FX_FULL): void {
+  const on = Boolean(p.dir) && fx.opacity > FADE_OFF
+  rig.root.visible = on
+  rig.fade.value = fx.opacity
+  ;(rig.planet.material as THREE.ShaderMaterial).transparent = fx.opacity < 1
+  if (on && p.dir) {
     rig.root.position.copy(p.dir).multiplyScalar(SKY_DIST_M)
-    rig.root.scale.setScalar(SKY_DIST_M * Math.sin(p.angRadiusDeg * DEG))
+    rig.root.scale.setScalar(SKY_DIST_M * Math.sin(p.angRadiusDeg * DEG) * fx.scale)
   }
-  placeHint(rig.hint, p.hintDir, p.dir ? horizonGlowStrength(p.clearanceDeg, p.angRadiusDeg) : 0)
+  placeHint(rig.hint, p.hintDir, p.dir ? horizonGlowStrength(p.clearanceDeg, p.angRadiusDeg) * (1 - fx.opacity) : 0)
 }
 
 // Far-horizon skirt

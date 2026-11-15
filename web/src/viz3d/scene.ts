@@ -39,6 +39,7 @@ import type { EarthOrientation } from '../lib/earthOrientation'
 import { buildTerrainMesh, directionEnu, heightAt } from './terrain'
 import { makeMilkyWayTexture, makeRegolithTexture } from './textures'
 import { dampAngleDeg, dampFactor, dampValue, lockPitchDeg } from './cameraLock'
+import { advanceFade, createBodyFade, fadeFx, retargetFade } from './bodyFade'
 import { earthLitFraction, faceTarget, lookAnglesTo, overviewFaceTarget } from './viewMath'
 import { createKeyMotion } from './keyMotion'
 import { easeInOutCubic, lerpOffset, MOVE_MS, startTween } from './tween'
@@ -171,6 +172,12 @@ export class SurfaceScene {
   private readonly lander: THREE.Group
   private readonly sunRig = buildSun(true)
   private readonly earthRig: ReturnType<typeof buildEarth>
+  // Eased visibility and size of the Sun and Earth (positions are never eased).
+  private readonly sunFade = createBodyFade()
+  private readonly earthFade = createBodyFade()
+  private bodyPlacements: { sun: BodyPlacement; earth: BodyPlacement; sizeK: number } | null = null
+  private fxLast = 0
+  private fxActive = false
   private readonly skirt = buildSkirt(HAZE_DISPLAY.clone(), SKIRT_SEGMENTS)
   private readonly terrainMat: THREE.MeshStandardMaterial
   private readonly landerFoil: THREE.MeshStandardMaterial[] = []
@@ -821,9 +828,37 @@ export class SurfaceScene {
     setEarthLighting(this.earthRig, this.sunDir, rotation ? 0 : (s.timeMs / DAY_MS) % 1)
     setStarSun(this.stars, this.sunDir)
     setSkirtSun(this.skirt, s.sun?.az ?? 0, s.sun?.el ?? null)
-    placeSun(this.sunRig, sunP)
-    placeEarth(this.earthRig, earthP)
+    const instant =
+      typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
+    retargetFade(this.sunFade, Boolean(sunP.dir), sunP.clearanceDeg, sunP.angRadiusDeg, k, instant)
+    retargetFade(this.earthFade, Boolean(earthP.dir), earthP.clearanceDeg, earthP.angRadiusDeg, k, instant)
+    this.bodyPlacements = { sun: sunP, earth: earthP, sizeK: k }
+    this.applyBodies()
     this.invalidate()
+  }
+
+  private applyBodies(): void {
+    const b = this.bodyPlacements
+    if (!b) return
+    placeSun(this.sunRig, b.sun, fadeFx(this.sunFade, b.sizeK))
+    placeEarth(this.earthRig, b.earth, fadeFx(this.earthFade, b.sizeK))
+  }
+
+  /** Advances the Sun and Earth blends by one frame; true while they are still moving. */
+  private stepBodies(): boolean {
+    const b = this.bodyPlacements
+    if (!b) return false
+    const now = performance.now()
+    // After an idle spell the first frame only starts the clock, so a fade never begins half done.
+    const dt = this.fxActive ? Math.min(100, Math.max(0, now - this.fxLast)) : 0
+    this.fxLast = now
+    const instant =
+      typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)
+    const a = advanceFade(this.sunFade, dt, b.sizeK, instant)
+    const c = advanceFade(this.earthFade, dt, b.sizeK, instant)
+    this.applyBodies()
+    this.fxActive = a || c
+    return this.fxActive
   }
 
   setOnTerrainClick(
@@ -1449,6 +1484,7 @@ export class SurfaceScene {
   private renderOnce(): void {
     // OrbitControls damping: update() fires 'change' (and so schedules another frame) until it settles.
     if (this.mode === 'overview') this.controls.update()
+    if (this.stepBodies()) this.invalidate()
     this.sky.position.copy(this.camera.position)
     faceSunGlow(this.sunRig, this.camera.quaternion)
     this.renderer.render(this.scene, this.camera)
