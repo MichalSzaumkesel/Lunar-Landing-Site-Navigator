@@ -46,7 +46,7 @@ import { SegmentedToggle } from '../components/ui/SegmentedToggle'
 /** Top speed of a held arrow key (metres per second) and the readout refresh interval while moving. */
 const LANDER_M_PER_S = 400
 const READOUT_MS = 100
-import { usePresence } from '../lib/usePresence'
+import { usePresence, usePresenceValue } from '../lib/usePresence'
 import { useTerrainHeights } from './useTerrainHeights'
 import {
   belowHorizonText,
@@ -157,6 +157,15 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
   const chipResult = bestSpotResult !== dismissedResult ? bestSpotResult : null
   const chipPresence = usePresence(chipResult !== null)
   const computingPresence = usePresence(showHeatmap && heatmapLoading)
+  const searchPresence = usePresence(isSearching)
+  const errorPresence = usePresenceValue(searchMessage)
+  const resultPresence = usePresenceValue(!simple ? bestSpotResult : null)
+  // Errors and notes fade out on their own; the result card stays until the lander is reset.
+  useEffect(() => {
+    if (!searchMessage) return
+    const t = setTimeout(() => setSearchMessage(null), 6000)
+    return () => clearTimeout(t)
+  }, [searchMessage])
   const legendPresence = usePresence(showHeatmap && heatmapGrid !== null)
   const [showComparison, setShowComparison] = useState(false)
 
@@ -786,6 +795,69 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
         {!simple && (
           <>
         <div className="surface__stack-bl">
+          <div className="surface__spotchips">
+            {searchPresence.mounted && (
+              <div
+                className="surface__chip surface__chip--progress presence-rise"
+                data-state={searchPresence.state}
+                role="status"
+                aria-live="polite"
+              >
+                <span>Searching nearby spots… {Math.round(searchProgress * 100)}%</span>
+                <button type="button" onClick={handleCancelSearch} aria-label="Cancel spot search">
+                  Cancel
+                </button>
+              </div>
+            )}
+            {errorPresence.mounted && errorPresence.value && (
+              <div className="surface__chip surface__chip--error presence-rise" data-state={errorPresence.state} role="alert">
+                <span>{errorPresence.value}</span>
+                <button type="button" className="surface__chip-x" aria-label="Dismiss message" onClick={() => setSearchMessage(null)}>
+                  ×
+                </button>
+              </div>
+            )}
+            {resultPresence.mounted && resultPresence.value && (
+              <div
+                className="surface__chip surface__chip--result presence-rise"
+                data-state={resultPresence.state}
+                role="status"
+                aria-label="Best spot result"
+              >
+                <span
+                  className="surface__approx"
+                  title="Approximate (local terrain patch horizon)"
+                  aria-label="Approximate (local terrain patch horizon)"
+                >
+                  ≈
+                </span>
+                <span className="surface__chip-text">
+                  {formatResultSentence(landerOffset, movedSunHours ?? 0, origSunHours ?? 0)}
+                </span>
+                <span className="surface__chip-actions">
+                  <button type="button" title="Reset position" aria-label="Reset position" onClick={handleResetPosition}>
+                    Reset
+                  </button>
+                  <button
+                    type="button"
+                    title="Compare both points"
+                    aria-label="Compare both points"
+                    aria-pressed={showComparison}
+                    onClick={() => setShowComparison((prev) => !prev)}
+                  >
+                    Compare
+                  </button>
+                </span>
+                {showComparison && (
+                  <span className="surface__chip-compare" aria-label="Points comparison">
+                    Original {origSunHours !== null ? `${Math.round(origSunHours)} h` : '—'} · Chosen{' '}
+                    {movedSunHours !== null ? `${Math.round(movedSunHours)} h` : '—'} · Gain{' '}
+                    <b className="surface__hours-delta">{formatDeltaHours(deltaHours)}</b>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <div className="surface__chipslot">
           {computingPresence.mounted && (
             <div
@@ -1030,84 +1102,18 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
           )}
           <button
             type="button"
-            disabled={isSearching}
+            className="surface__findbtn"
+            aria-disabled={isSearching || undefined}
+            aria-busy={isSearching || undefined}
+            data-loading={isSearching || undefined}
             onClick={handleFindBestSpot}
           >
             Find spot with most Sun visible
+            {isSearching && <MapButtonRing />}
           </button>
-          {isSearching && (
-            <button
-              type="button"
-              onClick={handleCancelSearch}
-              aria-label="Cancel spot search"
-            >
-              Cancel
-            </button>
-          )}
         </div>
         )}
       </div>
-
-      {isSearching && (
-        <div className="surface__search-progress" role="status" aria-live="polite">
-          Searching for spot with most Sun visible: {Math.round(searchProgress * 100)}%
-        </div>
-      )}
-
-      {searchMessage && (
-        <div className="surface__best-spot-alert" role="status">
-          {searchMessage}
-        </div>
-      )}
-
-      {/* Best Spot Result Card */}
-      {!simple && bestSpotResult && (
-        <div className="surface__result-card" role="status" aria-live="polite" aria-label="Best spot result">
-          <div className="surface__result-badges">
-            {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
-            <span className="badge badge--approximate">Approximate (local terrain patch horizon)</span>
-          </div>
-          <div className="surface__result-sentence">
-            {formatResultSentence(
-              landerOffset,
-              movedSunHours ?? 0,
-              origSunHours ?? 0,
-            )}
-          </div>
-          {showComparison && (
-            <div className="surface__result-compare" aria-label="Points comparison">
-              <div className="surface__compare-col">
-                <span className="surface__compare-label">Original site:</span>
-                <b>{origSunHours !== null ? `${Math.round(origSunHours)} h` : '—'}</b>
-              </div>
-              <div className="surface__compare-col">
-                <span className="surface__compare-label">Chosen spot:</span>
-                <b>{movedSunHours !== null ? `${Math.round(movedSunHours)} h` : '—'}</b>
-              </div>
-              <div className="surface__compare-col">
-                <span className="surface__compare-label">Gain:</span>
-                <b className="surface__hours-delta">{formatDeltaHours(deltaHours)}</b>
-              </div>
-            </div>
-          )}
-          <div className="surface__result-actions">
-            <button
-              type="button"
-              onClick={handleResetPosition}
-            >
-              Reset position
-            </button>
-            <button
-              type="button"
-              aria-pressed={showComparison}
-              onClick={() => setShowComparison((prev) => !prev)}
-            >
-              Compare both points
-            </button>
-          </div>
-        </div>
-      )}
-
 
       </div>
     </>
