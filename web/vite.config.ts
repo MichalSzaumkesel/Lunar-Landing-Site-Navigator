@@ -61,6 +61,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'node',
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      // Several heavy computations (illumination grids, real data) time out at the 5 s default when the machine is busy.
+      testTimeout: 30_000,
     },
   }
 })
