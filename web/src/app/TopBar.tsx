@@ -97,6 +97,7 @@ export function TopBar() {
           type="button"
           className="ghost"
           aria-label="Start demo"
+          data-demo-trigger=""
           aria-pressed={isDemoActive}
           disabled={isBundleLoading}
           title={isBundleLoading ? 'Site data is loading...' : 'Start demo'}

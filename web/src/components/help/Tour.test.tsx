@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Tour } from './Tour'
+import { placeTourCard } from './tourPlacement'
 import { useTourStore } from './tourState'
 import { useAppStore } from '../../state/store'
 
@@ -437,5 +438,34 @@ describe('Tour component', () => {
 
     expect(document.activeElement).toBe(customButton)
     customButton.remove()
+  })
+})
+
+describe('placeTourCard', () => {
+  const view = { w: 844, h: 390 }
+  const card = { w: 340, h: 200 }
+  const overlaps = (p: { top: number; left: number }, s: { left: number; top: number; right: number; bottom: number }) =>
+    p.left < s.right && p.left + card.w > s.left && p.top < s.bottom && p.top + card.h > s.top
+
+  it('puts the card beside the target in landscape instead of over it', () => {
+    const spot = { left: 20, top: 70, right: 300, bottom: 320 }
+    const p = placeTourCard(card, spot, view, 'right', 16, 12)
+    expect(overlaps(p, spot)).toBe(false)
+  })
+
+  it('flips to the side with room when the preferred side does not fit', () => {
+    const spot = { left: 520, top: 70, right: 820, bottom: 320 }
+    const p = placeTourCard(card, spot, view, 'right', 16, 12)
+    expect(overlaps(p, spot)).toBe(false)
+    expect(p.left + card.w).toBeLessThanOrEqual(spot.left)
+  })
+
+  it('stays inside the viewport and picks the least overlap when nothing is free', () => {
+    const spot = { left: 8, top: 8, right: 836, bottom: 382 }
+    const p = placeTourCard(card, spot, view, 'bottom', 16, 12)
+    expect(p.left).toBeGreaterThanOrEqual(16)
+    expect(p.top).toBeGreaterThanOrEqual(16)
+    expect(p.left + card.w).toBeLessThanOrEqual(view.w - 16)
+    expect(p.top + card.h).toBeLessThanOrEqual(view.h - 16)
   })
 })

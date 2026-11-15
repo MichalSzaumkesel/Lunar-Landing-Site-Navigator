@@ -26,6 +26,7 @@ import {
   type ElevationPoint,
   type RangeMode,
 } from './elevationSeries'
+import { formatCursorH } from '../../lib/formatHours'
 import './chart.css'
 
 const DEFAULT_VIEW_W = 600
@@ -215,7 +216,7 @@ export function ElevationLineChart({
       aria-valuemin={0}
       aria-valuemax={Math.round(durationH)}
       aria-valuenow={Math.round(cursorH)}
-      aria-valuetext={`Cursor at ${cursorH.toFixed(1)} hours`}
+      aria-valuetext={`Cursor at ${formatCursorH(cursorH)} hours`}
       tabIndex={0}
       onKeyDown={onKeyDown}
       onKeyUp={held.onKeyUp}

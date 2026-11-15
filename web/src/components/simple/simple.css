@@ -371,6 +371,9 @@
 
 .simple-card__title {
   margin: 0;
+  /* two lines reserved: a long place name wrapping never moves the layout below */
+  line-height: 1.25;
+  min-height: 2.5em;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text);
@@ -692,6 +695,17 @@
   font-size: 0.8125rem;
   line-height: 1;
   cursor: pointer;
+}
+
+/* Invisible hit area: the visible pill stays 26 px high, the tap target is 32 px */
+.simple-view-switch__btn {
+  position: relative;
+}
+
+.simple-view-switch__btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px -1px;
 }
 
 .simple-view-switch__btn[aria-pressed='true'] {

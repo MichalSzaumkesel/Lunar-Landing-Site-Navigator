@@ -1188,3 +1188,54 @@
     flex-basis: 100%;
   }
 }
+
+/* Full screen on phones and landscape: a compact strip. The Simple controls (camera toggle and the three
+   Face buttons) sit in one nowrap row; below 600 px wide they do not fit, so they wrap into two short rows. */
+@media (max-height: 500px), (max-width: 600px) {
+  .surface.surface[data-chrome] > .surface__side {
+    inset: auto 0.375rem 0.375rem 0.375rem;
+    padding: 0.25rem;
+    max-height: 40%;
+    overflow: hidden auto;
+  }
+
+  .surface.surface[data-chrome] .surface__controls--simple {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.25rem 0.375rem;
+    justify-content: center;
+  }
+
+  .surface.surface[data-chrome] .surface__controls--simple > * {
+    flex: none;
+  }
+
+  .surface.surface[data-chrome] .surface__controls--simple button,
+  .surface.surface[data-chrome] .surface__controls--simple .lockbtn {
+    height: 2rem;
+    min-height: 0;
+    padding-block: 0;
+    padding-inline: 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .surface.surface[data-chrome] .surface__controls--simple .surface__faces {
+    height: 2rem;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+  }
+
+  .surface.surface[data-chrome] .surface__controls--simple .surface__faces .surface__face > .lockbtn {
+    height: 2rem;
+    padding-inline: 0.5rem;
+    flex: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .surface.surface[data-chrome] .surface__controls--simple {
+    flex-wrap: wrap;
+  }
+}

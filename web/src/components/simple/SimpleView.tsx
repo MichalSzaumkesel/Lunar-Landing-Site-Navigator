@@ -6,6 +6,7 @@ import { chooseSkyZoom, describeBody, pickMask, skyCentreText } from '../sky/geo
 import { ephemCoverage, sampleAt } from '../../lib/ephem'
 import { useScenarioEvents } from '../../lib/useScenarioEvents'
 import { useScenarioMetrics } from '../../lib/useScenarioMetrics'
+import { isUnknownSiteError } from '../../lib/siteError'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { useAppStore } from '../../state/store'
@@ -52,7 +53,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   const [switched, setSwitched] = useState(false)
   const heightM = useAppStore((s) => s.observerHeightM)
 
-  const { status, bundle } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
+  const { status, bundle, error } = useSiteBundle(scenario?.siteId ?? 'southpole_landed')
   const { startMs, endMs } = scenario ? scenarioWindowMs(scenario) : { startMs: 0, endMs: 0 }
   const events = useScenarioEvents(bundle, heightM)
   const metrics = useScenarioMetrics(bundle, heightM, startMs, endMs)
@@ -108,7 +109,8 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   }
   const onStartDateChange = (e: ChangeEvent<HTMLInputElement>) => setStart(e.target.value)
 
-  const siteName = bundle ? displayName(bundle.site) : scenario.siteId
+  const unknownSite = status === 'error' && isUnknownSiteError(error)
+  const siteName = bundle ? displayName(bundle.site) : unknownSite ? 'Unknown place' : scenario.siteId
 
   return (
     <section className={`simple-view ${className}`.trim()} aria-label="Simple mode view">
@@ -182,11 +184,13 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
           {status === 'error' && (
             <div className="simple-error" role="alert">
               <p className="simple-error__message">
-                Could not load this place. Try another place.
+                {unknownSite ? 'This place is not on the list. Choose another place above.' : 'Could not load this place. Try another place.'}
               </p>
-              <button type="button" className="simple-error__retry" onClick={onRetry}>
-                Try again
-              </button>
+              {!unknownSite && (
+                <button type="button" className="simple-error__retry" onClick={onRetry}>
+                  Try again
+                </button>
+              )}
             </div>
           )}
 

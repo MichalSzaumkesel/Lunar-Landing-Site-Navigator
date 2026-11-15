@@ -141,10 +141,10 @@ describe('lookAnglesTo', () => {
 })
 
 describe('simpleSunText', () => {
-  it('uses the fixed Sun phrases, hills only in brackets', () => {
-    expect(simpleSunText(true, 12)).toBe('Sun visible')
-    expect(simpleSunText(false, -4)).toBe('Sun below horizon')
-    expect(simpleSunText(false, 2)).toBe('Sun below horizon (hills)')
-    expect(simpleSunText(false, 2)).not.toMatch(/hidden|the horizon/)
+  it('uses the fixed Sun phrases only', () => {
+    expect(simpleSunText(true)).toBe('Sun visible')
+    expect(simpleSunText(false)).toBe('Sun below horizon')
+    expect(simpleSunText(false)).toBe('Sun below horizon')
+    expect(simpleSunText(false)).not.toMatch(/hidden|the horizon/)
   })
 })
