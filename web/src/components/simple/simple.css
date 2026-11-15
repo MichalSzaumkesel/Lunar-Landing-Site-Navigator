@@ -364,11 +364,11 @@
 
 .simple-card__aside {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--space-2, 8px);
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
+
 
 .simple-card__window {
   margin: 0;
@@ -377,13 +377,12 @@
 }
 
 .simple-date {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-1, 4px);
-  padding-top: var(--space-3, 12px);
-  border-top: 1px solid var(--line);
 }
+
 
 .simple-date__label {
   font-size: 0.875rem;
@@ -401,6 +400,7 @@
   font-size: 0.875rem;
   min-height: 2.5rem;
   width: 100%;
+  min-width: 9.5rem;
   max-width: 240px;
 }
 
@@ -776,4 +776,41 @@
 
 .sky-help__para + .sky-help__para {
   margin-top: var(--space-2, 8px);
+}
+
+/* Simple card footer: a quiet pointer to Advanced mode. */
+.simple-more {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  flex-wrap: wrap;
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius, 10px);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.simple-more__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 14rem;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.simple-more__text strong {
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.simple-more__btn {
+  flex: none;
+  min-height: 2.25rem;
+  padding: 0 var(--space-4, 16px);
+  font-weight: 600;
 }

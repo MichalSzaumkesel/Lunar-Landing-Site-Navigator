@@ -38,6 +38,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
     (s) => s.scenarios.find((x) => x.id === s.activeScenarioId) ?? s.scenarios[0],
   )
   const updateScenario = useAppStore((s) => s.updateScenario)
+  const setMode = useAppStore((s) => s.setMode)
   const cursorH = useAppStore((s) => s.cursorH)
   const [view, setView] = useState<DiagramView>(readDiagramView)
   const heightM = useAppStore((s) => s.observerHeightM)
@@ -150,6 +151,20 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               </p>
             </div>
             <div className="simple-card__aside">
+              <div className="simple-date">
+                <label htmlFor="simple-start-date" className="simple-date__label">
+                  Start date (UTC)
+                </label>
+                <input
+                  id="simple-start-date"
+                  type="date"
+                  className="simple-date__input"
+                  min={min}
+                  max={max}
+                  value={scenario.startUtc.slice(0, 10)}
+                  onChange={onStartDateChange}
+                />
+              </div>
               {bundle && <DataBadges synthetic={bundle.synthetic} approximate={bundle.approximate} notes={bundle.site.notes} />}
             </div>
           </header>
@@ -215,21 +230,15 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               {readout.note && <p className="simple-summary__note">{readout.note}</p>}
             </div>
           )}
-
-          <div className="simple-date">
-            <label htmlFor="simple-start-date" className="simple-date__label">
-              Start date (UTC)
-            </label>
-            <input
-              id="simple-start-date"
-              type="date"
-              className="simple-date__input"
-              min={min}
-              max={max}
-              value={scenario.startUtc.slice(0, 10)}
-              onChange={onStartDateChange}
-            />
-          </div>
+          <aside className="simple-more" aria-label="More in Advanced mode">
+            <p className="simple-more__text">
+              <strong>More in Advanced mode</strong>
+              <span>Compare several places and dates, set mission rules, find landing windows, and export a one-page brief.</span>
+            </p>
+            <button type="button" className="simple-more__btn" onClick={() => setMode('advanced')}>
+              Open Advanced
+            </button>
+          </aside>
         </article>
       </div>
     </section>
