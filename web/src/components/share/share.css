@@ -123,6 +123,7 @@
 }
 
 .share-menu__item {
+  flex-shrink: 0; /* a height-capped popup scrolls instead of squeezing the items */
   display: flex;
   align-items: flex-start;
   gap: var(--space-3, 12px);

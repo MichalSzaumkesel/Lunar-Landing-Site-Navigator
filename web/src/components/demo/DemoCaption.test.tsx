@@ -40,6 +40,28 @@ describe('DemoCaption component', () => {
     expect(container.querySelector('.demo-caption')).toBeNull()
   })
 
+  it('shows Restart only on the end card of the standard demo and restarts from step 1', async () => {
+    await act(async () => {
+      root.render(createElement(DemoCaption))
+    })
+    await act(async () => {
+      useDemoStore.getState().startDemo()
+    })
+    const restart = () => container.querySelector<HTMLButtonElement>('[aria-label="Restart demo"]')
+    expect(restart()).toBeNull()
+
+    await act(async () => {
+      useDemoStore.getState().setStepIndex(5)
+    })
+    expect(restart()).not.toBeNull()
+
+    await act(async () => {
+      restart()?.click()
+    })
+    expect(useDemoStore.getState().stepIndex).toBe(0)
+    expect(restart()).toBeNull()
+  })
+
   it('renders aria-live="polite" caption bar with hint and stop button when active', async () => {
     await act(async () => {
       root.render(createElement(DemoCaption))

@@ -17,6 +17,9 @@ export interface DemoController {
   caption: string
   startDemo: (variant?: DemoVariant) => void
   stopDemo: () => void
+  /** True on the end card of the standard demo, which holds until Restart or Stop. */
+  atEnd: boolean
+  restartDemo: () => void
   setVariant: (variant: DemoVariant) => void
 }
 
@@ -28,6 +31,7 @@ export function useDemo(): DemoController {
   const storeStop = useDemoStore((s) => s.stopDemo)
   const storeStart = useDemoStore((s) => s.startDemo)
   const setVariant = useDemoStore((s) => s.setVariant)
+  const setStepIndex = useDemoStore((s) => s.setStepIndex)
   const closeTour = useTourStore((s) => s.closeTour)
 
   const ctx = useDemoContext()
@@ -65,13 +69,12 @@ export function useDemo(): DemoController {
     const store = useAppStore.getState()
     step.run(store, ctxRef.current)
 
+    // The standard demo holds on its end card (Restart or Stop); the 30 s video ends itself there.
+    const last = stepIndex >= steps.length - 1
+    if (last && variant !== 'video30s') return
     const timer = setTimeout(() => {
-      if (variant === 'video30s' && stepIndex >= steps.length - 1) {
-        // Video finished after end card
-        stopDemo()
-      } else {
-        nextStep(steps.length)
-      }
+      if (last) stopDemo()
+      else nextStep(steps.length)
     }, step.durationMs)
 
     return () => {
@@ -102,6 +105,9 @@ export function useDemo(): DemoController {
     }
   }, [isActive, stopDemo])
 
+  const restartDemo = useCallback(() => setStepIndex(0), [setStepIndex])
+  const atEnd = isActive && variant !== 'video30s' && stepIndex >= steps.length - 1
+
   const caption = isActive && currentStep ? currentStep.caption(ctx) : ''
 
   return {
@@ -112,6 +118,8 @@ export function useDemo(): DemoController {
     caption,
     startDemo,
     stopDemo,
+    atEnd,
+    restartDemo,
     setVariant,
   }
 }

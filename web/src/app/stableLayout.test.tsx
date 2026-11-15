@@ -128,6 +128,15 @@ describe('Stable layout between Simple and Advanced modes', () => {
       })
       const items = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'))
       expect(items.map((i) => i.disabled)).toEqual([false, true, true, true])
+      // Simple wording: the link is about this place and date, and the tooltip lists only what is offered
+      expect(items[0].textContent).toContain('Copies a link to this place and date.')
+      expect(items[0].textContent).not.toMatch(/scenarios|rules/)
+      expect((trigger as HTMLButtonElement).title).toBe('Copy a link to this place and date')
+
+      act(() => {
+        useAppStore.getState().setMode('advanced')
+      })
+      expect((trigger as HTMLButtonElement).title).toContain('export CSV')
     })
   })
 

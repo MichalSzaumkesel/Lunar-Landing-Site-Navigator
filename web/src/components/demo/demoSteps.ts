@@ -97,10 +97,21 @@ export function findSunsetCursorH(
   return sunsetH === null ? null : Math.max(0, sunsetH - SUNSET_LEAD_H)
 }
 
-/** Step 1 caption: names both sites from the scenario data. */
+/**
+ * Step 1 caption: names both sites from the scenario data. It names them only once the preset's own
+ * scenarios and bundles are in place; before that (the first moments of a later loop, while the old
+ * scenarios are still shown) it stays neutral instead of naming the wrong sites.
+ */
 export function formatStep1Caption(ctx: DemoStepContext): string {
-  const site1 = ctx.bundles[0]?.site.name ?? ctx.scenarios[0]?.siteId ?? 'Apollo 11'
-  const site2 = ctx.bundles[1]?.site.name ?? ctx.scenarios[1]?.siteId ?? 'Artemis candidate region'
+  const wanted = PRESET_APOLLO_VS_ARTEMIS.scenarios.map((s) => s.siteId)
+  const applied = wanted.every(
+    (id, i) => ctx.scenarios[i]?.siteId === id && ctx.bundles[i]?.site.id === id,
+  )
+  if (!applied) {
+    return appendDemoDataNotice('Comparing two sites under identical dates.', ctx.isSynthetic)
+  }
+  const site1 = ctx.bundles[0]?.site.name ?? wanted[0]
+  const site2 = ctx.bundles[1]?.site.name ?? wanted[1]
   return appendDemoDataNotice(
     `Comparing ${site1} and ${site2} under identical dates.`,
     ctx.isSynthetic,
@@ -180,7 +191,7 @@ export function formatStep5Caption(
 /** Step 6 caption: concluding end card before looping. */
 export function formatStep6Caption(ctx: DemoStepContext): string {
   return appendDemoDataNotice(
-    'Demo complete. Press Esc or click Stop demo to explore freely.',
+    'Demo complete. Restart it, or press Esc or click Stop demo to explore freely.',
     ctx.isSynthetic,
   )
 }

@@ -52,6 +52,10 @@
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
+  /* Two lines are always reserved, so the bar keeps its height whatever the caption length */
+  min-height: 2.8em;
+  display: flex;
+  align-items: center;
   overflow-wrap: anywhere;
   animation: demo-text-fade var(--motion-duration-fast, 120ms) ease;
 }

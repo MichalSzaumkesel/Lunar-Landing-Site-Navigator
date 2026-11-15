@@ -7,7 +7,7 @@ import { useSiteBundle } from '../../lib/useSiteBundle'
 import type { PresenceState } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
 import { copyHorizonsQuery } from '../share/shareActions'
-import { REPO_DOCS_URL, summariseValidation } from './validationSummary'
+import { REPO_DOCS_URL, checkLabel, summariseValidation } from './validationSummary'
 import type { ValidationSummary } from './validationSummary'
 import './about.css'
 
@@ -111,8 +111,8 @@ function HorizonUncertaintyNote() {
   if (u === null) return null
   return (
     <p>
-      The horizon of {bundle?.site.name} carries an uncertainty of ±{u}° (worst RMS of the pipeline's own horizon under
-      DEM degradation and site shifts). Ranges next to Sun visible and Earth in view show the share with the horizon
+      The horizon of {bundle?.site.name} carries an uncertainty of ±{u}° (the worst RMS of our own horizon computation
+      under DEM degradation and site shifts). Ranges next to Sun visible and Earth in view show the share with the horizon
       raised and lowered by that amount. It excludes LOLA height and geolocation error.
     </p>
   )
@@ -151,7 +151,7 @@ export default function AboutData({ onClose, state = 'open' }: { onClose: () => 
           </button>
         </header>
         <p>
-          Horizons are computed from NASA LOLA terrain. Sun and Earth positions come from JPL Horizons.
+          Local horizons are computed from NASA LOLA terrain. Sun and Earth positions come from JPL Horizons.
           The tool shows geometry only.
         </p>
         <Provenance />
@@ -176,7 +176,7 @@ export default function AboutData({ onClose, state = 'open' }: { onClose: () => 
                       <li key={c.id} title={c.notes}>
                         <span aria-hidden="true">{c.pass ? '✓' : '✗'}</span>{' '}
                         <span className="about__sr">{c.pass ? 'Pass' : 'Fail'}: </span>
-                        {c.id}
+                        {checkLabel(c.id)}
                       </li>
                     ))}
                   </ul>

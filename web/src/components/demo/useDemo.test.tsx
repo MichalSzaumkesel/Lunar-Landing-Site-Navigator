@@ -139,7 +139,7 @@ describe('useDemo hook', () => {
     expect(useDemoStore.getState().isActive).toBe(false)
   })
 
-  it('advances through steps with timer and loops back to step 0', async () => {
+  it('advances through steps with timer and holds on the end card until Restart or Stop', async () => {
     await act(async () => {
       root.render(createElement(DemoTester))
     })
@@ -156,8 +156,15 @@ describe('useDemo hook', () => {
       })
     }
 
-    // Should have looped back to step 0
-    expect(useDemoStore.getState().stepIndex).toBe(0)
+    // The end card stays: no automatic loop, the demo is still running
+    const last = DEMO_STEPS.length - 1
+    expect(useDemoStore.getState().stepIndex).toBe(last)
+    expect(useDemoStore.getState().isActive).toBe(true)
+    await act(async () => {
+      vi.advanceTimersByTime(60_000)
+    })
+    expect(useDemoStore.getState().stepIndex).toBe(last)
+    expect(useDemoStore.getState().isActive).toBe(true)
   })
 
   it('restores app state before demo started (scenarios, mode, slip, cursor, playing false, active tab) when stopped', async () => {

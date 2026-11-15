@@ -40,6 +40,12 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
   )
   const updateScenario = useAppStore((s) => s.updateScenario)
   const setMode = useAppStore((s) => s.setMode)
+  /** Switches level, then shows the top of the Advanced page with focus on its mode button. */
+  const openAdvanced = () => {
+    setMode('advanced')
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    document.querySelector<HTMLElement>('[data-tour="mode-switch"] [data-mode="advanced"]')?.focus({ preventScroll: true })
+  }
   const cursorH = useAppStore((s) => s.cursorH)
   const [view, setView] = useState<DiagramView>(readDiagramView)
   // The new view fades in after a switch (not on the first paint)
@@ -241,7 +247,7 @@ function SimpleBody({ className = '', onRetry }: SimpleBodyProps) {
               <strong>More in Advanced mode</strong>
               <span>Compare several places and dates, set mission rules, find landing windows, and export a one-page brief.</span>
             </p>
-            <button type="button" className="simple-more__btn" onClick={() => setMode('advanced')}>
+            <button type="button" className="simple-more__btn" onClick={openAdvanced}>
               Open Advanced
             </button>
           </aside>

@@ -226,6 +226,26 @@ describe('demoSteps', () => {
       expect(caption).not.toMatch(FORBIDDEN_WORDS)
     })
 
+    it('formatStep1Caption stays neutral until the preset scenarios and bundles are applied', () => {
+      // Later loop: the previous (slip) preset is still on screen while the Apollo preset is being applied.
+      const stale: DemoStepContext = {
+        scenarios: [makeMockScenario('s1', 'southpole_landed'), makeMockScenario('s2', 'southpole_landed')],
+        bundles: [makeMockBundle('southpole_landed', 'IM-2 Athena'), makeMockBundle('southpole_landed', 'IM-2 Athena')],
+        metrics: [null, null],
+        events: [[], []],
+        isSynthetic: false,
+      }
+      expect(formatStep1Caption(stale)).toBe('Comparing two sites under identical dates.')
+
+      // Scenarios already switched but the bundles still belong to the old sites.
+      const half: DemoStepContext = {
+        ...stale,
+        scenarios: [makeMockScenario('s1', 'apollo_11'), makeMockScenario('s2', 'artemis_region_1')],
+      }
+      expect(formatStep1Caption(half)).not.toContain('IM-2 Athena')
+      expect(formatStep1Caption(half)).toBe('Comparing two sites under identical dates.')
+    })
+
     it('formatStep2Caption is "Sun and Earth over the local horizon"', () => {
       const ctx: DemoStepContext = {
         scenarios: [],

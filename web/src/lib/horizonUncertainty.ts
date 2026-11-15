@@ -84,7 +84,7 @@ export function formatShareRange(range: ShareRange): string {
 export function uncertaintyTip(uncertaintyDeg: number): string {
   return (
     `Range if the horizon were higher or lower by ±${uncertaintyDeg}°. ` +
-    `The shipped value is the worst RMS of the pipeline's own horizon under DEM x2/x4 degradation and ±1 px site shifts; ` +
+    `The shipped value is the worst RMS of our own horizon computation under DEM x2/x4 degradation and ±1 px site shifts; ` +
     `it excludes LOLA height and geolocation error.`
   )
 }

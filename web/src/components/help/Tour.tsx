@@ -191,7 +191,9 @@ export function Tour({ className = '' }: TourProps) {
   // Escape and the arrows work wherever focus is while the tour is open (for example after a click on the
   // page or when the focused Back button became inactive). Capture phase: the page shortcuts must not also move time.
   const keysRef = useRef({ handleClose, handleNext, handleBack, canGoBack })
-  keysRef.current = { handleClose, handleNext, handleBack, canGoBack }
+  useEffect(() => {
+    keysRef.current = { handleClose, handleNext, handleBack, canGoBack }
+  })
   useEffect(() => {
     if (!isOpen) return
     const onKey = (e: KeyboardEvent) => {

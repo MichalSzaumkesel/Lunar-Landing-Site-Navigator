@@ -134,11 +134,25 @@ function nextChange(
 
 const NOT_AVAILABLE = 'Not available'
 
-/** Whole degrees ("12°"), or "Not available" for a missing value. */
+/**
+ * Whole degrees ("12°"), or "Not available" for a missing value.
+ * A value just under straight up (89.5 to 89.99) shows as 89°: 90° is kept for the zenith itself.
+ */
 export function formatDegrees(deg: number | null | undefined): string {
   if (deg == null || !Number.isFinite(deg)) return NOT_AVAILABLE
-  const r = Math.round(deg)
+  let r = Math.round(deg)
+  if (r === 90 && deg < 90) r = 89
   return `${Object.is(r, -0) ? 0 : r}°`
+}
+
+/**
+ * Highest elevation of a body over the window. A body that never gets above the flat horizon
+ * (for example Earth from the far side) reads "Never above the horizon" rather than a negative angle.
+ */
+export function formatHighestElevation(deg: number | null | undefined): string {
+  if (deg == null || !Number.isFinite(deg)) return NOT_AVAILABLE
+  if (deg <= 0) return 'Never above the horizon'
+  return formatDegrees(deg)
 }
 
 /** Whole percent ("37%"), or "Not available" for a missing value. */
@@ -178,7 +192,7 @@ export function windowGroups(
     {
       id: 'maxSun',
       label: 'Highest Sun above the horizon',
-      value: formatDegrees(d?.maxSunElDeg),
+      value: formatHighestElevation(d?.maxSunElDeg),
       hint: 'The highest the centre of the Sun climbs above the flat (mean) horizon in this window. Hills are ignored here.',
       child: true,
     },
@@ -205,7 +219,7 @@ export function windowGroups(
         {
           id: 'maxEarth',
           label: 'Highest Earth above the horizon',
-          value: formatDegrees(d?.maxEarthElDeg),
+          value: formatHighestElevation(d?.maxEarthElDeg),
           hint: 'The highest the centre of the Earth climbs above the flat (mean) horizon in this window. Hills are ignored here.',
           child: true,
         },

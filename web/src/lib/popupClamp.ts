@@ -1,4 +1,5 @@
 import { useLayoutEffect, type RefObject } from 'react'
+import { usableViewBand } from './viewBand'
 
 /** Gap kept between a popup and the viewport edge, in px. */
 export const POPUP_MARGIN = 8
@@ -62,7 +63,7 @@ export function useClampedPopup(
       const place = placePopup(
         { left: p.left, right: p.right, height: p.height },
         { top: t.top, bottom: t.bottom },
-        { width: document.documentElement.clientWidth || window.innerWidth, height: window.innerHeight },
+        { width: document.documentElement.clientWidth || window.innerWidth, height: usableViewBand().bottom },
       )
       if (place.dx !== 0) popup.style.setProperty('translate', `${place.dx}px 0`)
       if (p.height > place.maxHeight) {
