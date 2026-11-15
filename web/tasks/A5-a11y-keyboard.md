@@ -1,0 +1,4 @@
+# Task A5-a11y-keyboard: Accessibility and keyboard audit (static)
+Review only: do not edit any file except your report. Follow `_review.md` format rules for reports (severity, evidence, fix). Write the report file early, then extend it. Final reply max 6 lines. Stay inside the scope below; do not run servers, do not run npm install, every command under 60 s. Finish within about 15 minutes.
+Report: `reviews/A5-a11y-keyboard.md`.
+Scope: static code reading of src/components and src/app (no browser). Find: controls without accessible names, missing roles, popups/menus without Escape or focus return, focus traps missing, non-keyboard-reachable interactions, colour-only information, small touch targets (<32 px) in CSS, missing prefers-reduced-motion handling for animations/transitions in CSS, aria-live misuse. Give file:line and a concrete fix for each finding.
