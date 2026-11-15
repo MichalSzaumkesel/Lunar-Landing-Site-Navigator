@@ -79,6 +79,18 @@ describe('SoundToggle', () => {
     expect(container.textContent).not.toContain('fade in and out')
   })
 
+  it('gives every option its own decorative icon and keeps an accessible name', async () => {
+    const engine = createSoundEngine()
+    await act(async () => {
+      root.render(createElement(SoundToggle, { engine }))
+    })
+    const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('button'))
+    const icons = buttons.map((b) => b.querySelector('svg'))
+    expect(icons.every((i) => i?.getAttribute('aria-hidden') === 'true')).toBe(true)
+    expect(new Set(icons.map((i) => i!.innerHTML)).size).toBe(3)
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual(['Off', 'Ambient', 'Cues'])
+  })
+
   it('stableLayout: the slider mounts inline only while sound is on', async () => {
     const engine = createSoundEngine()
     await act(async () => {

@@ -13,23 +13,48 @@ import './sound.css'
 
 const SLIDE_MS = 200
 
-function SpeakerIcon({ muted = false }: { muted?: boolean }): ReactElement {
+const STROKE = { stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round', fill: 'none' } as const
+
+type SpeakerVariant = 'off' | 'ambient' | 'cues'
+
+/** Speaker body plus a variant mark: cross (off), two waves (ambient), one short wave and a ping dot (cues). */
+function SpeakerIcon({ variant }: { variant: SpeakerVariant }): ReactElement {
   return (
     <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
       <path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="currentColor" />
-      {muted ? (
-        <path d="M10.5 6l4 4m0-4l-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-      ) : (
-        <path d="M10.5 5.8a3.2 3.2 0 010 4.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+      {variant === 'off' && <path d="M10.5 6l4 4m0-4l-4 4" {...STROKE} />}
+      {variant === 'ambient' && (
+        <>
+          <path d="M10.3 5.9a3 3 0 010 4.2" {...STROKE} />
+          <path d="M12.3 4.2a5.4 5.4 0 010 7.6" {...STROKE} />
+        </>
+      )}
+      {variant === 'cues' && (
+        <>
+          <path d="M10.3 5.9a3 3 0 010 4.2" {...STROKE} />
+          <circle cx="13.6" cy="3.4" r="1.4" fill="currentColor" />
+        </>
       )}
     </svg>
   )
 }
 
 const MODES: SegmentedOption<SoundMode>[] = [
-  { id: 'off', label: 'Off', icon: <SpeakerIcon muted />, title: 'Turn sound off' },
-  { id: 'ambient', label: 'Ambient', title: 'Calm ambient tone that follows Sun and Earth visibility' },
-  { id: 'cues', label: 'Cues', title: 'Short tones when the Sun or Earth rises or sets during Play' },
+  { id: 'off', label: 'Off', icon: <SpeakerIcon variant="off" />, title: 'Turn sound off', ariaLabel: 'Off' },
+  {
+    id: 'ambient',
+    label: 'Ambient',
+    icon: <SpeakerIcon variant="ambient" />,
+    title: 'Ambient: calm tone that follows Sun and Earth visibility',
+    ariaLabel: 'Ambient',
+  },
+  {
+    id: 'cues',
+    label: 'Cues',
+    icon: <SpeakerIcon variant="cues" />,
+    title: 'Cues: short tones when the Sun or Earth rises or sets during Play',
+    ariaLabel: 'Cues',
+  },
 ]
 
 export interface SoundToggleProps {
