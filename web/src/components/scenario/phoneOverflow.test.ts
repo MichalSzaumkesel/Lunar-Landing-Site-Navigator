@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest'
 
 const css = readFileSync('src/components/scenario/scenario.css', 'utf8')
 
-/** Body of the first rule whose selector list is exactly `selector`, optionally inside the last 520px media block. */
+/** Concatenated bodies of every rule whose selector list is exactly `selector` in `source`. */
 function rule(selector: string, source = css): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const m = new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([^}]*)\\}`).exec(source)
-  return m?.[1] ?? ''
+  const re = new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([^}]*)\\}`, 'g')
+  return [...source.matchAll(re)].map((m) => m[1]).join('\n')
 }
 
 describe('phone width overflow guard', () => {
