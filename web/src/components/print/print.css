@@ -253,6 +253,7 @@
   font-size: 8px;
   color: #334155;
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .print-rule-status {

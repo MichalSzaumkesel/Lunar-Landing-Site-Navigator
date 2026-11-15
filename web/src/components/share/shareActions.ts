@@ -5,23 +5,48 @@ import { dataSource as defaultDataSource } from '../../lib/loader'
 import { downloadText, scenariosToCsv, type ScenarioCsvRow } from '../../lib/exportCsv'
 import type { SiteDataSource } from '../../lib/types'
 import { shareUrl } from '../../state/useUrlSync'
+import { horizonsQueryText } from '../../lib/horizonsQuery'
 
-/** Copies the shareable URL; resolves to the URL when the clipboard is unavailable, else null. */
-export async function copyShareLink(): Promise<string | null> {
-  const url = shareUrl()
+/** Writes text to the clipboard; false when the API is missing or the write is refused. */
+async function writeClipboard(text: string): Promise<boolean> {
   if (
     typeof navigator !== 'undefined' &&
     navigator.clipboard &&
     typeof navigator.clipboard.writeText === 'function'
   ) {
     try {
-      await navigator.clipboard.writeText(url)
-      return null
+      await navigator.clipboard.writeText(text)
+      return true
     } catch {
-      // Caller shows the address in a text box instead
+      // Caller shows the text in a box instead
     }
   }
-  return url
+  return false
+}
+
+/** Copies the shareable URL; resolves to the URL when the clipboard is unavailable, else null. */
+export async function copyShareLink(): Promise<string | null> {
+  const url = shareUrl()
+  return (await writeClipboard(url)) ? null : url
+}
+
+export type HorizonsCopyResult =
+  | { status: 'copied' }
+  | { status: 'missing' }
+  | { status: 'fallback'; text: string }
+
+/**
+ * Copies the JPL Horizons query recorded in the site's ephemeris file, as stored.
+ * 'missing' when the file records none; 'fallback' carries the text when the clipboard is unavailable.
+ */
+export async function copyHorizonsQuery(
+  siteId: string,
+  dataSource: SiteDataSource = defaultDataSource,
+): Promise<HorizonsCopyResult> {
+  const bundle = await dataSource.loadSite(siteId)
+  const text = horizonsQueryText(bundle.ephem)
+  if (text === null) return { status: 'missing' }
+  return (await writeClipboard(text)) ? { status: 'copied' } : { status: 'fallback', text }
 }
 
 /** Loads every store scenario, computes metrics and downloads them as CSV. Throws on failure. */

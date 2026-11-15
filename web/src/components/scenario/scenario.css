@@ -243,6 +243,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.countdown__range {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .countdown--sun .countdown__value {
   color: var(--sun);
 }

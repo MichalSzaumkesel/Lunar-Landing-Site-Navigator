@@ -9,9 +9,12 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { HORIZONS_QUERY_MISSING, horizonsQueryText } from '../../lib/horizonsQuery'
 import { usePresence } from '../../lib/usePresence'
+import { useSiteBundle } from '../../lib/useSiteBundle'
+import { useAppStore } from '../../state/store'
 import { PrintBrief } from '../print/PrintBrief'
-import { copyShareLink, exportScenariosCsv } from './shareActions'
+import { copyHorizonsQuery, copyShareLink, exportScenariosCsv } from './shareActions'
 import './share.css'
 
 export interface ShareMenuProps {
@@ -50,6 +53,12 @@ const TableIcon = () => (
     <path d="M3 10h18M3 15h18M9 4v16" />
   </Icon>
 )
+const TerminalIcon = () => (
+  <Icon>
+    <polyline points="4 17 10 11 4 5" />
+    <line x1="12" y1="19" x2="20" y2="19" />
+  </Icon>
+)
 const PrinterIcon = () => (
   <Icon>
     <polyline points="6 9 6 2 18 2 18 9" />
@@ -63,9 +72,10 @@ const ADVANCED_ONLY = 'Available only in Advanced mode.'
 
 export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactElement {
   const [open, setOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [fallbackUrl, setFallbackUrl] = useState<string | null>(null)
+  const [fallbackLabel, setFallbackLabel] = useState('Share URL fallback')
   const [error, setError] = useState<string | null>(null)
 
   const wrapRef = useRef<HTMLDivElement | null>(null)
@@ -75,6 +85,11 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
   const menuId = useId()
 
   const presence = usePresence(open)
+
+  // The query is read from the active scenario's ephemeris file; the click copies it as stored.
+  const activeSiteId = useAppStore((st) => (st.scenarios.find((x) => x.id === st.activeScenarioId) ?? st.scenarios[0])?.siteId ?? '')
+  const { bundle: activeBundle } = useSiteBundle(activeSiteId)
+  const hasHorizonsQuery = horizonsQueryText(activeBundle?.ephem) !== null
 
   useEffect(
     () => () => {
@@ -139,8 +154,32 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
   }
 
   const resetNotes = () => {
+    setFallbackLabel('Share URL fallback')
     setFallbackUrl(null)
     setError(null)
+  }
+
+  const flashCopied = (text: string) => {
+    setCopied(text)
+    if (copiedTimer.current) clearTimeout(copiedTimer.current)
+    copiedTimer.current = setTimeout(() => setCopied(null), 2000)
+  }
+
+  const onHorizons = async () => {
+    close(true)
+    resetNotes()
+    try {
+      const r = await copyHorizonsQuery(activeSiteId)
+      if (r.status === 'copied') flashCopied('Copied')
+      else if (r.status === 'missing') setError(HORIZONS_QUERY_MISSING)
+      else {
+        setFallbackLabel('Horizons query fallback')
+        setFallbackUrl(r.text)
+        setError('Could not copy. Copy the text from the box.')
+      }
+    } catch (err) {
+      setError(`Could not copy: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
 
   const onCopy = async () => {
@@ -148,9 +187,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
     resetNotes()
     const fallback = await copyShareLink()
     if (fallback === null) {
-      setCopied(true)
-      if (copiedTimer.current) clearTimeout(copiedTimer.current)
-      copiedTimer.current = setTimeout(() => setCopied(false), 2000)
+      flashCopied('Link copied')
     } else {
       setFallbackUrl(fallback)
       setError('Could not copy. Copy the address from the box.')
@@ -176,7 +213,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
     if (typeof window.print === 'function') window.print()
   }
 
-  const label = busy ? 'Exporting…' : copied ? 'Link copied' : 'Share and export'
+  const label = busy ? 'Exporting…' : (copied ?? 'Share and export')
 
   return (
     <div className="share-menu" ref={wrapRef}>
@@ -187,7 +224,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={presence.mounted ? menuId : undefined}
-        title="Copy a link, export CSV or open the printable dossier"
+        title="Copy a link, export CSV, copy the Horizons query or open the printable dossier"
         onClick={() => {
           resetNotes()
           if (open) close(false)
@@ -217,7 +254,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
         </svg>
       </button>
       <span className="share-menu__live" role="status" aria-live="polite">
-        {copied ? 'Link copied' : ''}
+        {copied ?? ''}
       </span>
 
       {presence.mounted && (
@@ -269,6 +306,26 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
               <span className="share-menu__desc">{advancedDisabled ? ADVANCED_ONLY : 'Opens a one-page brief to print or save as PDF.'}</span>
             </span>
           </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="share-menu__item"
+            disabled={advancedDisabled || !hasHorizonsQuery}
+            title={advancedDisabled ? ADVANCED_ONLY : !hasHorizonsQuery ? HORIZONS_QUERY_MISSING : undefined}
+            onClick={onHorizons}
+          >
+            <TerminalIcon />
+            <span className="share-menu__text">
+              <span className="share-menu__title">Copy Horizons query</span>
+              <span className="share-menu__desc">
+                {advancedDisabled
+                  ? ADVANCED_ONLY
+                  : hasHorizonsQuery
+                    ? 'Copies the JPL Horizons query recorded for the active site, to reproduce the Sun and Earth positions.'
+                    : HORIZONS_QUERY_MISSING}
+              </span>
+            </span>
+          </button>
         </div>
       )}
 
@@ -285,7 +342,7 @@ export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactEl
               readOnly
               value={fallbackUrl}
               className="share-fallback-input"
-              aria-label="Share URL fallback"
+              aria-label={fallbackLabel}
               autoFocus
               onFocus={(e) => e.currentTarget.select()}
             />

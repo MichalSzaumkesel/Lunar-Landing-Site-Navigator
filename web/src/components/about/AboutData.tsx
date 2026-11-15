@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MetaInput } from '../../lib/types'
+import { HORIZONS_QUERY_MISSING, horizonsQueryText } from '../../lib/horizonsQuery'
+import { horizonUncertaintyDeg } from '../../lib/horizonUncertainty'
 import { useFocusTrap } from '../../lib/useFocusTrap'
 import { useSiteBundle } from '../../lib/useSiteBundle'
 import type { PresenceState } from '../../lib/usePresence'
 import { useAppStore } from '../../state/store'
+import { copyHorizonsQuery } from '../share/shareActions'
 import { REPO_DOCS_URL, summariseValidation } from './validationSummary'
 import type { ValidationSummary } from './validationSummary'
 import './about.css'
@@ -54,6 +57,67 @@ function Provenance() {
   )
 }
 
+function HorizonsQuery() {
+  const siteId = useAppStore((s) => (s.scenarios.find((x) => x.id === s.activeScenarioId) ?? s.scenarios[0])?.siteId)
+  const { bundle } = useSiteBundle(siteId ?? 'southpole_landed')
+  const [note, setNote] = useState<string | null>(null)
+  const [fallback, setFallback] = useState<string | null>(null)
+  const available = horizonsQueryText(bundle?.ephem) !== null
+  const onCopy = useCallback(async () => {
+    setFallback(null)
+    try {
+      const r = await copyHorizonsQuery(siteId ?? 'southpole_landed')
+      if (r.status === 'copied') setNote('Copied')
+      else if (r.status === 'missing') setNote(HORIZONS_QUERY_MISSING)
+      else {
+        setNote('Could not copy. Copy the text from the box.')
+        setFallback(r.text)
+      }
+    } catch {
+      setNote('Could not copy.')
+    }
+  }, [siteId])
+  if (!bundle) return null
+  return (
+    <section>
+      <h3>Reproduce in JPL Horizons</h3>
+      <p>
+        The ephemeris file of {bundle.site.name} records the JPL Horizons query that produced the Sun and Earth positions.
+      </p>
+      <p>
+        <button type="button" className="ghost" disabled={!available} title={available ? undefined : HORIZONS_QUERY_MISSING} onClick={onCopy}>
+          Copy Horizons query
+        </button>{' '}
+        <span role="status" aria-live="polite">{available ? note : HORIZONS_QUERY_MISSING}</span>
+      </p>
+      {fallback && (
+        <input
+          type="text"
+          readOnly
+          value={fallback}
+          aria-label="Horizons query fallback"
+          style={{ width: '100%' }}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+      )}
+    </section>
+  )
+}
+
+function HorizonUncertaintyNote() {
+  const siteId = useAppStore((s) => (s.scenarios.find((x) => x.id === s.activeScenarioId) ?? s.scenarios[0])?.siteId)
+  const { bundle } = useSiteBundle(siteId ?? 'southpole_landed')
+  const u = bundle ? horizonUncertaintyDeg(bundle.horizon) : null
+  if (u === null) return null
+  return (
+    <p>
+      The horizon of {bundle?.site.name} carries an uncertainty of ±{u}° (worst RMS of the pipeline's own horizon under
+      DEM degradation and site shifts). Ranges next to Sun visible and Earth in view show the share with the horizon
+      raised and lowered by that amount. It excludes LOLA height and geolocation error.
+    </p>
+  )
+}
+
 export default function AboutData({ onClose, state = 'open' }: { onClose: () => void; state?: PresenceState }) {
   const validation = useValidation()
   const closeRef = useRef<HTMLButtonElement | null>(null)
@@ -91,6 +155,8 @@ export default function AboutData({ onClose, state = 'open' }: { onClose: () => 
           The tool shows geometry only.
         </p>
         <Provenance />
+        <HorizonUncertaintyNote />
+        <HorizonsQuery />
         <section>
           <h3>Validation</h3>
           {validation.status === 'loading' && <p aria-busy="true">Loading validation results...</p>}

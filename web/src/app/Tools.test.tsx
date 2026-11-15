@@ -49,13 +49,14 @@ describe('Tools - Share and export menu', () => {
     expect(items()).toHaveLength(0)
   })
 
-  it('opens a menu with three items and focuses the first', () => {
+  it('opens a menu with four items and focuses the first', () => {
     click(trigger())
     expect(container.querySelector('[role="menu"]')).toBeTruthy()
     expect(items().map((i) => i.querySelector('.share-menu__title')?.textContent)).toEqual([
       'Copy link',
       'Export CSV',
       'Export dossier',
+      'Copy Horizons query',
     ])
     expect(document.activeElement).toBe(items()[0])
   })
@@ -100,7 +101,7 @@ describe('Tools - Share and export menu', () => {
   it('disables CSV and dossier in simple mode', () => {
     act(() => useAppStore.setState({ mode: 'simple' }))
     click(trigger())
-    expect(items().map((i) => i.disabled)).toEqual([false, true, true])
+    expect(items().map((i) => i.disabled)).toEqual([false, true, true, true])
   })
 
   it('renders the brief as a direct child of body for print', () => {

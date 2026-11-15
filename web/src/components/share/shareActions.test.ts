@@ -4,7 +4,7 @@ import { useAppStore } from '../../state/store'
 import { shareUrl } from '../../state/useUrlSync'
 import * as exportCsv from '../../lib/exportCsv'
 import type { SiteBundle, SiteDataSource } from '../../lib/types'
-import { copyShareLink, exportScenariosCsv } from './shareActions'
+import { copyHorizonsQuery, copyShareLink, exportScenariosCsv } from './shareActions'
 
 function bundle(siteId: string, name: string): SiteBundle {
   const meta = {
@@ -130,5 +130,39 @@ describe('copyShareLink', () => {
   it('resolves to the URL when there is no clipboard API', async () => {
     vi.stubGlobal('navigator', {})
     await expect(copyShareLink()).resolves.toBe(shareUrl())
+  })
+})
+
+describe('copyHorizonsQuery', () => {
+  const query = { CENTER: "'coord@301'", SITE_COORD: "'23.473100,0.674200,-1.928000'", STEP_SIZE: "'1h'" }
+  const withQuery = (q?: Record<string, string>): SiteDataSource =>
+    ({
+      loadSite: vi.fn(async (id: string) => {
+        const b = bundle(id, id)
+        if (q) b.ephem.horizons_query = q
+        return b
+      }),
+    }) as unknown as SiteDataSource
+
+  it('copies the recorded query as stored', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    await expect(copyHorizonsQuery('site_a', withQuery(query))).resolves.toEqual({ status: 'copied' })
+    expect(writeText).toHaveBeenCalledTimes(1)
+    expect(JSON.parse(writeText.mock.calls[0][0])).toEqual(query)
+  })
+
+  it('reports missing data and copies nothing', async () => {
+    const writeText = vi.fn()
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+    await expect(copyHorizonsQuery('site_a', withQuery())).resolves.toEqual({ status: 'missing' })
+    expect(writeText).not.toHaveBeenCalled()
+  })
+
+  it('returns the text when the clipboard is unavailable', async () => {
+    vi.stubGlobal('navigator', {})
+    const r = await copyHorizonsQuery('site_a', withQuery(query))
+    expect(r.status).toBe('fallback')
+    expect(r.status === 'fallback' && JSON.parse(r.text)).toEqual(query)
   })
 })

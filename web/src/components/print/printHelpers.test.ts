@@ -316,3 +316,17 @@ describe('printHelpers', () => {
     })
   })
 })
+
+describe('getPrintMetricRows with a horizon range', () => {
+  const m = { pct_sunlit: 52.14, pct_earth: 80, mean_sun_frac: 50, longest_dark_h: 1, longest_no_earth_h: 0, pct_both: 40 } as never
+  const range = { uncertaintyDeg: 0.15, sun: { lo: 50.94, hi: 53.04 }, earth: { lo: 79.2, hi: 80.8 } }
+  it('appends the range to the two shares only', () => {
+    const rows = getPrintMetricRows(m, null, null, range)
+    expect(rows.find((r) => r.key === 'pct_sunlit')?.value).toBe('52.1 % (50.9–53.0)')
+    expect(rows.find((r) => r.key === 'pct_earth')?.value).toBe('80.0 % (79.2–80.8)')
+    expect(rows.find((r) => r.key === 'pct_both')?.value).toBe('40.0 %')
+  })
+  it('adds nothing without a range', () => {
+    expect(getPrintMetricRows(m, null, null, null).find((r) => r.key === 'pct_sunlit')?.value).toBe('52.1 %')
+  })
+})

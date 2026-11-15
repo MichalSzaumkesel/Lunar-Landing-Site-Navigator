@@ -182,6 +182,15 @@ export function chooseSkyZoom(
   return chooseZoomEl(Math.max(maxHorizon, maxBodies, 0))
 }
 
+/** The uncertainty band is drawn only when it is at least this wide on screen (viewBox units). */
+export const MIN_BAND_PX = 2
+
+/** Positive `uncertainty_deg` of a horizon file, else null. */
+function bandDeg(horizon: { uncertainty_deg?: number }): number | null {
+  const u = horizon.uncertainty_deg
+  return typeof u === 'number' && Number.isFinite(u) && u > 0 ? u : null
+}
+
 export interface SkyRing {
   el: number
   r: number
@@ -198,6 +207,8 @@ export interface SkyModel {
   terrainPath: string
   /** The horizon curve only, relative to the plot centre. */
   horizonPath: string
+  /** Band of +-uncertainty_deg around the horizon (fill with evenodd); '' when absent or too thin to see. */
+  bandPath: string
   sunTrackPath: string
   earthTrackPath: string
 }
@@ -245,6 +256,13 @@ export function buildSkyModel(
   const horizonPath = radialPath(horizonPoints, zoomEl, true, true)
   const terrainPath = circlePath(RIM_R) + horizonPath
 
+  const u = bandDeg(horizon)
+  const bandPath =
+    u !== null && mask.length > 0 && degToPx(2 * u, zoomEl) >= MIN_BAND_PX
+      ? radialPath(horizonPoints.map((p) => ({ az: p.az, el: p.el + u })), zoomEl, true, true) +
+        radialPath(horizonPoints.map((p) => ({ az: p.az, el: p.el - u })), zoomEl, true, true)
+      : ''
+
   const trackPath = (body: EphemFile['sun']) =>
     trackSegments(body.az, body.el, k0, k1)
       .map((seg) => radialPath(seg, zoomEl, false, false))
@@ -258,6 +276,7 @@ export function buildSkyModel(
     spokesPath,
     terrainPath,
     horizonPath,
+    bandPath,
     sunTrackPath: trackPath(ephem.sun),
     earthTrackPath: trackPath(ephem.earth),
   }
