@@ -23,6 +23,8 @@ import { cancelBestSpotSearch, findBestSpotAsync } from './bestSpotClient'
 import { clampSearchRadius, formatResultSentence, formatSimpleResultSentence } from './bestSpot'
 import type { BestSpotResult } from './bestSpot'
 import { createHeatmapTexture } from './heatmapTexture'
+import { LanderPopover } from './LanderPopover'
+import { MapButtonRing } from './MapButtonRing'
 import {
   cellIndexAt,
   clampLanderOffset,
@@ -799,7 +801,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
               className="surface__overlay surface__map-legend presence-rise"
               data-state={legendPresence.state}
               role="img"
-              aria-label={`Sun visible map colour scale: from ${Math.round(heatmapRange.min)} percent (less Sun visible) to ${Math.round(heatmapRange.max)} percent (more Sun visible)`}
+              aria-label={`Sunlight map colour scale: from ${Math.round(heatmapRange.min)} percent (less Sun visible) to ${Math.round(heatmapRange.max)} percent (more Sun visible)`}
             >
               <div className="surface__map-legend-row">
                 <span>Less</span>
@@ -825,6 +827,81 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
             : 'Drag to orbit, scroll to zoom; click terrain to move lander'}
         </div>
           </>
+        )}
+        {!simple && (
+          <LanderPopover
+            summary={`${formatOffset(landerOffset)}${movedSunHours !== null ? ` · ${movedSunHours.toFixed(1)} h` : ''}`}
+          >
+      <div className="surface__lander-box">
+        <div className="surface__lander-header">
+          <div
+            className="surface__nudge-control"
+            tabIndex={0}
+            role="group"
+            aria-roledescription="position control"
+            aria-label={`Lander position: ${formatOffset(landerOffset)}, height ${fmtNum(landerHeight, 1, true)} m. Arrow keys nudge.`}
+            onKeyDown={handleLanderKeyDown}
+            onKeyUp={handleLanderKeyUp}
+            onBlur={() => keyMotionRef.current?.release()}
+          >
+            <div className="surface__control-label">Lander position (arrow keys, Shift faster, Alt finer)</div>
+            <div className="surface__readouts">
+              <span>Offset: <b>{formatOffset(landerOffset)}</b></span>
+              <span>Terrain height: <b>{fmtNum(landerHeight, 1, true)} m</b></span>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={isAtOrigin}
+            onClick={handleResetPosition}
+          >
+            Reset position
+          </button>
+        </div>
+
+        <div className="surface__hours-row" title="Sun visible hours for the scenario window evaluated on this terrain patch">
+          <span className="surface__hours-title">Sun visible hours:</span>
+          <span className="badge badge--approximate">Approximate</span>
+          {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
+          <span className="surface__hours-stat">
+            <b>{movedSunHours !== null ? `${movedSunHours.toFixed(1)} h` : '—'}</b>
+            <span
+              className="surface__hours-site"
+              title="The patch-only horizon covers the terrain patch around the site. The card metrics use the full LOLA horizon mask, so the two totals differ."
+            >
+              {' '}
+              (patch-only site estimate: {origSunHours !== null ? `${origSunHours.toFixed(1)} h` : '—'}
+              {cardSunHours !== null ? `; card, full horizon: ${cardSunHours.toFixed(1)} h` : ''})
+            </span>
+            <b className="surface__hours-delta"> {formatDeltaHours(deltaHours)}</b>
+          </span>
+        </div>
+      </div>
+      {/* Sunlight Heatmap Legend & Cell Inspector */}
+      {showHeatmap && heatmapGrid && (
+        <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
+          {heatmapGrid ? (
+            <>
+              <div className="surface__legend-meta">
+                <div className="surface__legend-title-group">
+                  <span className="surface__legend-name">Sunlight map</span>
+                  <span className="badge badge--approximate">Approximate</span>
+                  {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
+                </div>
+                <span className="surface__legend-res">Resolution: ~{cellResolutionM} m</span>
+              </div>
+              <div className="surface__cell-inspector" aria-live={hoveredCell ? 'off' : 'polite'}>
+                {hoveredCell !== null
+                  ? `Hovered cell: ${hoveredCell.pct.toFixed(1)}% Sun visible (${formatOffset({ eastM: hoveredCell.eastM, northM: hoveredCell.northM })})`
+                  : landerCellPct !== null && !Number.isNaN(landerCellPct)
+                    ? `Lander cell: ${landerCellPct.toFixed(1)}% Sun visible (${formatOffset(landerOffset)})`
+                    : 'Hover terrain or nudge lander to inspect cell values'}
+              </div>
+            </>
+          ) : null}
+        </div>
+      )}
+          </LanderPopover>
         )}
         {simple && <LookHint />}
       </div>
@@ -924,7 +1001,8 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
           aria-busy={heatmapLoading || undefined}
           onClick={() => setShowHeatmap((prev) => !prev)}
         >
-          Sun visible map
+          Sunlight map
+          {heatmapLoading && <MapButtonRing />}
         </button>
 
           </>
@@ -1030,87 +1108,7 @@ function SurfaceStage({ simple, scenario, bundle, terrain, heights, cornerSlot }
         </div>
       )}
 
-      {/* Lander position and sunlight hours: secondary, collapsed by default but always mounted (keyboard nudge stays available) */}
-      {!simple && (
-      <details className="surface__more">
-      <summary className="surface__more-summary">
-        <span className="surface__more-title">Lander and sunlight hours</span>
-        <span className="surface__more-sum">
-          {formatOffset(landerOffset)}
-          {movedSunHours !== null ? ` · ${movedSunHours.toFixed(1)} h` : ''}
-        </span>
-      </summary>
-      <div className="surface__lander-box">
-        <div className="surface__lander-header">
-          <div
-            className="surface__nudge-control"
-            tabIndex={0}
-            role="group"
-            aria-roledescription="position control"
-            aria-label={`Lander position: ${formatOffset(landerOffset)}, height ${fmtNum(landerHeight, 1, true)} m. Arrow keys nudge.`}
-            onKeyDown={handleLanderKeyDown}
-            onKeyUp={handleLanderKeyUp}
-            onBlur={() => keyMotionRef.current?.release()}
-          >
-            <div className="surface__control-label">Lander position (arrow keys, Shift faster, Alt finer)</div>
-            <div className="surface__readouts">
-              <span>Offset: <b>{formatOffset(landerOffset)}</b></span>
-              <span>Terrain height: <b>{fmtNum(landerHeight, 1, true)} m</b></span>
-            </div>
-          </div>
-          <button
-            type="button"
-            disabled={isAtOrigin}
-            onClick={handleResetPosition}
-          >
-            Reset position
-          </button>
-        </div>
 
-        <div className="surface__hours-row" title="Sun visible hours for the scenario window evaluated on this terrain patch">
-          <span className="surface__hours-title">Sun visible hours:</span>
-          <span className="badge badge--approximate">Approximate</span>
-          {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
-          <span className="surface__hours-stat">
-            <b>{movedSunHours !== null ? `${movedSunHours.toFixed(1)} h` : '—'}</b>
-            <span
-              className="surface__hours-site"
-              title="The patch-only horizon covers the terrain patch around the site. The card metrics use the full LOLA horizon mask, so the two totals differ."
-            >
-              {' '}
-              (patch-only site estimate: {origSunHours !== null ? `${origSunHours.toFixed(1)} h` : '—'}
-              {cardSunHours !== null ? `; card, full horizon: ${cardSunHours.toFixed(1)} h` : ''})
-            </span>
-            <b className="surface__hours-delta"> {formatDeltaHours(deltaHours)}</b>
-          </span>
-        </div>
-      </div>
-      {/* Sunlight Heatmap Legend & Cell Inspector */}
-      {showHeatmap && heatmapGrid && (
-        <div className="surface__heatmap-panel" aria-label="Local sunlight map legend">
-          {heatmapGrid ? (
-            <>
-              <div className="surface__legend-meta">
-                <div className="surface__legend-title-group">
-                  <span className="surface__legend-name">Sun visible map</span>
-                  <span className="badge badge--approximate">Approximate</span>
-                  {bundle.synthetic && <span className="badge badge--synthetic">Synthetic data</span>}
-                </div>
-                <span className="surface__legend-res">Resolution: ~{cellResolutionM} m</span>
-              </div>
-              <div className="surface__cell-inspector" aria-live={hoveredCell ? 'off' : 'polite'}>
-                {hoveredCell !== null
-                  ? `Hovered cell: ${hoveredCell.pct.toFixed(1)}% Sun visible (${formatOffset({ eastM: hoveredCell.eastM, northM: hoveredCell.northM })})`
-                  : landerCellPct !== null && !Number.isNaN(landerCellPct)
-                    ? `Lander cell: ${landerCellPct.toFixed(1)}% Sun visible (${formatOffset(landerOffset)})`
-                    : 'Hover terrain or nudge lander to inspect cell values'}
-              </div>
-            </>
-          ) : null}
-        </div>
-      )}
-      </details>
-      )}
       </div>
     </>
   )
