@@ -1,4 +1,5 @@
 import { memo, useId, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { sampleAt } from '../../lib/ephem'
 import type { SkySample } from '../../lib/ephem'
 import type { SiteBundle } from '../../lib/types'
@@ -95,6 +96,8 @@ interface FrameProps {
   model: SkyModel
   sample: SkySample | null
   cursorMs: number
+  /** When set, the zoom caption is rendered there (Advanced puts it under the loupe). */
+  zoomSlot?: HTMLElement | null
 }
 
 function PolarDiscs({ readout, sample, bundle, zoomEl }: {
@@ -127,7 +130,7 @@ function PolarDiscs({ readout, sample, bundle, zoomEl }: {
   )
 }
 
-function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
+function SkyFrame({ scenario, bundle, model, sample, cursorMs, zoomSlot }: FrameProps) {
   const textScaleRef = useSvgTextScale()
   const clipId = 'sky-clip-' + useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const readout = sample ? describeSky(sample, model, bundle.ephem) : null
@@ -135,6 +138,16 @@ function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
   const label = readout
     ? `Sky plot, ${bundle.site.name}, ${utc}. ${sunStateText(readout.sun.visible)}. ${earthStateText(readout.earth.visible)}.`
     : `Sky plot, ${bundle.site.name}, ${utc}. Outside data range.`
+
+  const zoomCaption = (
+    <p
+      className={`sky__zoom${model.zoomEl < 90 ? ' sky__zoom--zoomed' : ''}`}
+      data-sky-zoom={model.zoomEl}
+      title="Elevation in degrees: the rim is the horizon (0°), the centre is the value shown"
+    >
+      {skyZoomLabel(model.zoomEl)}
+    </p>
+  )
 
   return (
     <>
@@ -175,18 +188,12 @@ function SkyFrame({ scenario, bundle, model, sample, cursorMs }: FrameProps) {
         </g>
       </svg>
     </div>
-    <p
-      className={`sky__zoom${model.zoomEl < 90 ? ' sky__zoom--zoomed' : ''}`}
-      data-sky-zoom={model.zoomEl}
-      title="Elevation in degrees: the rim is the horizon (0°), the centre is the value shown"
-    >
-      {skyZoomLabel(model.zoomEl)}
-    </p>
+    {zoomSlot ? createPortal(zoomCaption, zoomSlot) : zoomCaption}
     </>
   )
 }
 
-function SkyPlotView({ scenario }: { scenario: Scenario }) {
+function SkyPlotView({ scenario, zoomSlot }: { scenario: Scenario; zoomSlot?: HTMLElement | null }) {
   const { status, bundle, error } = useSiteBundle(scenario.siteId)
   const heightM = useAppStore((s) => s.observerHeightM)
   const cursorH = useAppStore((s) => s.cursorH)
@@ -216,6 +223,7 @@ function SkyPlotView({ scenario }: { scenario: Scenario }) {
         model={model}
         sample={sampleAt(bundle.ephem, cursorMs)}
         cursorMs={cursorMs}
+        zoomSlot={zoomSlot}
       />
     )
   }
@@ -225,8 +233,8 @@ function SkyPlotView({ scenario }: { scenario: Scenario }) {
   )
 }
 
-export function SkyPlot({ scenarioId }: { scenarioId: string }) {
+export function SkyPlot({ scenarioId, zoomSlot }: { scenarioId: string; zoomSlot?: HTMLElement | null }) {
   const scenario = useAppStore((s) => s.scenarios.find((x) => x.id === scenarioId))
   if (!scenario) return null
-  return <SkyPlotView scenario={scenario} />
+  return <SkyPlotView scenario={scenario} zoomSlot={zoomSlot} />
 }

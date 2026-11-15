@@ -183,21 +183,11 @@
   max-width: 560px;
 }
 
-/* Advanced: the zoom caption sits in the empty top-left corner of the plot, not under it. */
-.views__sky {
-  position: relative;
-}
-
-.views__sky .sky__zoom {
-  position: absolute;
-  top: 0;
-  left: 0;
-  max-width: 9rem;
+/* Advanced: the zoom caption sits under the loupe, in the right column. */
+.views__zoomslot .sky__zoom {
+  text-align: left;
   font-size: 0.75rem;
   line-height: 1.25;
-  text-align: left;
-  border-radius: var(--radius-md, 10px);
-  pointer-events: none;
 }
 
 .views__loupe {

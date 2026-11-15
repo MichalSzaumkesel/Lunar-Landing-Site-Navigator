@@ -44,13 +44,15 @@ class ViewBoundary extends Component<{ children: ReactNode }, BoundaryState> {
 }
 
 function PolarPanel({ scenarioId }: { scenarioId: string }) {
+  const [zoomSlot, setZoomSlot] = useState<HTMLElement | null>(null)
   return (
     <div className="views__polar">
       <div className="views__sky" data-tour="sky-plot">
-        <SkyPlot scenarioId={scenarioId} />
+        <SkyPlot scenarioId={scenarioId} zoomSlot={zoomSlot} />
       </div>
       <div className="views__loupe" data-tour="loupe">
         <Loupe scenarioId={scenarioId} />
+        <div ref={setZoomSlot} className="views__zoomslot" />
       </div>
     </div>
   )

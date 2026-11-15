@@ -59,7 +59,7 @@ const PrinterIcon = () => (
 )
 
 /** One "Share and export" button with a menu: copy link, export CSV, open the print dossier. */
-const ADVANCED_ONLY = 'Needs Advanced mode. Switch to Advanced to use this.'
+const ADVANCED_ONLY = 'Available only in Advanced mode'
 
 export function ShareMenu({ advancedDisabled = false }: ShareMenuProps): ReactElement {
   const [open, setOpen] = useState(false)
