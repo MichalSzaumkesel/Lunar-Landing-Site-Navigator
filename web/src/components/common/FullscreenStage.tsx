@@ -36,10 +36,7 @@ export function FullscreenStage({ className, dataTour, onChange, persistentExit 
   // Remember the page scroll and the focus owner so leaving fullscreen puts both back.
   const saved = useRef<{ y: number } | null>(null)
   useEffect(() => {
-    if (active) {
-      saved.current = { y: window.scrollY }
-      return
-    }
+    if (active) return
     const prev = saved.current
     saved.current = null
     if (!prev) return
@@ -49,11 +46,17 @@ export function FullscreenStage({ className, dataTour, onChange, persistentExit 
       root.querySelector<HTMLElement>('.fs-button')?.focus({ preventScroll: true })
     }
   }, [active])
+  // Taken before the request: the browser may reset the page scroll while entering.
+  const toggle = () => {
+    if (!active) saved.current = { y: window.scrollY }
+    control.toggle()
+  }
+  const ctl = { ...control, toggle }
   const hideSlot = persistentExit && active
   return (
     <div ref={ref} className={className} data-tour={dataTour}>
-      {children(hideSlot ? null : <FullscreenToggle control={control} />)}
-      {hideSlot && <FullscreenToggle control={control} className="fs-button--exit" />}
+      {children(hideSlot ? null : <FullscreenToggle control={ctl} />)}
+      {hideSlot && <FullscreenToggle control={ctl} className="fs-button--exit" />}
       {active && <Transport />}
     </div>
   )
