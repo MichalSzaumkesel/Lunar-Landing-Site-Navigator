@@ -15,6 +15,7 @@ import {
   sortScenariosByCriterion,
   type CompareCriterionId,
 } from './compareLogic'
+import { pickDiffPair, whatDiffersFor } from './whatDiffers'
 import './compare.css'
 
 export interface CompareTableProps {
@@ -105,6 +106,12 @@ export function CompareTable({
     return sortScenariosByCriterion(scenarioData, sortCriterion, sortDirection)
   }, [scenarioData, sortCriterion, sortDirection])
 
+  // Neutral one-line difference of the active scenario and the next one, in board order
+  const diffText = useMemo(() => {
+    const pair = pickDiffPair(scenarioData, activeScenarioId)
+    return pair ? whatDiffersFor(pair[0], pair[1]) : null
+  }, [scenarioData, activeScenarioId])
+
   const handleSort = (critId: CompareCriterionId) => {
     const criterion = COMPARE_CRITERIA.find((c) => c.id === critId)
     if (sortCriterion === critId) {
@@ -141,6 +148,7 @@ export function CompareTable({
           synthetic: s.bundle?.synthetic ?? false,
           approximate: s.bundle?.approximate ?? false,
           metrics: s.metrics,
+          bothVisible: s.bothVisible,
         }
       })
 
@@ -169,6 +177,7 @@ export function CompareTable({
             synthetic: s.bundle?.synthetic ?? false,
             approximate: s.bundle?.approximate ?? false,
             metrics: s.metrics,
+          bothVisible: s.bothVisible,
           }
         })
         const csv = scenariosToCsv(rows)
@@ -265,6 +274,12 @@ export function CompareTable({
         </div>
       </header>
 
+      {diffText && !loading && (
+        <p className="compare-diff" data-testid="compare-diff">
+          {diffText}
+        </p>
+      )}
+
       {loading && (
         <div className="compare-loading" role="status" aria-busy="true">
           Loading scenario data…
@@ -340,6 +355,11 @@ export function CompareTable({
                       aria-pressed={isSorted}
                     >
                       <span>{crit.label}</span>
+                      {crit.derived && (
+                        <span className="compare-derived" title="Derived: computed from the same samples as the other rows">
+                          derived
+                        </span>
+                      )}
                       {isSorted && (
                         <span className="compare-sort-arrow" aria-hidden="true">
                           {sortHint}

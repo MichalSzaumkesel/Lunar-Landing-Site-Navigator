@@ -312,6 +312,25 @@
   white-space: nowrap;
 }
 
+.metrics__both {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.metrics__derived {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0 4px;
+  border: 1px solid var(--control-border);
+  border-radius: 3px;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
 .metrics__note {
   margin: var(--space-2) 0 0;
   color: var(--muted);

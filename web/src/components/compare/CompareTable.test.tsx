@@ -157,6 +157,32 @@ describe('CompareTable', () => {
     expect(container.textContent).toContain('Minimum Sun clearance')
   })
 
+  it('shows the derived Sun and Earth together rows and a neutral difference sentence', async () => {
+    // Sun el [0.5,3.4,..] vs a Sun that is never above the 0.0-2.4 deg mask in the first bundle's hour 0.
+    const bundle1 = createBundle('Shackleton', 'site1', 2.4, [1.5, 3.4, 2.2, 1.0])
+    const bundle2 = createBundle('Connecting Ridge', 'site2', 1.0, [-1.0, -2.0, 3.0, 2.0])
+    const mockDataSource: SiteDataSource = {
+      loadSites: vi.fn(),
+      loadSite: vi.fn().mockImplementation((id: string) => Promise.resolve(id === 'site1' ? bundle1 : bundle2)),
+      loadCustomSite: vi.fn(),
+    }
+    const scenarios: Scenario[] = [
+      { id: 'sc1', siteId: 'site1', startUtc: '2026-12-01T00:00:00Z', durationH: 4, slipDays: 0 },
+      { id: 'sc2', siteId: 'site2', startUtc: '2026-12-01T00:00:00Z', durationH: 4, slipDays: 0 },
+    ]
+    await act(async () => {
+      root.render(createElement(CompareTable, { scenarios, observerHeightM: 2, cursorH: 0, dataSource: mockDataSource }))
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(container.textContent).toContain('Sun and Earth together (% of window)')
+    expect(container.querySelectorAll('.compare-derived').length).toBe(2)
+    const diff = container.querySelector('[data-testid="compare-diff"]')
+    expect(diff?.textContent).toMatch(/Sun visible/)
+    expect(diff?.textContent).not.toMatch(/better|worse|power|link/i)
+  })
+
   it('highlights better value softly with neutral wording higher/lower', async () => {
     // site1 has highest horizon 2.4 deg, site2 has 1.0 deg (lower is better for horizon elevation)
     const bundle1 = createBundle('Shackleton', 'site1', 2.4)

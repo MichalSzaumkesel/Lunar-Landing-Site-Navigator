@@ -1,3 +1,4 @@
+import { formatBothVisible, type BothVisible } from '../../lib/bothVisible'
 import type { MissionRules, ScenarioMetrics, SiteBundle } from '../../lib/types'
 import type { MastDeltaResult } from '../../lib/mastDelta'
 import type { SkySample } from '../../lib/ephem'
@@ -88,6 +89,7 @@ export function getPrintMetricRows(
   cursorValues: { sunElDeg: number | null; sunClearanceDeg: number | null } | null,
   mastDeltaResult?: MastDeltaResult | null,
   shareRange?: HorizonShareRange | null,
+  both?: BothVisible | null,
 ): PrintMetricRow[] {
   const sunEl = cursorValues?.sunElDeg
   const sunClearance = cursorValues?.sunClearanceDeg
@@ -148,6 +150,12 @@ export function getPrintMetricRows(
       label: 'Sun and Earth together',
       value: metrics ? formatUnitValue(metrics.pct_both, '%', 1) : OUTSIDE_RANGE,
       tip: 'Share of window samples where both Sun and Earth are above terrain horizon.',
+    },
+    {
+      key: 'both_derived',
+      label: 'Sun visible and Earth in view together (derived)',
+      value: both ? formatBothVisible(both) : OUTSIDE_RANGE,
+      tip: 'Derived: computed from the same samples and terrain horizon as the values above.',
     },
     {
       key: 'mast_gain',

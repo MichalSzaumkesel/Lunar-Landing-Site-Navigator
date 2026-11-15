@@ -2,6 +2,7 @@ import { useAppStore } from '../../state/store'
 import { scenarioCursorMs, scenarioWindowMs } from '../../state/selectors'
 import { computeMetrics } from '../../lib/metrics'
 import { dataSource as defaultDataSource } from '../../lib/loader'
+import { computeBothVisible } from '../../lib/bothVisible'
 import { downloadText, scenariosToCsv, type ScenarioCsvRow } from '../../lib/exportCsv'
 import type { SiteDataSource } from '../../lib/types'
 import { shareUrl } from '../../state/useUrlSync'
@@ -86,6 +87,7 @@ export async function exportScenariosCsv(
       synthetic: bundle.synthetic,
       approximate: bundle.approximate,
       metrics,
+      bothVisible: computeBothVisible(bundle, { observerHeightM, startMs, endMs }),
     }
   })
 

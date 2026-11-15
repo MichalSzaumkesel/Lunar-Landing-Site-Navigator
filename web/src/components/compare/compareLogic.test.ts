@@ -100,8 +100,8 @@ function createMockScenario(id: string, siteId = 'shackleton'): Scenario {
 
 describe('compareLogic', () => {
   describe('COMPARE_CRITERIA', () => {
-    it('defines exactly 8 criteria with expected IDs and units', () => {
-      expect(COMPARE_CRITERIA).toHaveLength(8)
+    it('defines exactly 10 criteria with expected IDs and units', () => {
+      expect(COMPARE_CRITERIA).toHaveLength(10)
       const ids = COMPARE_CRITERIA.map((c) => c.id)
       expect(ids).toEqual([
         'pct_sunlit',
@@ -112,7 +112,14 @@ describe('compareLogic', () => {
         'time_to_earthset_h',
         'highest_horizon_el_deg',
         'min_sun_clearance_deg',
+        'pct_both',
+        'longest_both_h',
       ])
+    })
+
+    it('marks the Sun and Earth together rows as derived', () => {
+      const derived = COMPARE_CRITERIA.filter((c) => c.derived).map((c) => c.id)
+      expect(derived).toEqual(['pct_both', 'longest_both_h'])
     })
   })
 
@@ -201,6 +208,21 @@ describe('compareLogic', () => {
       expect(result.values.min_sun_clearance_deg).not.toBeNull()
       expect(result.displayValues.pct_sunlit).toContain('%')
     })
+
+    it('adds the derived Sun and Earth together values from the same samples', () => {
+      // Sun el [1.5,3.4,2.2,1.0], Earth el 5 on flat 0.2-ish mask: both visible whenever the Sun is.
+      const result = computeScenarioValues(createMockScenario('s1'), createMockBundle(), 2, 0)
+      expect(result.values.pct_both).toBeCloseTo(result.metrics!.pct_both, 10)
+      expect(result.values.longest_both_h).toBe(result.bothVisible!.longestH)
+      expect(result.displayValues.pct_both).toMatch(/ %$/)
+      expect(result.displayValues.longest_both_h).toMatch(/ h$/)
+    })
+
+    it('has no derived values while loading', () => {
+      const result = computeScenarioValues(createMockScenario('s1'), null, 2, 0)
+      expect(result.bothVisible).toBeNull()
+      expect(result.values.pct_both).toBeNull()
+    })
   })
 
   describe('findBetterScenarioIds', () => {
@@ -215,6 +237,7 @@ describe('compareLogic', () => {
         metrics: null,
         highestHorizonDeg: null,
         minSunClearanceDeg: null,
+        bothVisible: null,
         values: values as any,
         displayValues: {} as any,
       }
@@ -263,6 +286,7 @@ describe('compareLogic', () => {
         metrics: null,
         highestHorizonDeg: null,
         minSunClearanceDeg: null,
+        bothVisible: null,
         values: { pct_sunlit: val } as any,
         displayValues: {} as any,
       }

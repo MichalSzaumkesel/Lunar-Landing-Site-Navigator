@@ -1,3 +1,4 @@
+import type { BothVisible } from './bothVisible'
 import type { ScenarioMetrics } from './types'
 
 export interface ScenarioCsvRow {
@@ -12,6 +13,8 @@ export interface ScenarioCsvRow {
   synthetic: boolean
   approximate: boolean
   metrics: ScenarioMetrics | null
+  /** Derived Sun and Earth together values; the CSV column carries a _derived suffix. */
+  bothVisible?: BothVisible | null
 }
 
 export const CSV_HEADERS = [
@@ -39,6 +42,7 @@ export const CSV_HEADERS = [
   'time_to_earthset_h',
   'sun_el_deg',
   'sun_clearance_deg',
+  'longest_both_h_derived',
 ] as const
 
 /** RFC 4180 field escaping with 3-decimal rounding for numbers. */
@@ -94,6 +98,7 @@ export function scenariosToCsv(rows: ScenarioCsvRow[]): string {
       escapeCsvField(m?.time_to_earthset_h ?? null),
       escapeCsvField(m?.sun_el_deg ?? null),
       escapeCsvField(m?.sun_clearance_deg ?? null),
+      escapeCsvField(row.bothVisible?.longestH ?? null),
     ]
     return cells.join(',')
   })
