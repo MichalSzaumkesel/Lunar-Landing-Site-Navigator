@@ -83,7 +83,11 @@ export function LockButton({ body, children, title, disabled, locked, onClick, o
   }
   const end = (): boolean => {
     setHolding(false)
-    return timerRef.current?.cancel() ?? false
+    const wasFired = timerRef.current?.cancel() ?? false
+    // The click that follows a release arrives in the same task; if none does (pointer released elsewhere)
+    // the swallow flag must not outlive it, or the next real click (e.g. unlock) would be eaten.
+    if (wasFired) window.setTimeout(() => { swallowClick.current = false }, 0)
+    return wasFired
   }
   const hint = holdHint(body)
   const tip = locked ? `${lockedLabel(body)}. Click to unlock` : readHintSeen() ? title : `${title}. ${hint}`
@@ -103,10 +107,15 @@ export function LockButton({ body, children, title, disabled, locked, onClick, o
       onPointerDown={(e) => {
         if (e.button !== 0) return
         swallowClick.current = false
+        // Capture keeps the hold alive when the pointer drifts off the button or the browser would start a gesture.
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId)
+        } catch {
+          /* not supported or pointer already gone */
+        }
         begin()
       }}
       onPointerUp={end}
-      onPointerLeave={end}
       onPointerCancel={end}
       onContextMenu={(e) => e.preventDefault()}
       onKeyDown={(e) => {

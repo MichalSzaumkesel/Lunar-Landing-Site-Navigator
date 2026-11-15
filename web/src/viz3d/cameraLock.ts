@@ -3,9 +3,9 @@
 export type LockBody = 'sun' | 'earth' | 'lander'
 
 /** How long a button must be held before the camera locks. */
-export const HOLD_MS = 600
+export const HOLD_MS = 450
 /** A press shows the hold visuals (padlock, fill, progress) only after this long, so a plain click stays quiet. */
-export const HOLD_VISUAL_DELAY_MS = 220
+export const HOLD_VISUAL_DELAY_MS = 150
 /** Time constant of the tracking damping: the remaining error shrinks by 1/e every TRACK_TAU_MS. */
 export const TRACK_TAU_MS = 140
 
