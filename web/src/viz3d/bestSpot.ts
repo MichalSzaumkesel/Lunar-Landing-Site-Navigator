@@ -130,6 +130,19 @@ export function formatResultSentence(
   return `Moved ${roundedDist} m to the ${dir}. Sun visible: ${roundedHere} h here vs ${roundedOrig} h at the original point (${deltaStr}).`
 }
 
+/** Message shown when the search finds nothing better than the current spot. */
+export const NO_BETTER_SPOT_MESSAGE = 'No better spot found nearby'
+
+/**
+ * True when the candidate gives at least one more whole hour of Sun visible than the original point,
+ * judged on the same rounded numbers the result sentence shows. Missing hours count as no gain.
+ */
+export function hasUsefulGain(candidateHours: number | null, origHours: number | null): boolean {
+  if (candidateHours === null || origHours === null) return false
+  if (!Number.isFinite(candidateHours) || !Number.isFinite(origHours)) return false
+  return Math.round(candidateHours) - Math.round(origHours) > 0
+}
+
 /**
  * Plain one-sentence result for Simple mode. Uses only the gain, so two baselines are never shown.
  */

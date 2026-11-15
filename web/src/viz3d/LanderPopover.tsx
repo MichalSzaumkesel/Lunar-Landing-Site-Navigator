@@ -23,7 +23,11 @@ export function LanderPopover({ summary, children }: { summary: string; children
       btn.current?.focus()
     }
     const onDown = (e: PointerEvent) => {
-      if (e.target instanceof Node && !wrap.current?.contains(e.target)) setOpen(false)
+      if (e.target instanceof Node && !wrap.current?.contains(e.target)) {
+        setOpen(false)
+        // The scene reads this flag on the same pointerdown and skips terrain picking for this click.
+        if (e.target instanceof HTMLCanvasElement) e.target.dataset.swallowClick = '1'
+      }
     }
     document.addEventListener('keydown', onKey, true)
     document.addEventListener('pointerdown', onDown, true)
