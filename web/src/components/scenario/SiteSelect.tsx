@@ -30,8 +30,7 @@ export function SiteSelect({ scenarioId, siteId }: { scenarioId: string; siteId:
 
   return (
     <div className="site-select">
-      <label htmlFor={id}>Site</label>
-      <select id={id} value={siteId} onChange={onChange} onClick={(e) => e.stopPropagation()}>
+      <select id={id} aria-label="Site" value={siteId} onChange={onChange} onClick={(e) => e.stopPropagation()}>
         {!known && <option value={siteId}>Custom site</option>}
         {groupByCategory(sites).map((g) => (
           <optgroup key={g.label} label={g.label}>
