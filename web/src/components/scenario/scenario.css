@@ -671,7 +671,8 @@
 .views[data-fullscreen='true'] .views__loupe {
   order: -1;
   align-self: start;
-  max-width: 16rem;
+  /* The square leaves room for the toggle row and the caption, so the loupe never runs under the transport */
+  max-width: min(16rem, calc(100cqh - 6rem));
 }
 
 .views[data-fullscreen='true'] .transport {
@@ -679,6 +680,15 @@
   flex: none;
   align-self: stretch;
   margin: 0 calc(-1 * var(--space-3));
+}
+
+/* Short full screen (landscape phone): the scale row and the zoom note give their room to the plot,
+   so the loupe ends above the transport. */
+@container (max-height: 24rem) {
+  .views[data-fullscreen='true'] .loupe__scale,
+  .views[data-fullscreen='true'] .views__zoomslot {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
@@ -810,4 +820,48 @@
 
 .metrics__item:hover {
   border-bottom-color: var(--control-border);
+}
+
+/* Side by side cards share their rows (header, headline chips, custom-site note, views, sections), so a badge,
+   an extra slip-chip line or a note in one card never pushes the other card out of line. Empty rows have no height:
+   the spacing between rows is margin, not gap. */
+@media (min-width: 901px) {
+  .board--2 > .card,
+  .board--3 > .card,
+  .board--4 > .card {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+
+  .board--2 > .card > *,
+  .board--3 > .card > *,
+  .board--4 > .card > * {
+    min-width: 0;
+  }
+
+  .board > .card > .card__header {
+    grid-row: 1;
+  }
+
+  .board > .card > .countdowns {
+    grid-row: 2;
+    margin-top: var(--space-4);
+  }
+
+  .board > .card > .card__note {
+    grid-row: 3;
+    margin: var(--space-4) 0 0;
+  }
+
+  .board > .card > .views {
+    grid-row: 4;
+    margin-top: var(--space-4);
+  }
+
+  .board > .card > .card__sections {
+    grid-row: 5;
+    margin-top: var(--space-4);
+  }
 }

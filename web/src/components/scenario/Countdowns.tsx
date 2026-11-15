@@ -56,7 +56,7 @@ function Share({ body, label, value, tip, detail, change, range, uncertaintyDeg 
   return (
     <div className={`countdown countdown--${body}`} title={tip}>
       <span className="countdown__value">
-        <SwapText value={`${label} ${value.toFixed(1)} %`} />
+        <SwapText value={`${label} ${value.toFixed(1)} %`} />
         {shareRangeVisible(range) && uncertaintyDeg !== null && (
           <span className="countdown__range" title={uncertaintyTip(uncertaintyDeg)}>
             {` (${formatShareRange(range)})`}

@@ -36,4 +36,18 @@ describe('layout guards (wave 74)', () => {
     expect(scenario).toMatch(/\.views__zoomslot\s*\{[^}]*min-height/)
     expect(scenario).toMatch(/\.countdown:nth-child\(n \+ 3\)/)
   })
+
+  it('shares card rows between side-by-side cards (wave 77)', () => {
+    expect(scenario).toMatch(/grid-template-rows:\s*subgrid/)
+    expect(scenario).toMatch(/\.board > \.card > \.card__note\s*\{[^}]*grid-row:\s*3/)
+  })
+
+  it('keeps a share value and its percent sign together (wave 77)', () => {
+    const src = readFileSync('src/components/scenario/Countdowns.tsx', 'utf8')
+    expect(src).toContain('toFixed(1)}\u00A0%')
+  })
+
+  it('gives ghost buttons the standard outline (wave 77)', () => {
+    expect(theme).toMatch(/button\.ghost\s*\{[^}]*border-color:\s*var\(--control-border\)/)
+  })
 })

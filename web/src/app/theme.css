@@ -208,15 +208,16 @@ button.primary[data-playing='true'] {
   box-shadow: 0 0 12px rgba(255, 194, 51, 0.4);
 }
 
+/* Quiet button: no fill, but the same outline as every other button, so it never reads as plain text */
 button.ghost {
   background: transparent;
-  border-color: transparent;
-  color: var(--muted);
+  border-color: var(--control-border);
+  color: var(--text);
 }
 
 button.ghost:hover:not(:disabled) {
-  color: var(--text);
-  border-color: var(--control-border);
+  background: var(--panel-2);
+  border-color: var(--muted);
 }
 
 /* Add-style action: tinted, not the amber primary reserved for Play */

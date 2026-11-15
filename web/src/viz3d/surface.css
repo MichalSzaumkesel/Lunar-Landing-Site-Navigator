@@ -1062,6 +1062,26 @@
   }
 }
 
+/* Landscape phone: the control column may be taller than the frame; the row grows instead of clipping the last button.
+   Attribution and the move hint sit side by side instead of on top of each other. */
+@media (max-height: 500px) and (min-width: 601px) {
+  .surface:not(.surface--simple) .surface__side {
+    height: auto;
+    min-height: var(--surface-h);
+    overflow-y: visible;
+  }
+
+  .surface__stack-bl {
+    max-width: calc(54% - 8px);
+  }
+
+  .surface__overlay--br {
+    max-width: calc(46% - 16px);
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+}
+
 /* Simple: the stage has a fixed size, so the frame takes whatever the controls leave */
 .surface--simple {
   height: 100%;

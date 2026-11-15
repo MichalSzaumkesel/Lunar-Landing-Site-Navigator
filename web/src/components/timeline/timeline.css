@@ -288,8 +288,22 @@
   color: var(--muted);
   cursor: pointer;
   user-select: none;
-  min-height: 2.5rem;
-  padding: 0 var(--space-1);
+  min-height: 2.25rem;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-default),
+              color var(--motion-duration-fast) var(--motion-ease-default);
+}
+
+.tl__release-check:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.tl__release-check:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .tl__release-check input {
