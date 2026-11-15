@@ -23,6 +23,7 @@ import { MetricsPanel } from './MetricsPanel'
 import { ScenarioControls } from './ScenarioControls'
 import { SiteSelect } from './SiteSelect'
 import { SkyViews } from './SkyViews'
+import { SlipStrip } from './SlipStrip'
 import { CustomSiteNote } from './CustomSiteNote'
 import { datesSummary, formatWindow, metricsSummary, rulesSummary, siteSubtitle, slipChange } from './cardLogic'
 import { CompareTable } from '../compare'
@@ -109,6 +110,7 @@ const CardBody = memo(function CardBody({ scenario }: { scenario: Scenario }) {
           summary={datesSummary(scenario.startUtc, scenario.durationH, scenario.slipDays)}
         >
           <ScenarioControls scenario={scenario} siteName={bundle?.site.name ?? title} change={change} />
+          <SlipStrip scenario={scenario} bundle={bundle} />
         </Disclosure>
         <Disclosure sectionKey="metrics" title="Metrics and events" summary={metricsSummary(metrics)}>
           <SkyReadout scenarioId={scenario.id} />
