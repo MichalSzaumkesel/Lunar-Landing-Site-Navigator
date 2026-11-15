@@ -926,7 +926,8 @@
 .surface__controls > label.group {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto;
+  /* Same fixed value column in every slider row, so all tracks have the same width */
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) 5.5rem;
   grid-template-areas: 'label slider value';
   align-items: center;
   gap: 0 0.5rem;
